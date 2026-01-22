@@ -1,0 +1,104 @@
+import React, { useState } from 'react';
+import { base44 } from '@/api/base44Client';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Link } from 'react-router-dom';
+import { createPageUrl } from "@/utils";
+import PageHeader from '@/components/common/PageHeader';
+import DataTable from '@/components/common/DataTable';
+import LoadingSpinner from '@/components/common/LoadingSpinner';
+import EmptyState from '@/components/common/EmptyState';
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
+import { format } from 'date-fns';
+import { TrendingUp, Plus, Eye, Printer, Trash2 } from 'lucide-react';
+
+export default function Sales() {
+  const queryClient = useQueryClient();
+
+  const { data: vouchers = [], isLoading } = useQuery({
+    queryKey: ['salesVouchers'],
+    queryFn: async () => {
+      const all = await base44.entities.Voucher.list('-created_date');
+      return all.filter(v => v.voucher_type === 'Sales');
+    }
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id) => base44.entities.Voucher.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['salesVouchers'] });
+      toast.success('Invoice deleted');
+    }
+  });
+
+  const columns = [
+    {
+      header: 'Invoice No',
+      accessor: 'voucher_number',
+      render: (row) => <span className="font-semibold text-emerald-600">{row.voucher_number || `INV-${row.id?.slice(-6)}`}</span>
+    },
+    {
+      header: 'Date',
+      accessor: 'date',
+      render: (row) => row.date ? format(new Date(row.date), 'dd MMM yyyy') : '-'
+    },
+    {
+      header: 'Customer',
+      accessor: 'party_name',
+      render: (row) => row.party_name || '-'
+    },
+    {
+      header: 'Amount',
+      accessor: 'net_amount',
+      render: (row) => <span className="font-semibold">{parseFloat(row.net_amount || 0).toFixed(2)} SAR</span>
+    },
+    {
+      header: 'Status',
+      accessor: 'status',
+      render: (row) => (
+        <Badge className={row.status === 'Confirmed' ? 'bg-emerald-100 text-emerald-700' : row.status === 'Cancelled' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'}>
+          {row.status || 'Confirmed'}
+        </Badge>
+      )
+    },
+    {
+      header: 'Actions',
+      render: (row) => (
+        <div className="flex items-center gap-2">
+          <Link to={createPageUrl(`SalesInvoice?id=${row.id}`)}>
+            <Button variant="ghost" size="icon"><Eye className="h-4 w-4" /></Button>
+          </Link>
+          <Link to={createPageUrl(`PrintInvoice?id=${row.id}&type=sales`)}>
+            <Button variant="ghost" size="icon"><Printer className="h-4 w-4" /></Button>
+          </Link>
+          <Button variant="ghost" size="icon" onClick={() => { if (confirm('Delete this invoice?')) deleteMutation.mutate(row.id); }}>
+            <Trash2 className="h-4 w-4 text-red-500" />
+          </Button>
+        </div>
+      )
+    }
+  ];
+
+  if (isLoading) return <LoadingSpinner text="Loading sales invoices..." />;
+
+  return (
+    <div>
+      <PageHeader
+        title="Sales Invoices"
+        subtitle="Manage your sales transactions"
+        primaryAction={{ label: 'New Invoice', onClick: () => window.location.href = createPageUrl('SalesInvoice') }}
+      />
+      {vouchers.length === 0 ? (
+        <EmptyState
+          icon={TrendingUp}
+          title="No Sales Invoices"
+          description="Create your first sales invoice"
+          action={{ label: 'Create Invoice', onClick: () => window.location.href = createPageUrl('SalesInvoice') }}
+        />
+      ) : (
+        <DataTable columns={columns} data={vouchers} />
+      )}
+    </div>
+  );
+}
