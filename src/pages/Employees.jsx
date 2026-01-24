@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { formatCurrency, generateVoucherCode } from '@/utils';
 import PageHeader from '@/components/common/PageHeader';
 import DataTable from '@/components/common/DataTable';
 import FormField from '@/components/forms/FormField';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import EmptyState from '@/components/common/EmptyState';
-import { generateUniqueID, ID_PREFIXES } from '@/components/common/IDGenerator';
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -31,7 +31,7 @@ export default function Employees() {
 
   const createMutation = useMutation({
     mutationFn: async (data) => {
-      const employeeCode = await generateUniqueID('employee', ID_PREFIXES.EMPLOYEE);
+      const employeeCode = await generateVoucherCode(base44, 'Employee');
       return base44.entities.Employee.create({ ...data, employee_code: employeeCode });
     },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['employees'] }); toast.success('Employee added'); closeDialog(); }
@@ -53,12 +53,15 @@ export default function Employees() {
       setFormData({ ...employee });
     } else {
       setEditingEmployee(null);
-      setFormData({
-        employee_code: '', name: '', name_arabic: '', designation: '', department: '',
-        date_of_joining: '', date_of_birth: '', gender: '', nationality: '',
-        iqama_number: '', passport_number: '', phone: '', email: '', address: '',
-        basic_salary: '', housing_allowance: '', transport_allowance: '', other_allowances: '',
-        gosi_number: '', bank_name: '', bank_account: '', iban: ''
+      // Auto-generate employee code for new employees
+      generateVoucherCode(base44, 'Employee').then(code => {
+        setFormData({
+          employee_code: code, name: '', name_arabic: '', designation: '', department: '',
+          date_of_joining: '', date_of_birth: '', gender: '', nationality: '',
+          iqama_number: '', passport_number: '', phone: '', email: '', address: '',
+          basic_salary: '', housing_allowance: '', transport_allowance: '', other_allowances: '',
+          gosi_number: '', bank_name: '', bank_account: '', iban: ''
+        });
       });
     }
     setDialogOpen(true);
@@ -167,7 +170,7 @@ export default function Employees() {
                 <div className="p-4 bg-emerald-50 rounded-lg">
                   <p className="text-sm text-slate-600">Total Salary:</p>
                   <p className="text-2xl font-bold text-emerald-600">
-                    {((parseFloat(formData.basic_salary) || 0) + (parseFloat(formData.housing_allowance) || 0) + (parseFloat(formData.transport_allowance) || 0) + (parseFloat(formData.other_allowances) || 0)).toFixed(2)} SAR
+                    {formatCurrency(((parseFloat(formData.basic_salary) || 0) + (parseFloat(formData.housing_allowance) || 0) + (parseFloat(formData.transport_allowance) || 0) + (parseFloat(formData.other_allowances) || 0)), 'SAR')}
                   </p>
                 </div>
               </TabsContent>

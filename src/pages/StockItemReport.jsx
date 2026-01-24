@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
+import { formatCurrency } from '@/utils';
 import PageHeader from '@/components/common/PageHeader';
 import DataTable from '@/components/common/DataTable';
 import FormField from '@/components/forms/FormField';
@@ -95,7 +96,7 @@ export default function StockItemReport() {
                 </div>
                 <div className="p-4 bg-purple-50 rounded-lg">
                   <p className="text-sm text-slate-500">Value</p>
-                  <p className="text-xl font-bold text-purple-600">{(runningQty * parseFloat(stockItem.cost_price || 0)).toFixed(2)} SAR</p>
+                  <p className="text-xl font-bold text-purple-600">{formatCurrency(runningQty * parseFloat(stockItem.cost_price || 0), 'SAR')}</p>
                 </div>
               </div>
             </CardContent>

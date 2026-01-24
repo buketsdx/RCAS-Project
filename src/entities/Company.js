@@ -55,6 +55,10 @@ export const Company = {
     "logo_url": {
       "type": "string"
     },
+    "password": {
+      "type": "string",
+      "description": "Company password for access control"
+    },
     "is_active": {
       "type": "boolean",
       "default": true

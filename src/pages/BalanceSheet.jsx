@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
+import { formatCurrency } from '@/utils';
 import PageHeader from '@/components/common/PageHeader';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import FormField from '@/components/forms/FormField';
@@ -87,7 +88,7 @@ export default function BalanceSheet() {
           )}
           <div className={`flex justify-between py-3 bg-${color}-50 px-3 rounded-lg font-bold mt-4`}>
             <span>Total {title}</span>
-            <span>{total.toFixed(2)} SAR</span>
+            <span>{formatCurrency(total, 'SAR')}</span>
           </div>
         </div>
       </CardContent>
@@ -123,11 +124,11 @@ export default function BalanceSheet() {
           <div className="grid grid-cols-2 gap-8 text-center">
             <div className="p-4 bg-blue-50 rounded-lg">
               <p className="text-sm text-slate-600">Total Assets</p>
-              <p className="text-2xl font-bold text-blue-600">{totalAssets.toFixed(2)} SAR</p>
+              <p className="text-2xl font-bold text-blue-600">{formatCurrency(totalAssets, 'SAR')}</p>
             </div>
             <div className="p-4 bg-orange-50 rounded-lg">
               <p className="text-sm text-slate-600">Total Liabilities + Capital</p>
-              <p className="text-2xl font-bold text-orange-600">{(totalLiabilities + totalCapital).toFixed(2)} SAR</p>
+              <p className="text-2xl font-bold text-orange-600">{formatCurrency(totalLiabilities + totalCapital, 'SAR')}</p>
             </div>
           </div>
         </CardContent>

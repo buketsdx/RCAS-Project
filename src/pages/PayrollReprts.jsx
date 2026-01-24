@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
+import { formatCurrency } from '@/utils';
 import PageHeader from '@/components/common/PageHeader';
 import DataTable from '@/components/common/DataTable';
 import FormField from '@/components/forms/FormField';
@@ -53,9 +54,9 @@ export default function PayrollReports() {
     { header: 'Employee', accessor: 'name', render: (row) => <span className="font-medium">{row.name}</span> },
     { header: 'Department', accessor: 'department' },
     { header: 'Months', accessor: 'monthsWorked' },
-    { header: 'Total Gross', render: (row) => `${row.totalGross.toFixed(2)} SAR` },
-    { header: 'Total GOSI', render: (row) => `${row.totalGOSI.toFixed(2)} SAR` },
-    { header: 'Total Net', render: (row) => <span className="font-semibold text-emerald-600">{row.totalNet.toFixed(2)} SAR</span> }
+    { header: 'Total Gross', render: (row) => formatCurrency(row.totalGross, 'SAR') },
+    { header: 'Total GOSI', render: (row) => formatCurrency(row.totalGOSI, 'SAR') },
+    { header: 'Total Net', render: (row) => <span className="font-semibold text-emerald-600">{formatCurrency(row.totalNet, 'SAR')}</span> }
   ];
 
   if (isLoading) return <LoadingSpinner text="Loading payroll reports..." />;
@@ -90,19 +91,19 @@ export default function PayrollReports() {
         <Card className="bg-blue-50 border-blue-200">
           <CardContent className="pt-6">
             <p className="text-sm text-blue-700">Annual Gross</p>
-            <p className="text-2xl font-bold text-blue-700">{totalAnnualGross.toFixed(2)} SAR</p>
+            <p className="text-2xl font-bold text-blue-700">{formatCurrency(totalAnnualGross, 'SAR')}</p>
           </CardContent>
         </Card>
         <Card className="bg-orange-50 border-orange-200">
           <CardContent className="pt-6">
             <p className="text-sm text-orange-700">Annual GOSI</p>
-            <p className="text-2xl font-bold text-orange-700">{totalAnnualGOSI.toFixed(2)} SAR</p>
+            <p className="text-2xl font-bold text-orange-700">{formatCurrency(totalAnnualGOSI, 'SAR')}</p>
           </CardContent>
         </Card>
         <Card className="bg-emerald-50 border-emerald-200">
           <CardContent className="pt-6">
             <p className="text-sm text-emerald-700">Annual Net</p>
-            <p className="text-2xl font-bold text-emerald-700">{totalAnnualNet.toFixed(2)} SAR</p>
+            <p className="text-2xl font-bold text-emerald-700">{formatCurrency(totalAnnualNet, 'SAR')}</p>
           </CardContent>
         </Card>
       </div>

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
+import { formatCurrency } from '@/utils';
 import PageHeader from '@/components/common/PageHeader';
 import DataTable from '@/components/common/DataTable';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
@@ -47,14 +48,14 @@ export default function Outstanding() {
   const receivableColumns = [
     { header: 'Customer', accessor: 'name', render: (row) => <span className="font-medium">{row.name}</span> },
     { header: 'Contact', accessor: 'phone', render: (row) => row.phone || row.email || '-' },
-    { header: 'Outstanding', className: 'text-right', render: (row) => <span className="font-semibold text-blue-600">{row.balance.toFixed(2)} SAR</span> },
+    { header: 'Outstanding', className: 'text-right', render: (row) => <span className="font-semibold text-blue-600">{formatCurrency(row.balance, 'SAR')}</span> },
     { header: 'Credit Days', accessor: 'credit_days', render: (row) => row.credit_days || '-' }
   ];
 
   const payableColumns = [
     { header: 'Supplier', accessor: 'name', render: (row) => <span className="font-medium">{row.name}</span> },
     { header: 'Contact', accessor: 'phone', render: (row) => row.phone || row.email || '-' },
-    { header: 'Outstanding', className: 'text-right', render: (row) => <span className="font-semibold text-red-600">{row.balance.toFixed(2)} SAR</span> },
+    { header: 'Outstanding', className: 'text-right', render: (row) => <span className="font-semibold text-red-600">{formatCurrency(row.balance, 'SAR')}</span> },
     { header: 'Credit Days', accessor: 'credit_days', render: (row) => row.credit_days || '-' }
   ];
 
@@ -73,7 +74,7 @@ export default function Outstanding() {
               </div>
               <div>
                 <p className="text-sm text-blue-700">Total Receivables</p>
-                <p className="text-2xl font-bold text-blue-700">{totalReceivables.toFixed(2)} SAR</p>
+                <p className="text-2xl font-bold text-blue-700">{formatCurrency(totalReceivables, 'SAR')}</p>
                 <p className="text-xs text-blue-600">{receivables.length} parties</p>
               </div>
             </div>
@@ -87,7 +88,7 @@ export default function Outstanding() {
               </div>
               <div>
                 <p className="text-sm text-red-700">Total Payables</p>
-                <p className="text-2xl font-bold text-red-700">{totalPayables.toFixed(2)} SAR</p>
+                <p className="text-2xl font-bold text-red-700">{formatCurrency(totalPayables, 'SAR')}</p>
                 <p className="text-xs text-red-600">{payables.length} parties</p>
               </div>
             </div>

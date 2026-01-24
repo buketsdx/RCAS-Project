@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
+import { formatCurrency } from '@/utils';
 import PageHeader from '@/components/common/PageHeader';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import FormField from '@/components/forms/FormField';
@@ -158,15 +159,15 @@ export default function CashFlow() {
             <div className="space-y-3">
               <div className="flex justify-between py-2 border-b">
                 <span>Cash Receipts</span>
-                <span className="font-medium">{totalReceipts.toFixed(2)} SAR</span>
+                <span className="font-medium">{formatCurrency(totalReceipts, 'SAR')}</span>
               </div>
               <div className="flex justify-between py-2 border-b">
                 <span>Sales Revenue</span>
-                <span className="font-medium">{totalSales.toFixed(2)} SAR</span>
+                <span className="font-medium">{formatCurrency(totalSales, 'SAR')}</span>
               </div>
               <div className="flex justify-between py-3 bg-emerald-50 px-3 rounded-lg font-bold">
                 <span>Total Inflows</span>
-                <span>{(totalReceipts + totalSales).toFixed(2)} SAR</span>
+                <span>{formatCurrency(totalReceipts + totalSales, 'SAR')}</span>
               </div>
             </div>
           </CardContent>
@@ -180,15 +181,15 @@ export default function CashFlow() {
             <div className="space-y-3">
               <div className="flex justify-between py-2 border-b">
                 <span>Cash Payments</span>
-                <span className="font-medium">{totalPayments.toFixed(2)} SAR</span>
+                <span className="font-medium">{formatCurrency(totalPayments, 'SAR')}</span>
               </div>
               <div className="flex justify-between py-2 border-b">
                 <span>Purchase Expenses</span>
-                <span className="font-medium">{totalPurchases.toFixed(2)} SAR</span>
+                <span className="font-medium">{formatCurrency(totalPurchases, 'SAR')}</span>
               </div>
               <div className="flex justify-between py-3 bg-red-50 px-3 rounded-lg font-bold">
                 <span>Total Outflows</span>
-                <span>{(totalPayments + totalPurchases).toFixed(2)} SAR</span>
+                <span>{formatCurrency(totalPayments + totalPurchases, 'SAR')}</span>
               </div>
             </div>
           </CardContent>

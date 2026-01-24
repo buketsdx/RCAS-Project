@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
+import { formatCurrency } from '@/utils';
 import PageHeader from '@/components/common/PageHeader';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import FormField from '@/components/forms/FormField';
@@ -147,7 +148,7 @@ export default function VATComputation() {
               {netVAT >= 0 ? 'VAT Payable to ZATCA' : 'VAT Refundable from ZATCA'}
             </p>
             <p className={`text-4xl font-bold ${netVAT >= 0 ? 'text-red-600' : 'text-emerald-600'}`}>
-              {Math.abs(netVAT).toFixed(2)} SAR
+              {formatCurrency(Math.abs(netVAT), 'SAR')}
             </p>
           </div>
         </CardContent>

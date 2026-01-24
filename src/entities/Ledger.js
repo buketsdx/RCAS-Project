@@ -14,6 +14,11 @@ export const Ledger = {
     "group_id": {
       "type": "string"
     },
+    "is_system": {
+      "type": "boolean",
+      "default": false,
+      "description": "System/inbuilt ledgers cannot be deleted"
+    },
     "opening_balance": {
       "type": "number",
       "default": 0
@@ -54,6 +59,18 @@ export const Ledger = {
     "vat_number": {
       "type": "string"
     },
+    "business_name": {
+      "type": "string",
+      "description": "Business name for VAT customers"
+    },
+    "cr_number": {
+      "type": "string",
+      "description": "Commercial Registration number for VAT customers"
+    },
+    "address_proof": {
+      "type": "string",
+      "description": "Address proof document for VAT customers"
+    },
     "credit_limit": {
       "type": "number"
     },
@@ -72,6 +89,15 @@ export const Ledger = {
     "is_active": {
       "type": "boolean",
       "default": true
+    },
+    "customer_type": {
+      "type": "string",
+      "enum": [
+        "VAT Customer",
+        "General"
+      ],
+      "default": "General",
+      "description": "Customer type: VAT Customer or General (Non-VAT) Customer"
     }
   },
   "required": [

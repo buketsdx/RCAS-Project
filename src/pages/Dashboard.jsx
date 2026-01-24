@@ -1,6 +1,7 @@
 import React from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
+import { formatCurrency } from '@/utils';
 import StatCard from '@/components/common/StatCard';
 import QuickAccessCard from '@/components/dashboard/QuickAccessCard';
 import RecentVouchers from '@/components/dashboard/RecentVouchers';
@@ -90,7 +91,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title="Monthly Sales"
-          value={`${totalSales.toFixed(2)} SAR`}
+          value={formatCurrency(totalSales, 'SAR')}
           subtitle="This month"
           icon={TrendingUp}
           trend="+12.5%"
@@ -98,13 +99,13 @@ export default function Dashboard() {
         />
         <StatCard
           title="Monthly Purchases"
-          value={`${totalPurchases.toFixed(2)} SAR`}
+          value={formatCurrency(totalPurchases, 'SAR')}
           subtitle="This month"
           icon={ShoppingCart}
         />
         <StatCard
           title="Cash Received"
-          value={`${totalReceipts.toFixed(2)} SAR`}
+          value={formatCurrency(totalReceipts, 'SAR')}
           subtitle="This month"
           icon={Wallet}
           trend="+8.2%"
@@ -112,7 +113,7 @@ export default function Dashboard() {
         />
         <StatCard
           title="Cash Paid"
-          value={`${totalPayments.toFixed(2)} SAR`}
+          value={formatCurrency(totalPayments, 'SAR')}
           subtitle="This month"
           icon={CreditCard}
         />
@@ -169,7 +170,7 @@ export default function Dashboard() {
                 <div>
                   <p className="text-sm text-slate-600">Gross Profit</p>
                   <p className="text-lg font-bold text-emerald-700">
-                    {(totalSales - totalPurchases).toFixed(2)} SAR
+                    {formatCurrency(totalSales - totalPurchases, 'SAR')}
                   </p>
                 </div>
               </div>
@@ -182,7 +183,7 @@ export default function Dashboard() {
                 <div>
                   <p className="text-sm text-slate-600">Net Cash Flow</p>
                   <p className="text-lg font-bold text-blue-700">
-                    {(totalReceipts - totalPayments).toFixed(2)} SAR
+                    {formatCurrency(totalReceipts - totalPayments, 'SAR')}
                   </p>
                 </div>
               </div>
@@ -195,10 +196,9 @@ export default function Dashboard() {
                 <div>
                   <p className="text-sm text-slate-600">VAT Collected</p>
                   <p className="text-lg font-bold text-purple-700">
-                    {monthlyVouchers
+                    {formatCurrency(monthlyVouchers
                       .filter(v => v.voucher_type === 'Sales')
-                      .reduce((sum, v) => sum + (parseFloat(v.vat_amount) || 0), 0)
-                      .toFixed(2)} SAR
+                      .reduce((sum, v) => sum + (parseFloat(v.vat_amount) || 0), 0), 'SAR')}
                   </p>
                 </div>
               </div>

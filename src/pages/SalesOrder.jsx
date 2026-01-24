@@ -2,7 +2,7 @@ import React from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { createPageUrl } from "@/utils";
+import { createPageUrl, formatCurrency } from "@/utils";
 import PageHeader from '@/components/common/PageHeader';
 import DataTable from '@/components/common/DataTable';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
@@ -36,7 +36,7 @@ export default function SalesOrder() {
     { header: 'Order No', accessor: 'voucher_number', render: (row) => <span className="font-semibold text-emerald-600">{row.voucher_number || `SO-${row.id?.slice(-6)}`}</span> },
     { header: 'Date', accessor: 'date', render: (row) => row.date ? format(new Date(row.date), 'dd MMM yyyy') : '-' },
     { header: 'Customer', accessor: 'party_name' },
-    { header: 'Amount', accessor: 'net_amount', render: (row) => <span className="font-semibold">{parseFloat(row.net_amount || 0).toFixed(2)} SAR</span> },
+    { header: 'Amount', accessor: 'net_amount', render: (row) => <span className="font-semibold">{formatCurrency(parseFloat(row.net_amount || 0), 'SAR')}</span> },
     { header: 'Status', accessor: 'status', render: (row) => <Badge className={row.status === 'Confirmed' ? 'bg-emerald-100 text-emerald-700' : 'bg-yellow-100 text-yellow-700'}>{row.status || 'Draft'}</Badge> },
     {
       header: 'Actions',

@@ -52,19 +52,28 @@ export default function FormField({
           )}
         />
       ) : type === 'select' ? (
-        <Select value={value || ''} onValueChange={handleChange} disabled={disabled}>
+        <Select value={value || 'default'} onValueChange={handleChange} disabled={disabled}>
           <SelectTrigger className={cn(
-            "bg-slate-50 border-slate-200 focus:border-emerald-500 focus:ring-emerald-500",
+            "bg-white text-slate-900 border-slate-300 focus:border-emerald-500 focus:ring-emerald-500 relative z-50",
             error && "border-red-500"
           )}>
             <SelectValue placeholder={placeholder || `Select ${label}`} />
           </SelectTrigger>
-          <SelectContent>
-            {options.map((opt) => (
-              <SelectItem key={opt.value} value={opt.value}>
-                {opt.label}
+          <SelectContent className="z-50 bg-white text-slate-900 border border-slate-300">
+            {options && options.length > 0 ? (
+              options.map((opt) => {
+                const optValue = opt.value || opt.id || opt.name;
+                return (
+                  <SelectItem key={optValue} value={String(optValue)} className="hover:bg-emerald-50">
+                    {opt.label || opt.name || opt.value}
+                  </SelectItem>
+                );
+              })
+            ) : (
+              <SelectItem value="default" disabled>
+                No options available
               </SelectItem>
-            ))}
+            )}
           </SelectContent>
         </Select>
       ) : (

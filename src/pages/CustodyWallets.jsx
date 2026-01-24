@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { formatCurrency } from '@/utils';
 import PageHeader from '@/components/common/PageHeader';
 import DataTable from '@/components/common/DataTable';
 import FormField from '@/components/forms/FormField';
@@ -145,7 +146,7 @@ export default function CustodyWallets() {
         <Card className="bg-emerald-50 border-emerald-200">
           <CardContent className="pt-6">
             <p className="text-sm text-emerald-700">Total Balance</p>
-            <p className="text-2xl font-bold text-emerald-700">{totalBalance.toFixed(2)} SAR</p>
+            <p className="text-2xl font-bold text-emerald-700">{formatCurrency(totalBalance, 'SAR')}</p>
           </CardContent>
         </Card>
         <Card>

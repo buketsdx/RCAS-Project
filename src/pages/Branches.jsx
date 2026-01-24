@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useCompany } from '@/context/CompanyContext';
 import PageHeader from '@/components/common/PageHeader';
 import DataTable from '@/components/common/DataTable';
 import FormField from '@/components/forms/FormField';
@@ -15,30 +16,38 @@ import { Building, Plus, Pencil, Trash2, Star } from 'lucide-react';
 
 export default function Branches() {
   const queryClient = useQueryClient();
+  const { selectedCompanyId, currentCompany } = useCompany();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingBranch, setEditingBranch] = useState(null);
   const [formData, setFormData] = useState({
     name: '', name_arabic: '', address: '', city: '', phone: '', email: '', manager_name: '', is_head_office: false
   });
 
-  const { data: branches = [], isLoading } = useQuery({ queryKey: ['branches'], queryFn: () => base44.entities.Branch.list() });
+  const { data: branches = [], isLoading } = useQuery({ 
+    queryKey: ['branches', selectedCompanyId],
+    queryFn: async () => {
+      const allBranches = await base44.entities.Branch.list();
+      return allBranches.filter(b => b.company_id === selectedCompanyId);
+    },
+    enabled: !!selectedCompanyId
+  });
 
   const createMutation = useMutation({
     mutationFn: async (data) => {
       const branchCode = await generateUniqueID('branch', ID_PREFIXES.BRANCH);
-      return base44.entities.Branch.create({ ...data, branch_code: branchCode });
+      return base44.entities.Branch.create({ ...data, branch_code: branchCode, company_id: selectedCompanyId });
     },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['branches'] }); toast.success('Branch created'); closeDialog(); }
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['branches', selectedCompanyId] }); toast.success('Branch created'); closeDialog(); }
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Branch.update(id, data),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['branches'] }); toast.success('Branch updated'); closeDialog(); }
+    mutationFn: ({ id, data }) => base44.entities.Branch.update(id, { ...data, company_id: selectedCompanyId }),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['branches', selectedCompanyId] }); toast.success('Branch updated'); closeDialog(); }
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id) => base44.entities.Branch.delete(id),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['branches'] }); toast.success('Branch deleted'); }
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['branches', selectedCompanyId] }); toast.success('Branch deleted'); }
   });
 
   const openDialog = (branch = null) => {
@@ -89,7 +98,11 @@ export default function Branches() {
 
   return (
     <div>
-      <PageHeader title="Branches" subtitle="Manage company branches" primaryAction={{ label: 'Add Branch', onClick: () => openDialog() }} />
+      <PageHeader 
+        title="Branches" 
+        subtitle={currentCompany ? `Branches for ${currentCompany.name}` : "Manage company branches"}
+        primaryAction={{ label: 'Add Branch', onClick: () => openDialog() }} 
+      />
       {branches.length === 0 ? (
         <EmptyState icon={Building} title="No Branches" description="Add branches to manage multiple locations" action={{ label: 'Add First Branch', onClick: () => openDialog() }} />
       ) : (

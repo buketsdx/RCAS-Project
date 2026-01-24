@@ -89,6 +89,30 @@ export const Voucher = {
     "due_date": {
       "type": "string",
       "format": "date"
+    },
+    "customer_vat_number": {
+      "type": "string",
+      "description": "Customer VAT number for VAT invoices"
+    },
+    "customer_business_name": {
+      "type": "string",
+      "description": "Customer business name for VAT invoices"
+    },
+    "customer_cr_number": {
+      "type": "string",
+      "description": "Customer Commercial Registration number for VAT invoices"
+    },
+    "customer_address_proof": {
+      "type": "string",
+      "description": "Customer address proof for VAT invoices"
+    },
+    "customer_type": {
+      "type": "string",
+      "enum": [
+        "VAT Customer",
+        "General"
+      ],
+      "description": "Customer type: VAT Customer or General (Non-VAT) Customer"
     }
   },
   "required": [

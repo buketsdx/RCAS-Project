@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { formatCurrency } from '@/utils';
 import PageHeader from '@/components/common/PageHeader';
 import DataTable from '@/components/common/DataTable';
 import FormField from '@/components/forms/FormField';
@@ -79,7 +80,7 @@ export default function SalaryComponents() {
     { header: 'Name', accessor: 'name', render: (row) => <div><p className="font-medium">{row.name}</p>{row.name_arabic && <p className="text-xs text-slate-500">{row.name_arabic}</p>}</div> },
     { header: 'Type', accessor: 'type', render: (row) => <Badge className={row.type === 'Earning' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}>{row.type}</Badge> },
     { header: 'Calculation', accessor: 'calculation_type' },
-    { header: 'Value/Rate', render: (row) => row.calculation_type === 'Fixed' ? `${parseFloat(row.default_value || 0).toFixed(2)} SAR` : row.percentage ? `${row.percentage}%` : '-' },
+    { header: 'Value/Rate', render: (row) => row.calculation_type === 'Fixed' ? formatCurrency(parseFloat(row.default_value || 0), 'SAR') : row.percentage ? `${row.percentage}%` : '-' },
     { header: 'GOSI', render: (row) => row.affects_gosi ? <Badge className="bg-blue-100 text-blue-700">Yes</Badge> : '-' },
     { header: 'Actions', render: (row) => (
       <div className="flex gap-2">

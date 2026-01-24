@@ -1,19 +1,22 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useCurrency } from '@/context/CurrencyContext';
 import PageHeader from '@/components/common/PageHeader';
 import DataTable from '@/components/common/DataTable';
 import FormField from '@/components/forms/FormField';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import EmptyState from '@/components/common/EmptyState';
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Coins, Plus, Pencil, Trash2, RefreshCw } from 'lucide-react';
+import { Coins, Plus, Pencil, Trash2, RefreshCw, Globe } from 'lucide-react';
 
 export default function Currencies() {
   const queryClient = useQueryClient();
+  const { baseCurrency, baseCurrencySymbol, setSelectedCurrency, CURRENCY_SYMBOLS } = useCurrency();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingCurrency, setEditingCurrency] = useState(null);
   const [formData, setFormData] = useState({
@@ -80,13 +83,55 @@ export default function Currencies() {
   if (isLoading) return <LoadingSpinner text="Loading currencies..." />;
 
   return (
-    <div>
+    <div className="space-y-6">
       <PageHeader title="Currencies" subtitle="Multi-currency management" primaryAction={{ label: 'Add Currency', onClick: () => openDialog() }} />
-      {currencies.length === 0 ? (
-        <EmptyState icon={Coins} title="No Currencies" description="Add currencies for multi-currency transactions" action={{ label: 'Add Currency', onClick: () => openDialog() }} />
-      ) : (
-        <DataTable columns={columns} data={currencies} />
-      )}
+      
+      {/* Base Currency Display */}
+      <Card className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-green-200 dark:border-green-800">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Globe className="h-5 w-5 text-green-600" />
+            Base Currency
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div>
+              <p className="text-sm text-slate-600 dark:text-slate-400 mb-2">Current Base Currency</p>
+              <p className="text-3xl font-bold text-green-600 dark:text-green-400">{baseCurrency}</p>
+            </div>
+            <div>
+              <p className="text-sm text-slate-600 dark:text-slate-400 mb-2">Symbol</p>
+              <p className="text-5xl font-bold text-green-600 dark:text-green-400">{baseCurrencySymbol}</p>
+            </div>
+            <div>
+              <p className="text-sm text-slate-600 dark:text-slate-400 mb-2">Quick Select</p>
+              <div className="flex flex-wrap gap-2">
+                {Object.entries(CURRENCY_SYMBOLS).slice(0, 5).map(([code, symbol]) => (
+                  <Button
+                    key={code}
+                    variant={baseCurrency === code ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setSelectedCurrency(code, symbol)}
+                    className={baseCurrency === code ? "bg-green-600 hover:bg-green-700" : ""}
+                  >
+                    {code} {symbol}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Currencies List */}
+      <div>
+        {currencies.length === 0 ? (
+          <EmptyState icon={Coins} title="No Currencies" description="Add currencies for multi-currency transactions" action={{ label: 'Add Currency', onClick: () => openDialog() }} />
+        ) : (
+          <DataTable columns={columns} data={currencies} />
+        )}
+      </div>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-md">

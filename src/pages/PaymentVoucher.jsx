@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { createPageUrl } from "@/utils";
+import { createPageUrl, generateVoucherCode } from "@/utils";
 import PageHeader from '@/components/common/PageHeader';
 import FormField from '@/components/forms/FormField';
 import LedgerEntriesTable from '@/components/vouchers/LedgerEntriesTable';
@@ -61,6 +61,18 @@ export default function PaymentVoucher() {
       });
     }
   }, [existingVoucher]);
+
+  // Auto-generate voucher code on mount if creating new voucher
+  useEffect(() => {
+    if (!voucherId && !formData.voucher_number) {
+      generateVoucherCode(base44, 'Payment').then(code => {
+        setFormData(prev => ({
+          ...prev,
+          voucher_number: code
+        }));
+      });
+    }
+  }, [voucherId]);
 
   useEffect(() => {
     if (existingEntries.length > 0) {

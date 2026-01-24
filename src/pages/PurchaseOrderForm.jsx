@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { createPageUrl } from "@/utils";
+import { createPageUrl, formatCurrency, generateVoucherCode } from "@/utils";
 import PageHeader from '@/components/common/PageHeader';
 import FormField from '@/components/forms/FormField';
 import VoucherItemsTable from '@/components/vouchers/VoucherItemsTable';
@@ -63,6 +63,18 @@ export default function PurchaseOrderForm() {
       });
     }
   }, [existingVoucher]);
+
+  // Auto-generate voucher code on mount if creating new voucher
+  useEffect(() => {
+    if (!voucherId && !formData.voucher_number) {
+      generateVoucherCode(base44, 'Purchase Order').then(code => {
+        setFormData(prev => ({
+          ...prev,
+          voucher_number: code
+        }));
+      });
+    }
+  }, [voucherId]);
 
   useEffect(() => {
     if (existingItems.length > 0) {
@@ -158,9 +170,9 @@ export default function PurchaseOrderForm() {
           <Card>
             <CardContent className="pt-6">
               <div className="flex flex-col items-end space-y-2">
-                <div className="flex justify-between w-64"><span>Subtotal:</span><span>{totals.gross.toFixed(2)} SAR</span></div>
-                <div className="flex justify-between w-64"><span>VAT:</span><span>{totals.vat.toFixed(2)} SAR</span></div>
-                <div className="flex justify-between w-64 pt-2 border-t font-bold"><span>Total:</span><span className="text-blue-600">{totals.net.toFixed(2)} SAR</span></div>
+                <div className="flex justify-between w-64"><span>Subtotal:</span><span>{formatCurrency(totals.gross, 'SAR')}</span></div>
+                <div className="flex justify-between w-64"><span>VAT:</span><span>{formatCurrency(totals.vat, 'SAR')}</span></div>
+                <div className="flex justify-between w-64 pt-2 border-t font-bold"><span>Total:</span><span className="text-blue-600">{formatCurrency(totals.net, 'SAR')}</span></div>
               </div>
             </CardContent>
           </Card>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { createPageUrl } from "@/utils";
+import { createPageUrl, formatCurrency, generateVoucherCode } from "@/utils";
 import PageHeader from '@/components/common/PageHeader';
 import FormField from '@/components/forms/FormField';
 import VoucherItemsTable from '@/components/vouchers/VoucherItemsTable';
@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { format } from 'date-fns';
-import { Save, Printer, ArrowLeft } from 'lucide-react';
+import { Save, Printer, ArrowLeft, Plus, X } from 'lucide-react';
 
 export default function SalesInvoice() {
   const queryClient = useQueryClient();
@@ -26,7 +26,28 @@ export default function SalesInvoice() {
     reference_number: '',
     billing_address: '',
     narration: '',
-    status: 'Confirmed'
+    status: 'Confirmed',
+    customer_vat_number: '',
+    customer_business_name: '',
+    customer_cr_number: '',
+    customer_address_proof: '',
+    customer_type: 'General'
+  });
+
+  const [customerType, setCustomerType] = useState('General');
+  const [showNewCustomerDialog, setShowNewCustomerDialog] = useState(false);
+  const [newCustomer, setNewCustomer] = useState({
+    name: '',
+    customer_type: 'General',
+    vat_number: '',
+    business_name: '',
+    cr_number: '',
+    address_proof: '',
+    contact_person: '',
+    address: '',
+    city: '',
+    phone: '',
+    email: ''
   });
 
   const [items, setItems] = useState([{ stock_item_id: '', quantity: 1, rate: 0, discount_percent: 0, vat_rate: 15 }]);
@@ -68,10 +89,27 @@ export default function SalesInvoice() {
         reference_number: existingVoucher.reference_number || '',
         billing_address: existingVoucher.billing_address || '',
         narration: existingVoucher.narration || '',
-        status: existingVoucher.status || 'Confirmed'
+        status: existingVoucher.status || 'Confirmed',
+        customer_vat_number: existingVoucher.customer_vat_number || '',
+        customer_business_name: existingVoucher.customer_business_name || '',
+        customer_cr_number: existingVoucher.customer_cr_number || '',
+        customer_address_proof: existingVoucher.customer_address_proof || '',
+        customer_type: existingVoucher.customer_type || 'General'
       });
     }
   }, [existingVoucher]);
+
+  // Auto-generate voucher code on mount if creating new voucher
+  useEffect(() => {
+    if (!voucherId && !formData.voucher_number) {
+      generateVoucherCode(base44, 'Sales').then(code => {
+        setFormData(prev => ({
+          ...prev,
+          voucher_number: code
+        }));
+      });
+    }
+  }, [voucherId]);
 
   useEffect(() => {
     if (existingItems.length > 0) {
@@ -92,58 +130,130 @@ export default function SalesInvoice() {
   }, [existingItems]);
 
   const partyLedgers = ledgers.filter(l => {
-    return true; // Filter for sundry debtors in real implementation
+    return l.customer_type === customerType;
+  });
+
+  const createCustomerMutation = useMutation({
+    mutationFn: async (customerData) => {
+      const ledgerData = {
+        name: customerData.name,
+        group_id: 'Sundry Debtors',
+        customer_type: customerData.customer_type,
+        vat_number: customerData.vat_number || '',
+        business_name: customerData.business_name || '',
+        cr_number: customerData.cr_number || '',
+        address_proof: customerData.address_proof || '',
+        contact_person: customerData.contact_person || '',
+        address: customerData.address || '',
+        city: customerData.city || '',
+        phone: customerData.phone || '',
+        email: customerData.email || '',
+        is_active: true
+      };
+      return base44.entities.Ledger.create(ledgerData);
+    },
+    onSuccess: (newLedger) => {
+      queryClient.invalidateQueries({ queryKey: ['ledgers'] });
+      toast.success('Customer created successfully');
+      setFormData(prev => ({
+        ...prev,
+        party_ledger_id: newLedger.id,
+        party_name: newLedger.name,
+        billing_address: newLedger.address || '',
+        customer_type: newLedger.customer_type || 'General',
+        customer_vat_number: newLedger.vat_number || '',
+        customer_business_name: newLedger.business_name || '',
+        customer_cr_number: newLedger.cr_number || '',
+        customer_address_proof: newLedger.address_proof || ''
+      }));
+      setShowNewCustomerDialog(false);
+      setNewCustomer({
+        name: '',
+        customer_type: 'General',
+        vat_number: '',
+        business_name: '',
+        cr_number: '',
+        address_proof: '',
+        contact_person: '',
+        address: '',
+        city: '',
+        phone: '',
+        email: ''
+      });
+    },
+    onError: (error) => {
+      toast.error(error.message || 'Failed to create customer');
+    }
   });
 
   const saveMutation = useMutation({
     mutationFn: async (data) => {
-      const grossAmount = items.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
-      const vatAmount = items.reduce((sum, item) => sum + (parseFloat(item.vat_amount) || 0), 0);
-      const netAmount = items.reduce((sum, item) => sum + (parseFloat(item.total_amount) || 0), 0);
+      try {
+        const grossAmount = items.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
+        const vatAmount = items.reduce((sum, item) => sum + (parseFloat(item.vat_amount) || 0), 0);
+        const netAmount = items.reduce((sum, item) => sum + (parseFloat(item.total_amount) || 0), 0);
 
-      const voucherData = {
-        ...formData,
-        gross_amount: grossAmount,
-        vat_amount: vatAmount,
-        net_amount: netAmount
-      };
+        const voucherData = {
+          ...formData,
+          gross_amount: grossAmount,
+          vat_amount: vatAmount,
+          net_amount: netAmount
+        };
 
-      let voucher;
-      if (voucherId) {
-        voucher = await base44.entities.Voucher.update(voucherId, voucherData);
-        // Delete old items
-        for (const item of existingItems) {
-          await base44.entities.VoucherItem.delete(item.id);
+        let voucher;
+        if (voucherId) {
+          voucher = await base44.entities.Voucher.update(voucherId, voucherData);
+          // Delete old items
+          for (const item of existingItems) {
+            try {
+              await base44.entities.VoucherItem.delete(item.id);
+            } catch (error) {
+              console.warn('Failed to delete item:', error);
+            }
+          }
+        } else {
+          voucher = await base44.entities.Voucher.create(voucherData);
         }
-      } else {
-        voucher = await base44.entities.Voucher.create(voucherData);
-      }
 
-      // Create new items
-      for (const item of items) {
-        if (item.stock_item_id) {
-          await base44.entities.VoucherItem.create({
-            voucher_id: voucher.id,
-            stock_item_id: item.stock_item_id,
-            stock_item_name: item.stock_item_name,
-            quantity: parseFloat(item.quantity) || 0,
-            rate: parseFloat(item.rate) || 0,
-            discount_percent: parseFloat(item.discount_percent) || 0,
-            discount_amount: parseFloat(item.discount_amount) || 0,
-            vat_rate: parseFloat(item.vat_rate) || 15,
-            vat_amount: parseFloat(item.vat_amount) || 0,
-            amount: parseFloat(item.amount) || 0,
-            total_amount: parseFloat(item.total_amount) || 0
-          });
+        // Create new items
+        for (const item of items) {
+          if (item.stock_item_id) {
+            try {
+              await base44.entities.VoucherItem.create({
+                voucher_id: voucher.id,
+                stock_item_id: item.stock_item_id,
+                stock_item_name: item.stock_item_name,
+                quantity: parseFloat(item.quantity) || 0,
+                rate: parseFloat(item.rate) || 0,
+                discount_percent: parseFloat(item.discount_percent) || 0,
+                discount_amount: parseFloat(item.discount_amount) || 0,
+                vat_rate: parseFloat(item.vat_rate) || 15,
+                vat_amount: parseFloat(item.vat_amount) || 0,
+                amount: parseFloat(item.amount) || 0,
+                total_amount: parseFloat(item.total_amount) || 0
+              });
+            } catch (error) {
+              console.warn('Failed to create item:', error);
+            }
+          }
         }
-      }
 
-      return voucher;
+        return voucher;
+      } catch (error) {
+        throw new Error(error.message || 'Failed to save invoice');
+      }
     },
     onSuccess: (voucher) => {
       queryClient.invalidateQueries({ queryKey: ['salesVouchers'] });
+      queryClient.invalidateQueries({ queryKey: ['vouchers'] });
       toast.success('Invoice saved successfully');
-      window.location.href = createPageUrl('Sales');
+      setTimeout(() => {
+        window.location.href = createPageUrl('Sales');
+      }, 1000);
+    },
+    onError: (error) => {
+      console.error('Save error:', error);
+      toast.error(error.message || 'Failed to save invoice. Please try again.');
     }
   });
 
@@ -156,6 +266,20 @@ export default function SalesInvoice() {
         if (ledger) {
           updated.party_name = ledger.name;
           updated.billing_address = ledger.address || '';
+          updated.customer_type = ledger.customer_type || 'General';
+          // Populate VAT customer fields if it's a VAT Customer
+          if (ledger.customer_type === 'VAT Customer') {
+            updated.customer_vat_number = ledger.vat_number || '';
+            updated.customer_business_name = ledger.business_name || '';
+            updated.customer_cr_number = ledger.cr_number || '';
+            updated.customer_address_proof = ledger.address_proof || '';
+          } else {
+            // Clear VAT fields for non-VAT customers
+            updated.customer_vat_number = '';
+            updated.customer_business_name = '';
+            updated.customer_cr_number = '';
+            updated.customer_address_proof = '';
+          }
         }
       }
       return updated;
@@ -188,17 +312,18 @@ export default function SalesInvoice() {
   if (isLoading && voucherId) return <LoadingSpinner text="Loading invoice..." />;
 
   return (
-    <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen flex flex-col bg-slate-50">
       <PageHeader
         title={voucherId ? 'Edit Sales Invoice' : 'New Sales Invoice'}
         subtitle="Create or edit sales invoice"
         backUrl="Sales"
       />
 
-      <form onSubmit={handleSubmit}>
-        <div className="space-y-6">
-          {/* Header Info */}
-          <Card>
+      <form onSubmit={handleSubmit} className="flex-1 flex flex-col">
+        <div className="flex-1 overflow-y-auto px-4 md:px-8 py-6">
+          <div className="max-w-6xl mx-auto space-y-6">
+            {/* Header Info */}
+            <Card>
             <CardHeader>
               <CardTitle>Invoice Details</CardTitle>
             </CardHeader>
@@ -247,15 +372,49 @@ export default function SalesInvoice() {
               <CardTitle>Customer Information</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <FormField
-                  label="Customer"
-                  name="party_ledger_id"
+                  label="Customer Type"
+                  name="customerType"
                   type="select"
-                  value={formData.party_ledger_id}
-                  onChange={handleChange}
-                  options={partyLedgers.map(l => ({ value: l.id, label: l.name }))}
+                  value={customerType}
+                  onChange={(e) => {
+                    setCustomerType(e.target.value);
+                    setNewCustomer(prev => ({ ...prev, customer_type: e.target.value }));
+                    setFormData(prev => ({ ...prev, party_ledger_id: '', party_name: '' }));
+                  }}
+                  options={[
+                    { value: 'VAT Customer', label: 'VAT Customer' },
+                    { value: 'General', label: 'General (Non-VAT Customer)' }
+                  ]}
                 />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <FormField
+                    label="Select Customer"
+                    name="party_ledger_id"
+                    type="select"
+                    value={formData.party_ledger_id}
+                    onChange={handleChange}
+                    options={partyLedgers.map(l => ({ value: l.id, label: l.name }))}
+                  />
+                </div>
+                <div className="flex items-end">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => setShowNewCustomerDialog(true)}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    New Customer
+                  </Button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                 <FormField
                   label="Customer Name"
                   name="party_name"
@@ -263,6 +422,7 @@ export default function SalesInvoice() {
                   onChange={handleChange}
                 />
               </div>
+
               <div className="mt-4">
                 <FormField
                   label="Billing Address"
@@ -273,6 +433,42 @@ export default function SalesInvoice() {
                   rows={2}
                 />
               </div>
+
+              {customerType === 'VAT Customer' && (
+                <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <h3 className="font-semibold text-blue-900 mb-4">VAT Customer Details</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      label="VAT Number"
+                      name="customer_vat_number"
+                      value={formData.customer_vat_number}
+                      onChange={handleChange}
+                      placeholder="VAT registration number"
+                    />
+                    <FormField
+                      label="Business Name"
+                      name="customer_business_name"
+                      value={formData.customer_business_name}
+                      onChange={handleChange}
+                      placeholder="Business/Trading name"
+                    />
+                    <FormField
+                      label="CR Number (Commercial Registration)"
+                      name="customer_cr_number"
+                      value={formData.customer_cr_number}
+                      onChange={handleChange}
+                      placeholder="CR number"
+                    />
+                    <FormField
+                      label="Address Proof"
+                      name="customer_address_proof"
+                      value={formData.customer_address_proof}
+                      onChange={handleChange}
+                      placeholder="Address proof document reference"
+                    />
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -298,15 +494,15 @@ export default function SalesInvoice() {
               <div className="flex flex-col items-end space-y-2">
                 <div className="flex justify-between w-64">
                   <span className="text-slate-600">Subtotal:</span>
-                  <span className="font-medium">{totals.gross.toFixed(2)} SAR</span>
+                  <span className="font-medium">{formatCurrency(totals.gross, 'SAR')}</span>
                 </div>
                 <div className="flex justify-between w-64">
                   <span className="text-slate-600">VAT (15%):</span>
-                  <span className="font-medium">{totals.vat.toFixed(2)} SAR</span>
+                  <span className="font-medium">{formatCurrency(totals.vat, 'SAR')}</span>
                 </div>
                 <div className="flex justify-between w-64 pt-2 border-t">
                   <span className="text-lg font-semibold">Total:</span>
-                  <span className="text-lg font-bold text-emerald-600">{totals.net.toFixed(2)} SAR</span>
+                  <span className="text-lg font-bold text-emerald-600">{formatCurrency(totals.net, 'SAR')}</span>
                 </div>
               </div>
             </CardContent>
@@ -326,8 +522,25 @@ export default function SalesInvoice() {
             </CardContent>
           </Card>
 
-          {/* Actions */}
-          <div className="flex justify-end gap-3">
+          {/* Narration */}
+          <Card>
+            <CardContent className="pt-6">
+              <FormField
+                label="Narration / Notes"
+                name="narration"
+                type="textarea"
+                value={formData.narration}
+                onChange={handleChange}
+                rows={2}
+              />
+            </CardContent>
+          </Card>
+          </div>
+        </div>
+
+        {/* Sticky Action Buttons at Bottom */}
+        <div className="sticky bottom-0 bg-white border-t border-slate-200 shadow-lg px-4 md:px-8 py-4">
+          <div className="max-w-6xl mx-auto flex justify-end gap-3">
             <Button type="button" variant="outline" onClick={() => window.location.href = createPageUrl('Sales')}>
               Cancel
             </Button>
@@ -338,6 +551,133 @@ export default function SalesInvoice() {
           </div>
         </div>
       </form>
+
+      {/* New Customer Dialog */}
+      {showNewCustomerDialog && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <Card className="w-full max-w-md mx-4">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+              <CardTitle>Create New Customer</CardTitle>
+              <button
+                onClick={() => setShowNewCustomerDialog(false)}
+                className="text-slate-500 hover:text-slate-700"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <FormField
+                  label="Customer Type"
+                  name="customer_type"
+                  type="select"
+                  value={newCustomer.customer_type}
+                  onChange={(e) => setNewCustomer(prev => ({ ...prev, customer_type: e.target.value }))}
+                  options={[
+                    { value: 'VAT Customer', label: 'VAT Customer' },
+                    { value: 'General', label: 'General (Non-VAT Customer)' }
+                  ]}
+                />
+                <FormField
+                  label="Customer Name *"
+                  name="name"
+                  value={newCustomer.name}
+                  onChange={(e) => setNewCustomer(prev => ({ ...prev, name: e.target.value }))}
+                  placeholder="Enter customer name"
+                />
+                {newCustomer.customer_type === 'VAT Customer' && (
+                  <>
+                    <FormField
+                      label="VAT Number"
+                      name="vat_number"
+                      value={newCustomer.vat_number}
+                      onChange={(e) => setNewCustomer(prev => ({ ...prev, vat_number: e.target.value }))}
+                      placeholder="VAT registration number"
+                    />
+                    <FormField
+                      label="Business Name"
+                      name="business_name"
+                      value={newCustomer.business_name}
+                      onChange={(e) => setNewCustomer(prev => ({ ...prev, business_name: e.target.value }))}
+                      placeholder="Business/Trading name"
+                    />
+                    <FormField
+                      label="CR Number (Commercial Registration)"
+                      name="cr_number"
+                      value={newCustomer.cr_number}
+                      onChange={(e) => setNewCustomer(prev => ({ ...prev, cr_number: e.target.value }))}
+                      placeholder="CR number"
+                    />
+                    <FormField
+                      label="Address Proof"
+                      name="address_proof"
+                      value={newCustomer.address_proof}
+                      onChange={(e) => setNewCustomer(prev => ({ ...prev, address_proof: e.target.value }))}
+                      placeholder="Address proof document reference"
+                    />
+                  </>
+                )}
+                <FormField
+                  label="Contact Person"
+                  name="contact_person"
+                  value={newCustomer.contact_person}
+                  onChange={(e) => setNewCustomer(prev => ({ ...prev, contact_person: e.target.value }))}
+                  placeholder="Contact person name"
+                />
+                <FormField
+                  label="Address"
+                  name="address"
+                  type="textarea"
+                  value={newCustomer.address}
+                  onChange={(e) => setNewCustomer(prev => ({ ...prev, address: e.target.value }))}
+                  placeholder="Customer address"
+                  rows={2}
+                />
+                <FormField
+                  label="City"
+                  name="city"
+                  value={newCustomer.city}
+                  onChange={(e) => setNewCustomer(prev => ({ ...prev, city: e.target.value }))}
+                  placeholder="City"
+                />
+                <FormField
+                  label="Phone"
+                  name="phone"
+                  value={newCustomer.phone}
+                  onChange={(e) => setNewCustomer(prev => ({ ...prev, phone: e.target.value }))}
+                  placeholder="Phone number"
+                />
+                <FormField
+                  label="Email"
+                  name="email"
+                  value={newCustomer.email}
+                  onChange={(e) => setNewCustomer(prev => ({ ...prev, email: e.target.value }))}
+                  placeholder="Email address"
+                />
+
+                <div className="flex gap-3 pt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => setShowNewCustomerDialog(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="button"
+                    className="flex-1 bg-emerald-600 hover:bg-emerald-700"
+                    onClick={() => createCustomerMutation.mutate(newCustomer)}
+                    disabled={!newCustomer.name || createCustomerMutation.isPending}
+                  >
+                    {createCustomerMutation.isPending ? 'Creating...' : 'Create Customer'}
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }

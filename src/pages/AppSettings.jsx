@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useCurrency } from '@/context/CurrencyContext';
 import PageHeader from '@/components/common/PageHeader';
 import FormField from '@/components/forms/FormField';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
@@ -13,6 +14,7 @@ import { Settings, Save, Database, FileText, Calculator, Globe } from 'lucide-re
 
 export default function AppSettings() {
   const queryClient = useQueryClient();
+  const { baseCurrency, baseCurrencySymbol, setSelectedCurrency, CURRENCY_SYMBOLS } = useCurrency();
   const [settings, setSettings] = useState({
     vat_rate: '15',
     invoice_prefix: 'INV',
@@ -20,7 +22,7 @@ export default function AppSettings() {
     receipt_prefix: 'REC',
     payment_prefix: 'PAY',
     date_format: 'dd/MM/yyyy',
-    currency_symbol: 'SAR',
+    currency_symbol: baseCurrencySymbol,
     decimal_places: '2',
     fiscal_year_start: '01',
     enable_inventory: true,
@@ -66,12 +68,28 @@ export default function AppSettings() {
                   { value: '0', label: '0% (Zero Rated)' }
                 ]}
               />
-              <FormField
-                label="Currency Symbol"
-                name="currency_symbol"
-                value={settings.currency_symbol}
-                onChange={(e) => handleChange('currency_symbol', e.target.value)}
-              />
+              <div>
+                <Label>Base Currency</Label>
+                <div className="flex gap-2 mt-2">
+                  <div className="flex-1 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md">
+                    <p className="text-sm text-slate-600 dark:text-slate-400">Current</p>
+                    <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{baseCurrency} {baseCurrencySymbol}</p>
+                  </div>
+                </div>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {Object.entries(CURRENCY_SYMBOLS).map(([code, symbol]) => (
+                    <Button
+                      key={code}
+                      variant={baseCurrency === code ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setSelectedCurrency(code, symbol)}
+                      className={baseCurrency === code ? "bg-blue-600 hover:bg-blue-700" : ""}
+                    >
+                      {code} {symbol}
+                    </Button>
+                  ))}
+                </div>
+              </div>
               <FormField
                 label="Decimal Places"
                 name="decimal_places"

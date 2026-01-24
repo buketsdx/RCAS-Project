@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
+import { formatCurrency } from '@/utils';
 import PageHeader from '@/components/common/PageHeader';
 import DataTable from '@/components/common/DataTable';
 import FormField from '@/components/forms/FormField';
@@ -77,19 +78,19 @@ export default function BankReconciliation() {
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div className="p-4 bg-slate-50 rounded-lg">
                   <p className="text-sm text-slate-500">Opening Balance</p>
-                  <p className="text-xl font-bold">{openingBalance.toFixed(2)} SAR</p>
+                  <p className="text-xl font-bold">{formatCurrency(openingBalance, 'SAR')}</p>
                 </div>
                 <div className="p-4 bg-emerald-50 rounded-lg">
                   <p className="text-sm text-slate-500">Total Deposits</p>
-                  <p className="text-xl font-bold text-emerald-600">{totalDebit.toFixed(2)} SAR</p>
+                  <p className="text-xl font-bold text-emerald-600">{formatCurrency(totalDebit, 'SAR')}</p>
                 </div>
                 <div className="p-4 bg-red-50 rounded-lg">
                   <p className="text-sm text-slate-500">Total Withdrawals</p>
-                  <p className="text-xl font-bold text-red-600">{totalCredit.toFixed(2)} SAR</p>
+                  <p className="text-xl font-bold text-red-600">{formatCurrency(totalCredit, 'SAR')}</p>
                 </div>
                 <div className="p-4 bg-blue-50 rounded-lg">
                   <p className="text-sm text-slate-500">Book Balance</p>
-                  <p className="text-xl font-bold text-blue-600">{bookBalance.toFixed(2)} SAR</p>
+                  <p className="text-xl font-bold text-blue-600">{formatCurrency(bookBalance, 'SAR')}</p>
                 </div>
               </div>
             </CardContent>

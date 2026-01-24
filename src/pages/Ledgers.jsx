@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { initializeSystemLedgers } from '@/utils';
 import PageHeader from '@/components/common/PageHeader';
 import DataTable from '@/components/common/DataTable';
 import FormField from '@/components/forms/FormField';
@@ -46,6 +47,13 @@ export default function Ledgers() {
     queryFn: () => base44.entities.AccountGroup.list()
   });
 
+  // Initialize system ledgers on component mount
+  useEffect(() => {
+    if (groups.length > 0) {
+      initializeSystemLedgers(base44, groups);
+    }
+  }, [groups]);
+
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.Ledger.create(data),
     onSuccess: () => {
@@ -65,10 +73,20 @@ export default function Ledgers() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.Ledger.delete(id),
+    mutationFn: (id) => {
+      // Prevent deletion of system ledgers
+      const ledger = ledgers.find(l => l.id === id);
+      if (ledger?.is_system) {
+        throw new Error('Cannot delete system/inbuilt ledgers');
+      }
+      return base44.entities.Ledger.delete(id);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['ledgers'] });
       toast.success('Ledger deleted successfully');
+    },
+    onError: (error) => {
+      toast.error(error.message || 'Cannot delete this ledger');
     }
   });
 
@@ -183,18 +201,23 @@ export default function Ledgers() {
           <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); openDialog(row); }}>
             <Pencil className="h-4 w-4" />
           </Button>
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={(e) => { 
-              e.stopPropagation(); 
-              if (confirm('Are you sure you want to delete this ledger?')) {
-                deleteMutation.mutate(row.id);
-              }
-            }}
-          >
-            <Trash2 className="h-4 w-4 text-red-500" />
-          </Button>
+          {!row.is_system && (
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={(e) => { 
+                e.stopPropagation(); 
+                if (confirm('Are you sure you want to delete this ledger?')) {
+                  deleteMutation.mutate(row.id);
+                }
+              }}
+            >
+              <Trash2 className="h-4 w-4 text-red-500" />
+            </Button>
+          )}
+          {row.is_system && (
+            <Badge variant="outline" className="text-xs">System</Badge>
+          )}
         </div>
       )
     }

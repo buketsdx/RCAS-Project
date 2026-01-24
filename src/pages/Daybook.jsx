@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
+import { formatCurrency } from '@/utils';
 import PageHeader from '@/components/common/PageHeader';
 import DataTable from '@/components/common/DataTable';
 import FormField from '@/components/forms/FormField';
@@ -88,15 +89,15 @@ export default function DayBook() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
             <div className="p-4 bg-emerald-50 rounded-lg">
               <p className="text-sm text-slate-600">Total Inflow (Sales + Receipts)</p>
-              <p className="text-2xl font-bold text-emerald-600">{totalDebit.toFixed(2)} SAR</p>
+              <p className="text-2xl font-bold text-emerald-600">{formatCurrency(totalDebit, 'SAR')}</p>
             </div>
             <div className="p-4 bg-red-50 rounded-lg">
               <p className="text-sm text-slate-600">Total Outflow (Purchase + Payments)</p>
-              <p className="text-2xl font-bold text-red-600">{totalCredit.toFixed(2)} SAR</p>
+              <p className="text-2xl font-bold text-red-600">{formatCurrency(totalCredit, 'SAR')}</p>
             </div>
             <div className="p-4 bg-blue-50 rounded-lg">
               <p className="text-sm text-slate-600">Net Cash Flow</p>
-              <p className="text-2xl font-bold text-blue-600">{(totalDebit - totalCredit).toFixed(2)} SAR</p>
+              <p className="text-2xl font-bold text-blue-600">{formatCurrency(totalDebit - totalCredit, 'SAR')}</p>
             </div>
           </div>
         </CardContent>

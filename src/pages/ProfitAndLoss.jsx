@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
+import { formatCurrency } from '@/utils';
 import PageHeader from '@/components/common/PageHeader';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import FormField from '@/components/forms/FormField';
@@ -96,7 +97,7 @@ export default function ProfitAndLoss() {
               )}
               <div className="flex justify-between items-center py-3 bg-emerald-50 px-3 rounded-lg font-bold">
                 <span>Total Income</span>
-                <span className="text-emerald-700">{totalIncome.toFixed(2)} SAR</span>
+                <span className="text-emerald-700">{formatCurrency(totalIncome, 'SAR')}</span>
               </div>
             </div>
           </CardContent>
@@ -123,7 +124,7 @@ export default function ProfitAndLoss() {
               )}
               <div className="flex justify-between items-center py-3 bg-red-50 px-3 rounded-lg font-bold">
                 <span>Total Expenses</span>
-                <span className="text-red-700">{totalExpenses.toFixed(2)} SAR</span>
+                <span className="text-red-700">{formatCurrency(totalExpenses, 'SAR')}</span>
               </div>
             </div>
           </CardContent>
@@ -136,7 +137,7 @@ export default function ProfitAndLoss() {
           <div className="text-center">
             <p className="text-lg text-slate-600 mb-2">{netProfit >= 0 ? 'Net Profit' : 'Net Loss'}</p>
             <p className={`text-4xl font-bold ${netProfit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-              {Math.abs(netProfit).toFixed(2)} SAR
+              {formatCurrency(Math.abs(netProfit), 'SAR')}
             </p>
           </div>
         </CardContent>

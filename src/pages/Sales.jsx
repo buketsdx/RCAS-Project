@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { createPageUrl } from "@/utils";
+import { createPageUrl, formatCurrency } from "@/utils";
 import PageHeader from '@/components/common/PageHeader';
 import DataTable from '@/components/common/DataTable';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
@@ -51,7 +51,7 @@ export default function Sales() {
     {
       header: 'Amount',
       accessor: 'net_amount',
-      render: (row) => <span className="font-semibold">{parseFloat(row.net_amount || 0).toFixed(2)} SAR</span>
+      render: (row) => <span className="font-semibold">{formatCurrency(parseFloat(row.net_amount || 0), 'SAR')}</span>
     },
     {
       header: 'Status',

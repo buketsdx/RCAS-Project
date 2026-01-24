@@ -1,6 +1,7 @@
 import React from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
+import { formatCurrency } from '@/utils';
 import PageHeader from '@/components/common/PageHeader';
 import DataTable from '@/components/common/DataTable';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
@@ -64,13 +65,13 @@ export default function StockSummary() {
     {
       header: 'Rate',
       accessor: 'cost_price',
-      render: (row) => `${parseFloat(row.cost_price || row.opening_rate || 0).toFixed(2)} SAR`
+      render: (row) => formatCurrency(parseFloat(row.cost_price || row.opening_rate || 0), 'SAR')
     },
     {
       header: 'Value',
       render: (row) => {
         const value = parseFloat(row.current_qty || 0) * parseFloat(row.cost_price || row.opening_rate || 0);
-        return <span className="font-semibold">{value.toFixed(2)} SAR</span>;
+        return <span className="font-semibold">{formatCurrency(value, 'SAR')}</span>;
       }
     }
   ];
@@ -83,7 +84,7 @@ export default function StockSummary() {
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <StatCard title="Total Items" value={items.length} icon={Package} />
-        <StatCard title="Total Value" value={`${totalValue.toFixed(2)} SAR`} icon={TrendingUp} />
+        <StatCard title="Total Value" value={formatCurrency(totalValue, 'SAR')} icon={TrendingUp} />
         <StatCard title="Low Stock" value={lowStockItems.length} icon={AlertTriangle} className={lowStockItems.length > 0 ? 'border-yellow-200' : ''} />
         <StatCard title="Out of Stock" value={outOfStockItems.length} icon={AlertTriangle} className={outOfStockItems.length > 0 ? 'border-red-200' : ''} />
       </div>

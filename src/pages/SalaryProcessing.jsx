@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { formatCurrency, generateVoucherCode } from '@/utils';
 import PageHeader from '@/components/common/PageHeader';
 import DataTable from '@/components/common/DataTable';
 import FormField from '@/components/forms/FormField';
@@ -44,7 +45,11 @@ export default function SalaryProcessing() {
         const totalDeductions = gosiEmployee;
         const netSalary = gross - totalDeductions;
 
+        // Auto-generate payroll code
+        const payrollCode = await generateVoucherCode(base44, 'Payroll');
+
         const payrollData = {
+          payroll_code: payrollCode,
           employee_id: emp.id,
           employee_name: emp.name,
           month: selectedMonth,
@@ -122,19 +127,19 @@ export default function SalaryProcessing() {
         <Card className="bg-blue-50 border-blue-200">
           <CardContent className="pt-6">
             <p className="text-sm text-blue-700">Total Gross</p>
-            <p className="text-2xl font-bold text-blue-700">{totalGross.toFixed(2)} SAR</p>
+            <p className="text-2xl font-bold text-blue-700">{formatCurrency(totalGross, 'SAR')}</p>
           </CardContent>
         </Card>
         <Card className="bg-orange-50 border-orange-200">
           <CardContent className="pt-6">
             <p className="text-sm text-orange-700">Total GOSI</p>
-            <p className="text-2xl font-bold text-orange-700">{totalGOSI.toFixed(2)} SAR</p>
+            <p className="text-2xl font-bold text-orange-700">{formatCurrency(totalGOSI, 'SAR')}</p>
           </CardContent>
         </Card>
         <Card className="bg-emerald-50 border-emerald-200">
           <CardContent className="pt-6">
             <p className="text-sm text-emerald-700">Total Net</p>
-            <p className="text-2xl font-bold text-emerald-700">{totalNet.toFixed(2)} SAR</p>
+            <p className="text-2xl font-bold text-emerald-700">{formatCurrency(totalNet, 'SAR')}</p>
           </CardContent>
         </Card>
       </div>

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { formatCurrency } from '@/utils';
 import PageHeader from '@/components/common/PageHeader';
 import DataTable from '@/components/common/DataTable';
 import FormField from '@/components/forms/FormField';
@@ -111,7 +112,7 @@ export default function FlowerWasteTracker() {
     { header: 'Item', accessor: 'stock_item_name' },
     { header: 'Quantity', render: (row) => `${parseFloat(row.quantity || 0).toFixed(2)} ${row.unit || ''}` },
     { header: 'Reason', accessor: 'waste_reason', render: (row) => <Badge style={{ backgroundColor: reasonColors[row.waste_reason] + '20', color: reasonColors[row.waste_reason] }}>{row.waste_reason}</Badge> },
-    { header: 'Value Loss', accessor: 'cost_value', render: (row) => <span className="text-red-600 font-medium">{parseFloat(row.cost_value || 0).toFixed(2)} SAR</span> },
+    { header: 'Value Loss', accessor: 'cost_value', render: (row) => <span className="text-red-600 font-medium">{formatCurrency(parseFloat(row.cost_value || 0), 'SAR')}</span> },
     { header: 'Disposal', accessor: 'disposal_method' },
     { header: 'Actions', render: (row) => (
       <div className="flex gap-2">
@@ -139,7 +140,7 @@ export default function FlowerWasteTracker() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <StatCard title="Total Records" value={filteredRecords.length} icon={Flower2} />
         <StatCard title="Total Quantity Lost" value={`${totalWasteQty.toFixed(2)}`} icon={AlertTriangle} />
-        <StatCard title="Total Value Loss" value={`${totalWasteValue.toFixed(2)} SAR`} icon={TrendingDown} className="border-red-200" />
+        <StatCard title="Total Value Loss" value={formatCurrency(totalWasteValue, 'SAR')} icon={TrendingDown} className="border-red-200" />
         <Card>
           <CardContent className="pt-6">
             <p className="text-sm text-slate-500">Top Reason</p>

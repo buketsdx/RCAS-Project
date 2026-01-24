@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { formatCurrency } from '@/utils';
 import PageHeader from '@/components/common/PageHeader';
 import DataTable from '@/components/common/DataTable';
 import FormField from '@/components/forms/FormField';
@@ -206,7 +207,7 @@ export default function StockItems() {
     {
       header: 'Selling Price',
       accessor: 'selling_price',
-      render: (row) => row.selling_price ? `${parseFloat(row.selling_price).toFixed(2)} SAR` : '-'
+      render: (row) => row.selling_price ? formatCurrency(parseFloat(row.selling_price), 'SAR') : '-'
     },
     {
       header: 'VAT',

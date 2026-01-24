@@ -118,12 +118,12 @@ export default function VoucherTypes() {
         <DataTable columns={columns} data={types} />
       )}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-lg max-h-[90vh] flex flex-col">
           <DialogHeader><DialogTitle>{editingType ? 'Edit' : 'Create'} Voucher Type</DialogTitle></DialogHeader>
-          <form onSubmit={handleSubmit}>
-            <div className="space-y-4 py-4">
-              <FormField label="Name" name="name" value={formData.name} onChange={handleChange} required />
-              <FormField label="Parent Type" name="parent_type" type="select" value={formData.parent_type} onChange={handleChange} required options={[
+          <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto">
+            <div className="space-y-5 py-4 px-0.5">
+              <FormField label="Name *" name="name" value={formData.name} onChange={handleChange} required />
+              <FormField label="Parent Type *" name="parent_type" type="select" value={formData.parent_type} onChange={handleChange} required options={[
                 { value: 'Sales', label: 'Sales' },
                 { value: 'Purchase', label: 'Purchase' },
                 { value: 'Receipt', label: 'Receipt' },
@@ -141,11 +141,11 @@ export default function VoucherTypes() {
                 <FormField label="Suffix" name="suffix" value={formData.suffix} onChange={handleChange} />
               </div>
             </div>
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={closeDialog}>Cancel</Button>
-              <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700">{editingType ? 'Update' : 'Create'}</Button>
-            </DialogFooter>
           </form>
+          <DialogFooter>
+              <Button type="button" variant="outline" onClick={closeDialog}>Cancel</Button>
+              <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700" onClick={handleSubmit}>{editingType ? 'Update' : 'Create'}</Button>
+            </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

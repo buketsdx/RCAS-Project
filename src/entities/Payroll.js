@@ -5,6 +5,10 @@ export const Payrooll = {
     "company_id": {
       "type": "string"
     },
+    "payroll_code": {
+      "type": "string",
+      "description": "Unique payroll code (auto-generated)"
+    },
     "employee_id": {
       "type": "string"
     },
@@ -24,16 +28,20 @@ export const Payrooll = {
       "type": "number"
     },
     "basic_salary": {
-      "type": "number"
+      "type": "number",
+      "description": "Salary snapshot at time of payroll processing"
     },
     "housing_allowance": {
-      "type": "number"
+      "type": "number",
+      "description": "Allowance snapshot at time of payroll processing"
     },
     "transport_allowance": {
-      "type": "number"
+      "type": "number",
+      "description": "Allowance snapshot at time of payroll processing"
     },
     "other_allowances": {
-      "type": "number"
+      "type": "number",
+      "description": "Allowance snapshot at time of payroll processing"
     },
     "overtime_hours": {
       "type": "number"

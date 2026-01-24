@@ -1,6 +1,7 @@
 import React from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
+import { formatCurrency } from '@/utils';
 import PageHeader from '@/components/common/PageHeader';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -54,7 +55,7 @@ export default function GodownSummary() {
               </div>
               <div>
                 <p className="text-sm text-slate-500">Total Value</p>
-                <p className="text-2xl font-bold">{totalValue.toFixed(2)} SAR</p>
+                <p className="text-2xl font-bold">{formatCurrency(totalValue, 'SAR')}</p>
               </div>
             </div>
           </CardContent>
@@ -99,7 +100,7 @@ export default function GodownSummary() {
                     </div>
                     <div className="flex justify-between font-semibold text-emerald-600">
                       <span>Value:</span>
-                      <span>{totalValue.toFixed(2)} SAR</span>
+                      <span>{formatCurrency(totalValue, 'SAR')}</span>
                     </div>
                   </div>
                 </div>

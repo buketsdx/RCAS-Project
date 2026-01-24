@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { formatCurrency } from '@/utils';
 import PageHeader from '@/components/common/PageHeader';
 import DataTable from '@/components/common/DataTable';
 import FormField from '@/components/forms/FormField';
@@ -128,8 +129,8 @@ export default function ZATCAIntegration() {
     { header: 'Invoice No', accessor: 'voucher_number', render: (row) => <span className="font-mono">{row.voucher_number || `#${row.id?.slice(-6)}`}</span> },
     { header: 'Date', accessor: 'date', render: (row) => row.date ? format(new Date(row.date), 'dd MMM yyyy') : '-' },
     { header: 'Customer', accessor: 'party_name' },
-    { header: 'Amount', accessor: 'net_amount', render: (row) => `${parseFloat(row.net_amount || 0).toFixed(2)} SAR` },
-    { header: 'VAT', accessor: 'vat_amount', render: (row) => `${parseFloat(row.vat_amount || 0).toFixed(2)} SAR` },
+    { header: 'Amount', accessor: 'net_amount', render: (row) => formatCurrency(parseFloat(row.net_amount || 0), 'SAR') },
+    { header: 'VAT', accessor: 'vat_amount', render: (row) => formatCurrency(parseFloat(row.vat_amount || 0), 'SAR') },
     { 
       header: 'ZATCA Status', 
       render: (row) => {
