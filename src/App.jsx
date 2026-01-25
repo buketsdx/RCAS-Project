@@ -72,6 +72,7 @@ import PayrollReprts from './pages/PayrollReprts';
 
 // Pages - Special Trackers
 import CustodyWallets from './pages/CustodyWallets';
+import CustodyWalletEntry from './pages/CustodyWalletEntry';
 import FlowerWasteTracker from './pages/FlowerWasteTracker';
 import ZATCAIntegration from './pages/ZATCAIntegration';
 import AdvancedReports from './pages/AdvancedReports';
@@ -172,6 +173,7 @@ function App() {
 
             {/* --- SPECIAL TRACKERS --- */}
             <Route path="CustodyWallets" element={<CustodyWallets />} />
+            <Route path="CustodyWalletEntry" element={<CustodyWalletEntry />} /> {/*Custody Wallet Entry Route Added*/}
             <Route path="FlowerWasteTracker" element={<FlowerWasteTracker />} />
             <Route path="ZATCAIntegration" element={<ZATCAIntegration />} />
             <Route path="AdvancedReports" element={<AdvancedReports />} />

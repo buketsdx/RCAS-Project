@@ -7,7 +7,7 @@ import { useCompany } from '@/context/CompanyContext';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { KeyboardShortcutsDialog } from '@/components/KeyboardShortcutsDialog';
 import AppLogo from '@/components/ui/AppLogo';
-import Footer from '@/components/Footer';
+import Footer from '@/components/ProfessionalFooter';
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -137,7 +137,14 @@ const menuItems = [
       { title: 'Payroll Reports', icon: FileSpreadsheet, href: 'PayrollReports' },
     ]
   },
-  { title: 'Custody Wallets', icon: Wallet, href: 'CustodyWallets' },
+  {
+    title: 'Custody Wallets',
+    icon: Wallet,
+    children: [
+      { title: 'Dashboard', icon: Wallet, href: 'CustodyWallets' },
+      { title: 'New Transaction', icon: ArrowRightLeft, href: 'CustodyWalletEntry' },
+    ]
+  },
   { title: 'Flower Waste', icon: Package, href: 'FlowerWasteTracker' },
   { title: 'ZATCA e-Invoice', icon: FileCheck, href: 'ZATCAIntegration' },
   { title: 'Advanced Reports', icon: BarChart3, href: 'AdvancedReports' },

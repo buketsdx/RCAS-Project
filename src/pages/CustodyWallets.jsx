@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { formatCurrency } from '@/utils';
+import { formatCurrency } from '@/lib/utils';
 import PageHeader from '@/components/common/PageHeader';
 import DataTable from '@/components/common/DataTable';
 import FormField from '@/components/forms/FormField';
@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { format } from 'date-fns';
 import { Wallet, Plus, Pencil, Trash2, ArrowUpRight, ArrowDownLeft, RefreshCw } from 'lucide-react';
+import { getAllTypes, addStoredType, getTransactionNature } from '@/lib/custodyTypes';
 
 export default function CustodyWallets() {
   const queryClient = useQueryClient();
@@ -22,6 +23,9 @@ export default function CustodyWallets() {
   const [transactionDialogOpen, setTransactionDialogOpen] = useState(false);
   const [editingWallet, setEditingWallet] = useState(null);
   const [selectedWallet, setSelectedWallet] = useState(null);
+  const [showTypeDialog, setShowTypeDialog] = useState(false);
+  const [newTypeData, setNewTypeData] = useState({ name: '', nature: 'Withdrawal' });
+  const [availableTypes, setAvailableTypes] = useState(getAllTypes());
   const [formData, setFormData] = useState({
     name: '', holder_name: '', holder_type: 'Employee', currency: 'SAR', purpose: '', contact_phone: '', notes: ''
   });
@@ -55,10 +59,11 @@ export default function CustodyWallets() {
       const wallet = wallets.find(w => w.id === selectedWallet.id);
       let newBalance = parseFloat(wallet.balance) || 0;
       const amount = parseFloat(data.amount) || 0;
+      const nature = getTransactionNature(data.type);
 
-      if (data.type === 'Deposit') newBalance += amount;
-      else if (data.type === 'Withdrawal') newBalance -= amount;
-      else if (data.type === 'Transfer') {
+      if (nature === 'Deposit') newBalance += amount;
+      else if (nature === 'Withdrawal') newBalance -= amount;
+      else if (nature === 'Transfer') {
         newBalance -= amount;
         const targetWallet = wallets.find(w => w.id === data.transfer_to_wallet_id);
         if (targetWallet) {
@@ -108,6 +113,24 @@ export default function CustodyWallets() {
     transactionMutation.mutate(transactionData);
   };
 
+  const handleAddType = (e) => {
+    e.preventDefault();
+    if (!newTypeData.name) return;
+    
+    const newType = { value: newTypeData.name, label: newTypeData.name, nature: newTypeData.nature };
+    addStoredType(newType);
+    setAvailableTypes(getAllTypes());
+    setTransactionData(prev => ({ ...prev, type: newType.value }));
+    setShowTypeDialog(false);
+    setNewTypeData({ name: '', nature: 'Withdrawal' });
+    toast.success('New transaction type added');
+  };
+
+  const handleNewTransaction = () => {
+    navigate('/CustodyWalletEntry');
+  };
+
+  const selectedTypeNature = getTransactionNature(transactionData.type);
   const totalBalance = wallets.reduce((sum, w) => sum + (parseFloat(w.balance) || 0), 0);
 
   const columns = [
@@ -199,9 +222,23 @@ export default function CustodyWallets() {
                 <p className="text-sm text-slate-500">Current Balance</p>
                 <p className="text-xl font-bold">{parseFloat(selectedWallet?.balance || 0).toFixed(2)} {selectedWallet?.currency}</p>
               </div>
-              <FormField label="Transaction Type" name="type" type="select" value={transactionData.type} onChange={handleTransactionChange} options={[{ value: 'Deposit', label: 'Deposit' }, { value: 'Withdrawal', label: 'Withdrawal' }, { value: 'Transfer', label: 'Transfer to Another Wallet' }]} />
+              <div className="flex items-end gap-2">
+                <div className="flex-1">
+                  <FormField label="Transaction Type" name="type" type="select" value={transactionData.type} onChange={handleTransactionChange} options={availableTypes} />
+                </div>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  size="icon" 
+                  className="mb-1"
+                  onClick={() => setShowTypeDialog(true)}
+                  title="Add New Type"
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
               <FormField label="Amount" name="amount" type="number" value={transactionData.amount} onChange={handleTransactionChange} required />
-              {transactionData.type === 'Transfer' && (
+              {selectedTypeNature === 'Transfer' && (
                 <FormField label="Transfer To" name="transfer_to_wallet_id" type="select" value={transactionData.transfer_to_wallet_id} onChange={handleTransactionChange} options={wallets.filter(w => w.id !== selectedWallet?.id).map(w => ({ value: w.id, label: `${w.name} (${w.holder_name})` }))} />
               )}
               <FormField label="Reference" name="reference" value={transactionData.reference} onChange={handleTransactionChange} />
@@ -210,11 +247,42 @@ export default function CustodyWallets() {
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setTransactionDialogOpen(false)}>Cancel</Button>
               <Button type="submit" className="bg-blue-600 hover:bg-blue-700" disabled={transactionMutation.isPending}>
-                {transactionData.type === 'Deposit' && <ArrowDownLeft className="h-4 w-4 mr-2" />}
-                {transactionData.type === 'Withdrawal' && <ArrowUpRight className="h-4 w-4 mr-2" />}
-                {transactionData.type === 'Transfer' && <RefreshCw className="h-4 w-4 mr-2" />}
+                {selectedTypeNature === 'Deposit' && <ArrowDownLeft className="h-4 w-4 mr-2" />}
+                {selectedTypeNature === 'Withdrawal' && <ArrowUpRight className="h-4 w-4 mr-2" />}
+                {selectedTypeNature === 'Transfer' && <RefreshCw className="h-4 w-4 mr-2" />}
                 Record Transaction
               </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add New Type Dialog */}
+      <Dialog open={showTypeDialog} onOpenChange={setShowTypeDialog}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Add Transaction Type</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleAddType} className="space-y-4">
+            <FormField 
+              label="Type Name" 
+              value={newTypeData.name} 
+              onChange={(e) => setNewTypeData(prev => ({ ...prev, name: e.target.value }))}
+              placeholder="e.g. Bank Charges, Fuel Expense"
+              required
+            />
+            <FormField 
+              label="Nature" 
+              type="select"
+              value={newTypeData.nature} 
+              onChange={(e) => setNewTypeData(prev => ({ ...prev, nature: e.target.value }))}
+              options={[
+                { value: 'Deposit', label: 'Deposit (Add Funds)' },
+                { value: 'Withdrawal', label: 'Withdrawal (Deduct Funds)' }
+              ]}
+            />
+            <DialogFooter>
+              <Button type="submit">Add Type</Button>
             </DialogFooter>
           </form>
         </DialogContent>
