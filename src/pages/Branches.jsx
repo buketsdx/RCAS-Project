@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { rcas } from '@/api/rcasClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCompany } from '@/context/CompanyContext';
 import PageHeader from '@/components/common/PageHeader';
@@ -26,7 +26,7 @@ export default function Branches() {
   const { data: branches = [], isLoading } = useQuery({ 
     queryKey: ['branches', selectedCompanyId],
     queryFn: async () => {
-      const allBranches = await base44.entities.Branch.list();
+      const allBranches = await rcas.entities.Branch.list();
       return allBranches.filter(b => b.company_id === selectedCompanyId);
     },
     enabled: !!selectedCompanyId
@@ -35,18 +35,18 @@ export default function Branches() {
   const createMutation = useMutation({
     mutationFn: async (data) => {
       const branchCode = await generateUniqueID('branch', ID_PREFIXES.BRANCH);
-      return base44.entities.Branch.create({ ...data, branch_code: branchCode, company_id: selectedCompanyId });
+      return rcas.entities.Branch.create({ ...data, branch_code: branchCode, company_id: selectedCompanyId });
     },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['branches', selectedCompanyId] }); toast.success('Branch created'); closeDialog(); }
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Branch.update(id, { ...data, company_id: selectedCompanyId }),
+    mutationFn: ({ id, data }) => rcas.entities.Branch.update(id, { ...data, company_id: selectedCompanyId }),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['branches', selectedCompanyId] }); toast.success('Branch updated'); closeDialog(); }
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.Branch.delete(id),
+    mutationFn: (id) => rcas.entities.Branch.delete(id),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['branches', selectedCompanyId] }); toast.success('Branch deleted'); }
   });
 

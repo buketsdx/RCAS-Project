@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { rcas } from '@/api/rcasClient';
 import { useQuery } from '@tanstack/react-query';
 import { formatCurrency } from '@/utils';
 import PageHeader from '@/components/common/PageHeader';
@@ -17,10 +17,10 @@ export default function StockItemReport() {
     toDate: format(endOfMonth(new Date()), 'yyyy-MM-dd')
   });
 
-  const { data: items = [] } = useQuery({ queryKey: ['stockItems'], queryFn: () => base44.entities.StockItem.list() });
-  const { data: voucherItems = [], isLoading } = useQuery({ queryKey: ['voucherItems'], queryFn: () => base44.entities.VoucherItem.list() });
-  const { data: vouchers = [] } = useQuery({ queryKey: ['vouchers'], queryFn: () => base44.entities.Voucher.list() });
-  const { data: units = [] } = useQuery({ queryKey: ['units'], queryFn: () => base44.entities.Unit.list() });
+  const { data: items = [] } = useQuery({ queryKey: ['stockItems'], queryFn: () => rcas.entities.StockItem.list() });
+  const { data: voucherItems = [], isLoading } = useQuery({ queryKey: ['voucherItems'], queryFn: () => rcas.entities.VoucherItem.list() });
+  const { data: vouchers = [] } = useQuery({ queryKey: ['vouchers'], queryFn: () => rcas.entities.Voucher.list() });
+  const { data: units = [] } = useQuery({ queryKey: ['units'], queryFn: () => rcas.entities.Unit.list() });
 
   const stockItem = items.find(i => i.id === selectedItem);
   const unit = units.find(u => u.id === stockItem?.unit_id);

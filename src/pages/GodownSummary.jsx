@@ -1,5 +1,5 @@
 import React from 'react';
-import { base44 } from '@/api/base44Client';
+import { rcas } from '@/api/rcasClient';
 import { useQuery } from '@tanstack/react-query';
 import { formatCurrency } from '@/utils';
 import PageHeader from '@/components/common/PageHeader';
@@ -8,8 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Warehouse, Package } from 'lucide-react';
 
 export default function GodownSummary() {
-  const { data: godowns = [], isLoading } = useQuery({ queryKey: ['godowns'], queryFn: () => base44.entities.Godown.list() });
-  const { data: items = [] } = useQuery({ queryKey: ['stockItems'], queryFn: () => base44.entities.StockItem.list() });
+  const { data: godowns = [], isLoading } = useQuery({ queryKey: ['godowns'], queryFn: () => rcas.entities.Godown.list() });
+  const { data: items = [] } = useQuery({ queryKey: ['stockItems'], queryFn: () => rcas.entities.StockItem.list() });
 
   const totalItems = items.length;
   const totalValue = items.reduce((sum, item) => sum + (parseFloat(item.current_qty || 0) * parseFloat(item.cost_price || 0)), 0);

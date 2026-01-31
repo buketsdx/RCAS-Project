@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { rcas } from '@/api/rcasClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import PageHeader from '@/components/common/PageHeader';
 import DataTable from '@/components/common/DataTable';
@@ -24,11 +24,11 @@ export default function CostCenters() {
 
   const { data: centers = [], isLoading } = useQuery({
     queryKey: ['costCenters'],
-    queryFn: () => base44.entities.CostCenter.list()
+    queryFn: () => rcas.entities.CostCenter.list()
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.CostCenter.create(data),
+    mutationFn: (data) => rcas.entities.CostCenter.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['costCenters'] });
       toast.success('Cost center created successfully');
@@ -37,7 +37,7 @@ export default function CostCenters() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.CostCenter.update(id, data),
+    mutationFn: ({ id, data }) => rcas.entities.CostCenter.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['costCenters'] });
       toast.success('Cost center updated successfully');
@@ -46,7 +46,7 @@ export default function CostCenters() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.CostCenter.delete(id),
+    mutationFn: (id) => rcas.entities.CostCenter.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['costCenters'] });
       toast.success('Cost center deleted successfully');

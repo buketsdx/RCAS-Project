@@ -1,5 +1,5 @@
 import React from 'react';
-import { base44 } from '@/api/base44Client';
+import { rcas } from '@/api/rcasClient';
 import { useQuery } from '@tanstack/react-query';
 import { formatCurrency } from '@/utils';
 import PageHeader from '@/components/common/PageHeader';
@@ -11,9 +11,9 @@ import { Badge } from "@/components/ui/badge";
 import { Package, AlertTriangle, TrendingUp } from 'lucide-react';
 
 export default function StockSummary() {
-  const { data: items = [], isLoading } = useQuery({ queryKey: ['stockItems'], queryFn: () => base44.entities.StockItem.list() });
-  const { data: groups = [] } = useQuery({ queryKey: ['stockGroups'], queryFn: () => base44.entities.StockGroup.list() });
-  const { data: units = [] } = useQuery({ queryKey: ['units'], queryFn: () => base44.entities.Unit.list() });
+  const { data: items = [], isLoading } = useQuery({ queryKey: ['stockItems'], queryFn: () => rcas.entities.StockItem.list() });
+  const { data: groups = [] } = useQuery({ queryKey: ['stockGroups'], queryFn: () => rcas.entities.StockGroup.list() });
+  const { data: units = [] } = useQuery({ queryKey: ['units'], queryFn: () => rcas.entities.Unit.list() });
 
   const totalValue = items.reduce((sum, item) => sum + (parseFloat(item.current_qty || 0) * parseFloat(item.cost_price || item.opening_rate || 0)), 0);
   const lowStockItems = items.filter(item => item.reorder_level && parseFloat(item.current_qty || 0) <= parseFloat(item.reorder_level));

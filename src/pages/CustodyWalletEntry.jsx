@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { rcas } from '@/api/rcasClient';
 import { generateUniqueID } from '@/components/common/IDGenerator';
 import PageHeader from '@/components/common/PageHeader';
 import FormField from '@/components/forms/FormField';
@@ -33,7 +33,7 @@ export default function CustodyWalletEntry() {
   // Fetch wallets list
   const { data: wallets = [] } = useQuery({ 
     queryKey: ['custodyWallets'], 
-    queryFn: () => base44.entities.CustodyWallet.list() 
+    queryFn: () => rcas.entities.CustodyWallet.list() 
   });
 
   const transactionMutation = useMutation({
@@ -59,17 +59,17 @@ export default function CustodyWalletEntry() {
         const targetWallet = wallets.find(w => w.id === data.transfer_to_wallet_id);
         if (targetWallet) {
           const targetBalance = (parseFloat(targetWallet.balance) || 0) + amount;
-          await base44.entities.CustodyWallet.update(targetWallet.id, { balance: targetBalance });
+          await rcas.entities.CustodyWallet.update(targetWallet.id, { balance: targetBalance });
         }
       }
 
       // Update source wallet balance
-      await base44.entities.CustodyWallet.update(wallet.id, { balance: newBalance });
+      await rcas.entities.CustodyWallet.update(wallet.id, { balance: newBalance });
       
       // Create transaction record
       const transactionId = await generateUniqueID('custody_trans', 'TXN');
       
-      return base44.entities.CustodyTransaction.create({
+      return rcas.entities.CustodyTransaction.create({
         ...data,
         transaction_id: transactionId,
         wallet_id: wallet.id,

@@ -1,5 +1,5 @@
 import React from 'react';
-import { base44 } from '@/api/base44Client';
+import { rcas } from '@/api/rcasClient';
 import { useQuery } from '@tanstack/react-query';
 import PageHeader from '@/components/common/PageHeader';
 import DataTable from '@/components/common/DataTable';
@@ -8,8 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { Package, AlertTriangle, CheckCircle } from 'lucide-react';
 
 export default function ReorderStatus() {
-  const { data: items = [], isLoading } = useQuery({ queryKey: ['stockItems'], queryFn: () => base44.entities.StockItem.list() });
-  const { data: units = [] } = useQuery({ queryKey: ['units'], queryFn: () => base44.entities.Unit.list() });
+  const { data: items = [], isLoading } = useQuery({ queryKey: ['stockItems'], queryFn: () => rcas.entities.StockItem.list() });
+  const { data: units = [] } = useQuery({ queryKey: ['units'], queryFn: () => rcas.entities.Unit.list() });
 
   const itemsWithReorder = items.filter(item => item.reorder_level);
   

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { rcas } from '@/api/rcasClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { formatCurrency, generateVoucherCode } from '@/utils';
 import PageHeader from '@/components/common/PageHeader';
@@ -27,23 +27,23 @@ export default function Employees() {
     gosi_number: '', bank_name: '', bank_account: '', iban: ''
   });
 
-  const { data: employees = [], isLoading } = useQuery({ queryKey: ['employees'], queryFn: () => base44.entities.Employee.list() });
+  const { data: employees = [], isLoading } = useQuery({ queryKey: ['employees'], queryFn: () => rcas.entities.Employee.list() });
 
   const createMutation = useMutation({
     mutationFn: async (data) => {
-      const employeeCode = await generateVoucherCode(base44, 'Employee');
-      return base44.entities.Employee.create({ ...data, employee_code: employeeCode });
+      const employeeCode = await generateVoucherCode('Employee');
+      return rcas.entities.Employee.create({ ...data, employee_code: employeeCode });
     },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['employees'] }); toast.success('Employee added'); closeDialog(); }
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Employee.update(id, data),
+    mutationFn: ({ id, data }) => rcas.entities.Employee.update(id, data),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['employees'] }); toast.success('Employee updated'); closeDialog(); }
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.Employee.delete(id),
+    mutationFn: (id) => rcas.entities.Employee.delete(id),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['employees'] }); toast.success('Employee deleted'); }
   });
 
@@ -54,7 +54,7 @@ export default function Employees() {
     } else {
       setEditingEmployee(null);
       // Auto-generate employee code for new employees
-      generateVoucherCode(base44, 'Employee').then(code => {
+      generateVoucherCode('Employee').then(code => {
         setFormData({
           employee_code: code, name: '', name_arabic: '', designation: '', department: '',
           date_of_joining: '', date_of_birth: '', gender: '', nationality: '',

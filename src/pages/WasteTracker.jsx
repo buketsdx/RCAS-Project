@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { rcas } from '@/api/rcasClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { formatCurrency } from '@/utils';
 import PageHeader from '@/components/common/PageHeader';
@@ -35,9 +35,9 @@ export default function FlowerWasteTracker() {
     waste_reason: 'Wilted', cost_value: '', disposal_method: 'Composting', notes: '', image_url: ''
   });
 
-  const { data: wasteRecords = [], isLoading } = useQuery({ queryKey: ['flowerWaste'], queryFn: () => base44.entities.FlowerWaste.list('-date') });
-  const { data: stockItems = [] } = useQuery({ queryKey: ['stockItems'], queryFn: () => base44.entities.StockItem.list() });
-  const { data: branches = [] } = useQuery({ queryKey: ['branches'], queryFn: () => base44.entities.Branch.list() });
+  const { data: wasteRecords = [], isLoading } = useQuery({ queryKey: ['flowerWaste'], queryFn: () => rcas.entities.FlowerWaste.list('-date') });
+  const { data: stockItems = [] } = useQuery({ queryKey: ['stockItems'], queryFn: () => rcas.entities.StockItem.list() });
+  const { data: branches = [] } = useQuery({ queryKey: ['branches'], queryFn: () => rcas.entities.Branch.list() });
 
   const filteredRecords = wasteRecords.filter(w => w.date >= filters.fromDate && w.date <= filters.toDate);
   const totalWasteQty = filteredRecords.reduce((sum, w) => sum + (parseFloat(w.quantity) || 0), 0);
@@ -51,18 +51,18 @@ export default function FlowerWasteTracker() {
   const createMutation = useMutation({
     mutationFn: async (data) => {
       const wasteId = await generateUniqueID('waste', ID_PREFIXES.WASTE);
-      return base44.entities.FlowerWaste.create({ ...data, waste_id: wasteId });
+      return rcas.entities.FlowerWaste.create({ ...data, waste_id: wasteId });
     },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['flowerWaste'] }); toast.success('Waste record added'); closeDialog(); }
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.FlowerWaste.update(id, data),
+    mutationFn: ({ id, data }) => rcas.entities.FlowerWaste.update(id, data),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['flowerWaste'] }); toast.success('Record updated'); closeDialog(); }
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.FlowerWaste.delete(id),
+    mutationFn: (id) => rcas.entities.FlowerWaste.delete(id),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['flowerWaste'] }); toast.success('Record deleted'); }
   });
 
@@ -93,7 +93,7 @@ export default function FlowerWasteTracker() {
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
     if (file) {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      const { file_url } = await rcas.integrations.Core.UploadFile({ file });
       setFormData(prev => ({ ...prev, image_url: file_url }));
       toast.success('Image uploaded');
     }

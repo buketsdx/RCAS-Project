@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { rcas } from '@/api/rcasClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { formatCurrency } from '@/utils';
 import PageHeader from '@/components/common/PageHeader';
@@ -40,21 +40,21 @@ export default function StockItems() {
 
   const { data: items = [], isLoading } = useQuery({
     queryKey: ['stockItems'],
-    queryFn: () => base44.entities.StockItem.list()
+    queryFn: () => rcas.entities.StockItem.list()
   });
 
   const { data: groups = [] } = useQuery({
     queryKey: ['stockGroups'],
-    queryFn: () => base44.entities.StockGroup.list()
+    queryFn: () => rcas.entities.StockGroup.list()
   });
 
   const { data: units = [] } = useQuery({
     queryKey: ['units'],
-    queryFn: () => base44.entities.Unit.list()
+    queryFn: () => rcas.entities.Unit.list()
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.StockItem.create(data),
+    mutationFn: (data) => rcas.entities.StockItem.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['stockItems'] });
       toast.success('Stock item created successfully');
@@ -63,7 +63,7 @@ export default function StockItems() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.StockItem.update(id, data),
+    mutationFn: ({ id, data }) => rcas.entities.StockItem.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['stockItems'] });
       toast.success('Stock item updated successfully');
@@ -72,7 +72,7 @@ export default function StockItems() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.StockItem.delete(id),
+    mutationFn: (id) => rcas.entities.StockItem.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['stockItems'] });
       toast.success('Stock item deleted successfully');
@@ -139,7 +139,7 @@ export default function StockItems() {
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
     if (file) {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      const { file_url } = await rcas.integrations.Core.UploadFile({ file });
       setFormData(prev => ({ ...prev, image_url: file_url }));
       toast.success('Image uploaded successfully');
     }

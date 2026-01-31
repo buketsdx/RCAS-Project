@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { rcas } from '@/api/rcasClient';
 import { useQuery } from '@tanstack/react-query';
 import { formatCurrency } from '@/utils';
 import PageHeader from '@/components/common/PageHeader';
@@ -16,8 +16,8 @@ const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 
 export default function PayrollReports() {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
-  const { data: payrolls = [], isLoading } = useQuery({ queryKey: ['payrolls'], queryFn: () => base44.entities.Payroll.list() });
-  const { data: employees = [] } = useQuery({ queryKey: ['employees'], queryFn: () => base44.entities.Employee.list() });
+  const { data: payrolls = [], isLoading } = useQuery({ queryKey: ['payrolls'], queryFn: () => rcas.entities.Payroll.list() });
+  const { data: employees = [] } = useQuery({ queryKey: ['employees'], queryFn: () => rcas.entities.Employee.list() });
 
   const yearPayrolls = payrolls.filter(p => p.year === selectedYear);
 

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { rcas } from '@/api/rcasClient';
 import { useQuery } from '@tanstack/react-query';
 import PageHeader from '@/components/common/PageHeader';
 import DataTable from '@/components/common/DataTable';
@@ -16,9 +16,9 @@ export default function LedgerReport() {
     toDate: format(endOfMonth(new Date()), 'yyyy-MM-dd')
   });
 
-  const { data: ledgers = [] } = useQuery({ queryKey: ['ledgers'], queryFn: () => base44.entities.Ledger.list() });
-  const { data: entries = [], isLoading } = useQuery({ queryKey: ['ledgerEntries'], queryFn: () => base44.entities.VoucherLedgerEntry.list() });
-  const { data: vouchers = [] } = useQuery({ queryKey: ['vouchers'], queryFn: () => base44.entities.Voucher.list() });
+  const { data: ledgers = [] } = useQuery({ queryKey: ['ledgers'], queryFn: () => rcas.entities.Ledger.list() });
+  const { data: entries = [], isLoading } = useQuery({ queryKey: ['ledgerEntries'], queryFn: () => rcas.entities.VoucherLedgerEntry.list() });
+  const { data: vouchers = [] } = useQuery({ queryKey: ['vouchers'], queryFn: () => rcas.entities.Voucher.list() });
 
   const ledger = ledgers.find(l => l.id === selectedLedger);
   

@@ -181,7 +181,7 @@ All previous enhancements remain fully operational:
 
 - **`/src/utils.js`** - Contains formatCurrency and generateVoucherCode functions
 - **`/src/entities/`** - Company, Ledger, Voucher, VoucherItem entities provide data
-- **`/src/api/base44Client.js`** - Base44 database client for querying
+- **`/src/api/rcasClient.js`** - RCAS database client for querying
 - **Multiple transaction pages** - Use PrintInvoice for displaying receipts
 
 ## Completion Status

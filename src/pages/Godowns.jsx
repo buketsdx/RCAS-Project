@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { rcas } from '@/api/rcasClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import PageHeader from '@/components/common/PageHeader';
 import DataTable from '@/components/common/DataTable';
@@ -28,11 +28,11 @@ export default function Godowns() {
 
   const { data: godowns = [], isLoading } = useQuery({
     queryKey: ['godowns'],
-    queryFn: () => base44.entities.Godown.list()
+    queryFn: () => rcas.entities.Godown.list()
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.Godown.create(data),
+    mutationFn: (data) => rcas.entities.Godown.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['godowns'] });
       toast.success('Godown created successfully');
@@ -41,7 +41,7 @@ export default function Godowns() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Godown.update(id, data),
+    mutationFn: ({ id, data }) => rcas.entities.Godown.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['godowns'] });
       toast.success('Godown updated successfully');
@@ -50,7 +50,7 @@ export default function Godowns() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.Godown.delete(id),
+    mutationFn: (id) => rcas.entities.Godown.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['godowns'] });
       toast.success('Godown deleted successfully');

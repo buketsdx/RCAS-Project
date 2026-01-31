@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { rcas } from '@/api/rcasClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { createPageUrl, formatCurrency } from "@/utils";
 import PageHeader from '@/components/common/PageHeader';
@@ -44,12 +44,12 @@ export default function PurchaseInvoice() {
 
   const [items, setItems] = useState([{ stock_item_id: '', quantity: 1, rate: 0, discount_percent: 0, vat_rate: 15 }]);
 
-  const { data: ledgers = [] } = useQuery({ queryKey: ['ledgers'], queryFn: () => base44.entities.Ledger.list() });
-  const { data: stockItems = [] } = useQuery({ queryKey: ['stockItems'], queryFn: () => base44.entities.StockItem.list() });
+  const { data: ledgers = [] } = useQuery({ queryKey: ['ledgers'], queryFn: () => rcas.entities.Ledger.list() });
+  const { data: stockItems = [] } = useQuery({ queryKey: ['stockItems'], queryFn: () => rcas.entities.StockItem.list() });
 
   const { data: existingVoucher, isLoading } = useQuery({
     queryKey: ['voucher', voucherId],
-    queryFn: () => base44.entities.Voucher.list(),
+    queryFn: () => rcas.entities.Voucher.list(),
     enabled: !!voucherId,
     select: (data) => data.find(v => v.id === voucherId)
   });
@@ -57,7 +57,7 @@ export default function PurchaseInvoice() {
   const { data: existingItems = [] } = useQuery({
     queryKey: ['voucherItems', voucherId],
     queryFn: async () => {
-      const allItems = await base44.entities.VoucherItem.list();
+      const allItems = await rcas.entities.VoucherItem.list();
       return allItems.filter(item => item.voucher_id === voucherId);
     },
     enabled: !!voucherId
@@ -108,7 +108,7 @@ export default function PurchaseInvoice() {
         email: supplierData.email || '',
         is_active: true
       };
-      return base44.entities.Ledger.create(ledgerData);
+      return rcas.entities.Ledger.create(ledgerData);
     },
     onSuccess: (newLedger) => {
       queryClient.invalidateQueries({ queryKey: ['ledgers'] });
@@ -144,22 +144,22 @@ export default function PurchaseInvoice() {
 
         let voucher;
         if (voucherId) {
-          voucher = await base44.entities.Voucher.update(voucherId, voucherData);
+          voucher = await rcas.entities.Voucher.update(voucherId, voucherData);
           for (const item of existingItems) {
             try {
-              await base44.entities.VoucherItem.delete(item.id);
+              await rcas.entities.VoucherItem.delete(item.id);
             } catch (error) {
               console.warn('Failed to delete item:', error);
             }
           }
         } else {
-          voucher = await base44.entities.Voucher.create(voucherData);
+          voucher = await rcas.entities.Voucher.create(voucherData);
         }
 
         for (const item of items) {
           if (item.stock_item_id) {
             try {
-              await base44.entities.VoucherItem.create({
+              await rcas.entities.VoucherItem.create({
                 voucher_id: voucher.id, stock_item_id: item.stock_item_id, stock_item_name: item.stock_item_name,
                 quantity: parseFloat(item.quantity) || 0, rate: parseFloat(item.rate) || 0,
                 discount_percent: parseFloat(item.discount_percent) || 0, discount_amount: parseFloat(item.discount_amount) || 0,

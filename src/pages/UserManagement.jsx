@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { rcas } from '@/api/rcasClient';
 import { useAuth, ROLES } from '@/context/AuthContext';
 import PageHeader from '@/components/common/PageHeader';
 import DataTable from '@/components/common/DataTable';
@@ -26,7 +26,7 @@ export default function UserManagement() {
   const loadUsers = async () => {
     setLoading(true);
     try {
-      const data = await base44.entities.User.list();
+      const data = await rcas.entities.User.list();
       setUsers(data);
     } catch (error) {
       console.error("Failed to load users", error);
@@ -49,7 +49,7 @@ export default function UserManagement() {
     e.preventDefault();
     try {
       if (editingId) {
-        await base44.entities.User.update(editingId, formData);
+        await rcas.entities.User.update(editingId, formData);
         toast.success("User updated successfully");
       } else {
         // Check for duplicate username
@@ -58,7 +58,7 @@ export default function UserManagement() {
           toast.error("Username already exists");
           return;
         }
-        await base44.entities.User.create(formData);
+        await rcas.entities.User.create(formData);
         toast.success("User created successfully");
       }
       setDialogOpen(false);
@@ -83,7 +83,7 @@ export default function UserManagement() {
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this user?")) return;
     try {
-      await base44.entities.User.delete(id);
+      await rcas.entities.User.delete(id);
       toast.success("User deleted successfully");
       loadUsers();
     } catch (error) {

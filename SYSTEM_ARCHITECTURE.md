@@ -180,7 +180,7 @@ User Interface                     Component State              Database
                     │               │                │
                     │       ┌───────┴────────┐       │
                     │       │                │       │
-                    ├──────►│  base44 API    │◄──────┤
+                    ├──────►│  rcas API    │◄──────┤
                     │       │  (Backend)     │       │
                     │       │                │       │
                     │       └────────┬────────┘       │

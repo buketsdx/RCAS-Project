@@ -1,5 +1,5 @@
 import React from 'react';
-import { base44 } from '@/api/base44Client';
+import { rcas } from '@/api/rcasClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { createPageUrl, formatCurrency } from "@/utils";
@@ -19,13 +19,13 @@ export default function CreditNote() {
   const { data: vouchers = [], isLoading } = useQuery({
     queryKey: ['creditNotes'],
     queryFn: async () => {
-      const all = await base44.entities.Voucher.list('-created_date');
+      const all = await rcas.entities.Voucher.list('-created_date');
       return all.filter(v => v.voucher_type === 'Credit Note');
     }
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.Voucher.delete(id),
+    mutationFn: (id) => rcas.entities.Voucher.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['creditNotes'] });
       toast.success('Credit note deleted');

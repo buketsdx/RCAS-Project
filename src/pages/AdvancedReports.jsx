@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { rcas } from '@/api/rcasClient';
 import { useQuery } from '@tanstack/react-query';
 import PageHeader from '@/components/common/PageHeader';
 import FormField from '@/components/forms/FormField';
@@ -19,12 +19,12 @@ export default function AdvancedReports() {
     toDate: format(endOfYear(new Date()), 'yyyy-MM-dd')
   });
 
-  const { data: vouchers = [], isLoading: loadingVouchers } = useQuery({ queryKey: ['vouchers'], queryFn: () => base44.entities.Voucher.list() });
-  const { data: ledgers = [] } = useQuery({ queryKey: ['ledgers'], queryFn: () => base44.entities.Ledger.list() });
-  const { data: stockItems = [] } = useQuery({ queryKey: ['stockItems'], queryFn: () => base44.entities.StockItem.list() });
-  const { data: employees = [] } = useQuery({ queryKey: ['employees'], queryFn: () => base44.entities.Employee.list() });
-  const { data: branches = [] } = useQuery({ queryKey: ['branches'], queryFn: () => base44.entities.Branch.list() });
-  const { data: voucherItems = [] } = useQuery({ queryKey: ['voucherItems'], queryFn: () => base44.entities.VoucherItem.list() });
+  const { data: vouchers = [], isLoading: loadingVouchers } = useQuery({ queryKey: ['vouchers'], queryFn: () => rcas.entities.Voucher.list() });
+  const { data: ledgers = [] } = useQuery({ queryKey: ['ledgers'], queryFn: () => rcas.entities.Ledger.list() });
+  const { data: stockItems = [] } = useQuery({ queryKey: ['stockItems'], queryFn: () => rcas.entities.StockItem.list() });
+  const { data: employees = [] } = useQuery({ queryKey: ['employees'], queryFn: () => rcas.entities.Employee.list() });
+  const { data: branches = [] } = useQuery({ queryKey: ['branches'], queryFn: () => rcas.entities.Branch.list() });
+  const { data: voucherItems = [] } = useQuery({ queryKey: ['voucherItems'], queryFn: () => rcas.entities.VoucherItem.list() });
 
   const filteredVouchers = vouchers.filter(v => v.date >= dateRange.fromDate && v.date <= dateRange.toDate);
 

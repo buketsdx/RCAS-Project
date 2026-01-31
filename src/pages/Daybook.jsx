@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { rcas } from '@/api/rcasClient';
 import { useQuery } from '@tanstack/react-query';
 import { formatCurrency } from '@/utils';
 import PageHeader from '@/components/common/PageHeader';
@@ -31,7 +31,7 @@ export default function DayBook() {
 
   const { data: vouchers = [], isLoading } = useQuery({
     queryKey: ['dayBookVouchers'],
-    queryFn: () => base44.entities.Voucher.list('-date')
+    queryFn: () => rcas.entities.Voucher.list('-date')
   });
 
   const filteredVouchers = vouchers.filter(v => {

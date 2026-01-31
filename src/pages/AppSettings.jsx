@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { rcas } from '@/api/rcasClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCurrency } from '@/context/CurrencyContext';
 import PageHeader from '@/components/common/PageHeader';
@@ -72,7 +72,7 @@ export default function AppSettings() {
   const { data: existingSettings, isLoading } = useQuery({
     queryKey: ['settings'],
     queryFn: async () => {
-      const list = await base44.entities.Settings.list();
+      const list = await rcas.entities.Settings.list();
       return list.length > 0 ? list[0] : null;
     }
   });
@@ -92,9 +92,9 @@ export default function AppSettings() {
   const saveMutation = useMutation({
     mutationFn: async (newSettings) => {
       if (settingsId) {
-        return base44.entities.Settings.update(settingsId, newSettings);
+        return rcas.entities.Settings.update(settingsId, newSettings);
       } else {
-        return base44.entities.Settings.create(newSettings);
+        return rcas.entities.Settings.create(newSettings);
       }
     },
     onSuccess: (data) => {

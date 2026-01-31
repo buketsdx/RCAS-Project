@@ -1,5 +1,5 @@
 import React from 'react';
-import { base44 } from '@/api/base44Client';
+import { rcas } from '@/api/rcasClient';
 import { useQuery } from '@tanstack/react-query';
 import { formatCurrency } from '@/utils';
 import StatCard from '@/components/common/StatCard';
@@ -25,17 +25,17 @@ import { format, startOfMonth, endOfMonth } from 'date-fns';
 export default function Dashboard() {
   const { data: vouchers = [], isLoading: loadingVouchers } = useQuery({
     queryKey: ['vouchers'],
-    queryFn: () => base44.entities.Voucher.list('-created_date', 100)
+    queryFn: () => rcas.entities.Voucher.list('-created_date', 100)
   });
 
   const { data: ledgers = [] } = useQuery({
     queryKey: ['ledgers'],
-    queryFn: () => base44.entities.Ledger.list()
+    queryFn: () => rcas.entities.Ledger.list()
   });
 
   const { data: stockItems = [] } = useQuery({
     queryKey: ['stockItems'],
-    queryFn: () => base44.entities.StockItem.list()
+    queryFn: () => rcas.entities.StockItem.list()
   });
 
   const currentMonth = new Date();

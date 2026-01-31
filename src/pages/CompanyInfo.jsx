@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { base44 } from '@/api/base44Client';
+import { rcas } from '@/api/rcasClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCompany } from '@/context/CompanyContext';
 import PageHeader from '@/components/common/PageHeader';
@@ -52,7 +52,7 @@ export default function CompanyInfo() {
 
   const { data: companies = [], isLoading } = useQuery({
     queryKey: ['companies'],
-    queryFn: () => base44.entities.Company.list()
+    queryFn: () => rcas.entities.Company.list()
   });
 
   const company = selectedCompanyId 
@@ -111,12 +111,12 @@ export default function CompanyInfo() {
       try {
         if (company) {
           console.log(`Updating company ID: ${company.id}`, data);
-          const result = await base44.entities.Company.update(company.id, data);
+          const result = await rcas.entities.Company.update(company.id, data);
           console.log('Update successful:', result);
           return result;
         } else {
           console.log('Creating new company', data);
-          const result = await base44.entities.Company.create(data);
+          const result = await rcas.entities.Company.create(data);
           console.log('Create successful:', result);
           return result;
         }

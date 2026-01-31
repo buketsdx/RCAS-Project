@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { base44 } from '@/api/base44Client';
+import { rcas } from '@/api/rcasClient';
 import { useQuery } from '@tanstack/react-query';
 import PageHeader from '@/components/common/PageHeader';
 import DataTable from '@/components/common/DataTable';
@@ -19,23 +19,23 @@ export default function SupplierComparison() {
   // Fetch Suppliers
   const { data: ledgers = [], isLoading: isLoadingLedgers } = useQuery({
     queryKey: ['ledgers'],
-    queryFn: () => base44.entities.Ledger.list()
+    queryFn: () => rcas.entities.Ledger.list()
   });
 
   // Fetch Transactions and Vouchers
   const { data: vouchers = [], isLoading: isLoadingVouchers } = useQuery({
     queryKey: ['vouchers'],
-    queryFn: () => base44.entities.Voucher.list()
+    queryFn: () => rcas.entities.Voucher.list()
   });
 
   const { data: voucherItems = [], isLoading: isLoadingVoucherItems } = useQuery({
     queryKey: ['voucherItems'],
-    queryFn: () => base44.entities.VoucherItem.list()
+    queryFn: () => rcas.entities.VoucherItem.list()
   });
 
   const { data: stockItems = [], isLoading: isLoadingStockItems } = useQuery({
     queryKey: ['stockItems'],
-    queryFn: () => base44.entities.StockItem.list()
+    queryFn: () => rcas.entities.StockItem.list()
   });
 
   // Filter for Suppliers

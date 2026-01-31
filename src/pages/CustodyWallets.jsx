@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { rcas } from '@/api/rcasClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { formatCurrency } from '@/lib/utils';
 import PageHeader from '@/components/common/PageHeader';
@@ -33,24 +33,24 @@ export default function CustodyWallets() {
     type: 'Deposit', amount: '', description: '', reference: '', transfer_to_wallet_id: ''
   });
 
-  const { data: wallets = [], isLoading } = useQuery({ queryKey: ['custodyWallets'], queryFn: () => base44.entities.CustodyWallet.list() });
-  const { data: transactions = [] } = useQuery({ queryKey: ['custodyTransactions'], queryFn: () => base44.entities.CustodyTransaction.list('-date') });
+  const { data: wallets = [], isLoading } = useQuery({ queryKey: ['custodyWallets'], queryFn: () => rcas.entities.CustodyWallet.list() });
+  const { data: transactions = [] } = useQuery({ queryKey: ['custodyTransactions'], queryFn: () => rcas.entities.CustodyTransaction.list('-date') });
 
   const createWalletMutation = useMutation({
     mutationFn: async (data) => {
       const walletId = await generateUniqueID('wallet', ID_PREFIXES.WALLET);
-      return base44.entities.CustodyWallet.create({ ...data, wallet_id: walletId, balance: 0 });
+      return rcas.entities.CustodyWallet.create({ ...data, wallet_id: walletId, balance: 0 });
     },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['custodyWallets'] }); toast.success('Wallet created'); closeDialog(); }
   });
 
   const updateWalletMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.CustodyWallet.update(id, data),
+    mutationFn: ({ id, data }) => rcas.entities.CustodyWallet.update(id, data),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['custodyWallets'] }); toast.success('Wallet updated'); closeDialog(); }
   });
 
   const deleteWalletMutation = useMutation({
-    mutationFn: (id) => base44.entities.CustodyWallet.delete(id),
+    mutationFn: (id) => rcas.entities.CustodyWallet.delete(id),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['custodyWallets'] }); toast.success('Wallet deleted'); }
   });
 
@@ -67,13 +67,13 @@ export default function CustodyWallets() {
         newBalance -= amount;
         const targetWallet = wallets.find(w => w.id === data.transfer_to_wallet_id);
         if (targetWallet) {
-          await base44.entities.CustodyWallet.update(targetWallet.id, { balance: (parseFloat(targetWallet.balance) || 0) + amount });
+          await rcas.entities.CustodyWallet.update(targetWallet.id, { balance: (parseFloat(targetWallet.balance) || 0) + amount });
         }
       }
 
-      await base44.entities.CustodyWallet.update(wallet.id, { balance: newBalance });
+      await rcas.entities.CustodyWallet.update(wallet.id, { balance: newBalance });
       const transactionId = await generateUniqueID('custody_trans', 'TXN');
-      return base44.entities.CustodyTransaction.create({
+      return rcas.entities.CustodyTransaction.create({
         ...data, transaction_id: transactionId, wallet_id: wallet.id, date: format(new Date(), 'yyyy-MM-dd'), amount
       });
     },

@@ -160,17 +160,17 @@ const saveMutation = useMutation({
 
     let voucher;
     if (voucherId) {
-      voucher = await base44.entities.Voucher.update(voucherId, voucherData);
+      voucher = await rcas.entities.Voucher.update(voucherId, voucherData);
       for (const item of existingItems) {
-        await base44.entities.VoucherItem.delete(item.id);
+        await rcas.entities.VoucherItem.delete(item.id);
       }
     } else {
-      voucher = await base44.entities.Voucher.create(voucherData);
+      voucher = await rcas.entities.Voucher.create(voucherData);
     }
 
     for (const item of items) {
       if (item.stock_item_id) {
-        await base44.entities.VoucherItem.create({
+        await rcas.entities.VoucherItem.create({
           // item fields...
         });
       }
@@ -203,24 +203,24 @@ const saveMutation = useMutation({
 
       let voucher;
       if (voucherId) {
-        voucher = await base44.entities.Voucher.update(voucherId, voucherData);
+        voucher = await rcas.entities.Voucher.update(voucherId, voucherData);
         // Delete old items with error handling
         for (const item of existingItems) {
           try {
-            await base44.entities.VoucherItem.delete(item.id);
+            await rcas.entities.VoucherItem.delete(item.id);
           } catch (error) {
             console.warn('Failed to delete item:', error);
           }
         }
       } else {
-        voucher = await base44.entities.Voucher.create(voucherData);
+        voucher = await rcas.entities.Voucher.create(voucherData);
       }
 
       // Create new items with error handling
       for (const item of items) {
         if (item.stock_item_id) {
           try {
-            await base44.entities.VoucherItem.create({
+            await rcas.entities.VoucherItem.create({
               // item fields...
             });
           } catch (error) {

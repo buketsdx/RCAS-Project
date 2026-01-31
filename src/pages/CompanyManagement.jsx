@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { rcas } from '@/api/rcasClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCompany } from '@/context/CompanyContext';
 import PageHeader from '@/components/common/PageHeader';
@@ -42,11 +42,11 @@ export default function CompanyManagement() {
 
   const { data: companies = [], isLoading } = useQuery({
     queryKey: ['companies'],
-    queryFn: () => base44.entities.Company.list()
+    queryFn: () => rcas.entities.Company.list()
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.Company.create(data),
+    mutationFn: (data) => rcas.entities.Company.create(data),
     onSuccess: (newCompany) => {
       queryClient.invalidateQueries({ queryKey: ['companies'] });
       setSelectedCompanyId(newCompany.id);
@@ -59,7 +59,7 @@ export default function CompanyManagement() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Company.update(id, data),
+    mutationFn: ({ id, data }) => rcas.entities.Company.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['companies'] });
       toast.success('Company updated successfully');
@@ -71,7 +71,7 @@ export default function CompanyManagement() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.Company.delete(id),
+    mutationFn: (id) => rcas.entities.Company.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['companies'] });
       toast.success('Company deleted successfully');

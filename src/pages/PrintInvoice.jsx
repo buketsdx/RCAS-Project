@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { base44 } from '@/api/base44Client';
+import { rcas } from '@/api/rcasClient';
 import { useQuery } from '@tanstack/react-query';
 import { formatCurrency } from '@/utils';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
@@ -16,25 +16,25 @@ export default function PrintInvoice() {
 
   const { data: vouchers = [], isLoading: loadingVoucher } = useQuery({
     queryKey: ['voucher', voucherId],
-    queryFn: () => base44.entities.Voucher.list()
+    queryFn: () => rcas.entities.Voucher.list()
   });
 
   const { data: voucherItems = [], isLoading: loadingItems } = useQuery({
     queryKey: ['voucherItems', voucherId],
     queryFn: async () => {
-      const all = await base44.entities.VoucherItem.list();
+      const all = await rcas.entities.VoucherItem.list();
       return all.filter(item => item.voucher_id === voucherId);
     }
   });
 
   const { data: companies = [] } = useQuery({
     queryKey: ['companies'],
-    queryFn: () => base44.entities.Company.list()
+    queryFn: () => rcas.entities.Company.list()
   });
 
   const { data: ledgers = [] } = useQuery({
     queryKey: ['ledgers'],
-    queryFn: () => base44.entities.Ledger.list()
+    queryFn: () => rcas.entities.Ledger.list()
   });
 
   const voucher = vouchers.find(v => v.id === voucherId);

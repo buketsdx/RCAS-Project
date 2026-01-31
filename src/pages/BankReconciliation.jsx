@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { rcas } from '@/api/rcasClient';
 import { useQuery } from '@tanstack/react-query';
 import { formatCurrency } from '@/utils';
 import PageHeader from '@/components/common/PageHeader';
@@ -15,10 +15,10 @@ export default function BankReconciliation() {
   const [selectedBank, setSelectedBank] = useState('');
   const [asOnDate, setAsOnDate] = useState(format(endOfMonth(new Date()), 'yyyy-MM-dd'));
 
-  const { data: ledgers = [] } = useQuery({ queryKey: ['ledgers'], queryFn: () => base44.entities.Ledger.list() });
-  const { data: entries = [], isLoading } = useQuery({ queryKey: ['ledgerEntries'], queryFn: () => base44.entities.VoucherLedgerEntry.list() });
-  const { data: vouchers = [] } = useQuery({ queryKey: ['vouchers'], queryFn: () => base44.entities.Voucher.list() });
-  const { data: reconciliations = [] } = useQuery({ queryKey: ['reconciliations'], queryFn: () => base44.entities.BankReconciliation.list() });
+  const { data: ledgers = [] } = useQuery({ queryKey: ['ledgers'], queryFn: () => rcas.entities.Ledger.list() });
+  const { data: entries = [], isLoading } = useQuery({ queryKey: ['ledgerEntries'], queryFn: () => rcas.entities.VoucherLedgerEntry.list() });
+  const { data: vouchers = [] } = useQuery({ queryKey: ['vouchers'], queryFn: () => rcas.entities.Voucher.list() });
+  const { data: reconciliations = [] } = useQuery({ queryKey: ['reconciliations'], queryFn: () => rcas.entities.BankReconciliation.list() });
 
   // Filter bank ledgers (ideally by group)
   const bankLedgers = ledgers.filter(l => l.bank_name || l.iban);

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { rcas } from '@/api/rcasClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import PageHeader from '@/components/common/PageHeader';
 import DataTable from '@/components/common/DataTable';
@@ -34,11 +34,11 @@ export default function AccountGroups() {
 
   const { data: groups = [], isLoading } = useQuery({
     queryKey: ['accountGroups'],
-    queryFn: () => base44.entities.AccountGroup.list()
+    queryFn: () => rcas.entities.AccountGroup.list()
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.AccountGroup.create(data),
+    mutationFn: (data) => rcas.entities.AccountGroup.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['accountGroups'] });
       toast.success('Account group created successfully');
@@ -47,7 +47,7 @@ export default function AccountGroups() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.AccountGroup.update(id, data),
+    mutationFn: ({ id, data }) => rcas.entities.AccountGroup.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['accountGroups'] });
       toast.success('Account group updated successfully');
@@ -56,7 +56,7 @@ export default function AccountGroups() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.AccountGroup.delete(id),
+    mutationFn: (id) => rcas.entities.AccountGroup.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['accountGroups'] });
       toast.success('Account group deleted successfully');

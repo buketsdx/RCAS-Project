@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { rcas } from '@/api/rcasClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { initializeSystemLedgers } from '@/utils';
 import PageHeader from '@/components/common/PageHeader';
@@ -39,23 +39,23 @@ export default function Ledgers() {
 
   const { data: ledgers = [], isLoading } = useQuery({
     queryKey: ['ledgers'],
-    queryFn: () => base44.entities.Ledger.list()
+    queryFn: () => rcas.entities.Ledger.list()
   });
 
   const { data: groups = [] } = useQuery({
     queryKey: ['accountGroups'],
-    queryFn: () => base44.entities.AccountGroup.list()
+    queryFn: () => rcas.entities.AccountGroup.list()
   });
 
   // Initialize system ledgers on component mount
   useEffect(() => {
     if (groups.length > 0) {
-      initializeSystemLedgers(base44, groups);
+      initializeSystemLedgers(groups);
     }
   }, [groups]);
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.Ledger.create(data),
+    mutationFn: (data) => rcas.entities.Ledger.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['ledgers'] });
       toast.success('Ledger created successfully');
@@ -64,7 +64,7 @@ export default function Ledgers() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Ledger.update(id, data),
+    mutationFn: ({ id, data }) => rcas.entities.Ledger.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['ledgers'] });
       toast.success('Ledger updated successfully');
@@ -79,7 +79,7 @@ export default function Ledgers() {
       if (ledger?.is_system) {
         throw new Error('Cannot delete system/inbuilt ledgers');
       }
-      return base44.entities.Ledger.delete(id);
+      return rcas.entities.Ledger.delete(id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['ledgers'] });

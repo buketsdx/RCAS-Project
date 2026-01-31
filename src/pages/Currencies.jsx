@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { rcas } from '@/api/rcasClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCurrency } from '@/context/CurrencyContext';
 import PageHeader from '@/components/common/PageHeader';
@@ -23,20 +23,20 @@ export default function Currencies() {
     code: '', name: '', symbol: '', exchange_rate: 1, decimal_places: 2, is_base_currency: false
   });
 
-  const { data: currencies = [], isLoading } = useQuery({ queryKey: ['currencies'], queryFn: () => base44.entities.Currency.list() });
+  const { data: currencies = [], isLoading } = useQuery({ queryKey: ['currencies'], queryFn: () => rcas.entities.Currency.list() });
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.Currency.create(data),
+    mutationFn: (data) => rcas.entities.Currency.create(data),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['currencies'] }); toast.success('Currency added'); closeDialog(); }
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Currency.update(id, data),
+    mutationFn: ({ id, data }) => rcas.entities.Currency.update(id, data),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['currencies'] }); toast.success('Currency updated'); closeDialog(); }
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.Currency.delete(id),
+    mutationFn: (id) => rcas.entities.Currency.delete(id),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['currencies'] }); toast.success('Currency deleted'); }
   });
 

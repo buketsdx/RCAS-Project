@@ -1,5 +1,6 @@
 // Utility functions for the application
 import React from 'react';
+import { rcas } from '@/api/rcasClient';
 
 export const createPageUrl = (path) => {
   if (!path) return "/";
@@ -58,7 +59,7 @@ export const generateID = (prefix = '', counter = 0) => {
 };
 
 // Generate unique voucher code automatically
-export const generateVoucherCode = async (base44, voucherType) => {
+export const generateVoucherCode = async (voucherType) => {
   try {
     // Mapping of voucher types to prefixes
     const prefixMap = {
@@ -77,12 +78,12 @@ export const generateVoucherCode = async (base44, voucherType) => {
     const prefix = prefixMap[voucherType] || 'VOC';
     
     // Get or create IDCounter for this voucher type
-    let idCounters = await base44.entities.IDCounter.list();
+    let idCounters = await rcas.entities.IDCounter.list();
     let counter = idCounters.find(c => c.entity_type === voucherType);
 
     if (!counter) {
       // Create new counter if it doesn't exist
-      counter = await base44.entities.IDCounter.create({
+      counter = await rcas.entities.IDCounter.create({
         entity_type: voucherType,
         prefix: prefix,
         last_number: 0,
@@ -92,7 +93,7 @@ export const generateVoucherCode = async (base44, voucherType) => {
 
     // Increment counter
     const newNumber = (counter.last_number || 0) + 1;
-    await base44.entities.IDCounter.update(counter.id, {
+    await rcas.entities.IDCounter.update(counter.id, {
       last_number: newNumber
     });
 
@@ -145,9 +146,9 @@ export const throttle = (func, limit) => {
   };
 };
 // Initialize inbuilt/system ledgers
-export const initializeSystemLedgers = async (base44, accountGroups) => {
+export const initializeSystemLedgers = async (accountGroups) => {
   try {
-    const existingLedgers = await base44.entities.Ledger.list();
+    const existingLedgers = await rcas.entities.Ledger.list();
     const systemLedgers = existingLedgers.filter(l => l.is_system);
     
     // If system ledgers already exist, don't recreate them
@@ -207,7 +208,7 @@ export const initializeSystemLedgers = async (base44, accountGroups) => {
     // Create system ledgers
     for (const ledger of inbuiltLedgers) {
       try {
-        await base44.entities.Ledger.create(ledger);
+        await rcas.entities.Ledger.create(ledger);
       } catch (error) {
         console.error('Error creating system ledger:', error);
       }

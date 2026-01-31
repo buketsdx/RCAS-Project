@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { rcas } from '@/api/rcasClient';
 import { useQuery } from '@tanstack/react-query';
 import { formatCurrency } from '@/utils';
 import PageHeader from '@/components/common/PageHeader';
@@ -17,10 +17,10 @@ export default function ProfitAndLoss() {
     toDate: format(endOfYear(new Date()), 'yyyy-MM-dd')
   });
 
-  const { data: ledgers = [], isLoading: loadingLedgers } = useQuery({ queryKey: ['ledgers'], queryFn: () => base44.entities.Ledger.list() });
-  const { data: groups = [] } = useQuery({ queryKey: ['accountGroups'], queryFn: () => base44.entities.AccountGroup.list() });
-  const { data: entries = [] } = useQuery({ queryKey: ['ledgerEntries'], queryFn: () => base44.entities.VoucherLedgerEntry.list() });
-  const { data: vouchers = [] } = useQuery({ queryKey: ['vouchers'], queryFn: () => base44.entities.Voucher.list() });
+  const { data: ledgers = [], isLoading: loadingLedgers } = useQuery({ queryKey: ['ledgers'], queryFn: () => rcas.entities.Ledger.list() });
+  const { data: groups = [] } = useQuery({ queryKey: ['accountGroups'], queryFn: () => rcas.entities.AccountGroup.list() });
+  const { data: entries = [] } = useQuery({ queryKey: ['ledgerEntries'], queryFn: () => rcas.entities.VoucherLedgerEntry.list() });
+  const { data: vouchers = [] } = useQuery({ queryKey: ['vouchers'], queryFn: () => rcas.entities.Voucher.list() });
 
   const calculateLedgerBalance = (ledgerId) => {
     let balance = 0;

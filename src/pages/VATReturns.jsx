@@ -1,5 +1,5 @@
 import React from 'react';
-import { base44 } from '@/api/base44Client';
+import { rcas } from '@/api/rcasClient';
 import { useQuery } from '@tanstack/react-query';
 import { formatCurrency } from '@/utils';
 import PageHeader from '@/components/common/PageHeader';
@@ -14,12 +14,12 @@ import { Button } from "@/components/ui/button";
 export default function VATReturns() {
   const { data: vouchers = [], isLoading } = useQuery({
     queryKey: ['vouchers'],
-    queryFn: () => base44.entities.Voucher.list()
+    queryFn: () => rcas.entities.Voucher.list()
   });
 
   const { data: company } = useQuery({
     queryKey: ['companies'],
-    queryFn: () => base44.entities.Company.list(),
+    queryFn: () => rcas.entities.Company.list(),
     select: (data) => data[0]
   });
 

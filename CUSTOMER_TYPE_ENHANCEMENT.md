@@ -74,7 +74,7 @@ const createCustomerMutation = useMutation({
       email: customerData.email || '',
       is_active: true
     };
-    return base44.entities.Ledger.create(ledgerData);
+    return rcas.entities.Ledger.create(ledgerData);
   },
   onSuccess: (newLedger) => {
     // Refresh ledger data

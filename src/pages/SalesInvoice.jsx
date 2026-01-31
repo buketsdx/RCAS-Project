@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { rcas } from '@/api/rcasClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { createPageUrl, formatCurrency, generateVoucherCode } from "@/utils";
 import PageHeader from '@/components/common/PageHeader';
@@ -54,17 +54,17 @@ export default function SalesInvoice() {
 
   const { data: ledgers = [] } = useQuery({
     queryKey: ['ledgers'],
-    queryFn: () => base44.entities.Ledger.list()
+    queryFn: () => rcas.entities.Ledger.list()
   });
 
   const { data: stockItems = [] } = useQuery({
     queryKey: ['stockItems'],
-    queryFn: () => base44.entities.StockItem.list()
+    queryFn: () => rcas.entities.StockItem.list()
   });
 
   const { data: existingVoucher, isLoading } = useQuery({
     queryKey: ['voucher', voucherId],
-    queryFn: () => base44.entities.Voucher.list(),
+    queryFn: () => rcas.entities.Voucher.list(),
     enabled: !!voucherId,
     select: (data) => data.find(v => v.id === voucherId)
   });
@@ -72,7 +72,7 @@ export default function SalesInvoice() {
   const { data: existingItems = [] } = useQuery({
     queryKey: ['voucherItems', voucherId],
     queryFn: async () => {
-      const allItems = await base44.entities.VoucherItem.list();
+      const allItems = await rcas.entities.VoucherItem.list();
       return allItems.filter(item => item.voucher_id === voucherId);
     },
     enabled: !!voucherId
@@ -102,7 +102,7 @@ export default function SalesInvoice() {
   // Auto-generate voucher code on mount if creating new voucher
   useEffect(() => {
     if (!voucherId && !formData.voucher_number) {
-      generateVoucherCode(base44, 'Sales').then(code => {
+      generateVoucherCode('Sales').then(code => {
         setFormData(prev => ({
           ...prev,
           voucher_number: code
@@ -150,7 +150,7 @@ export default function SalesInvoice() {
         email: customerData.email || '',
         is_active: true
       };
-      return base44.entities.Ledger.create(ledgerData);
+      return rcas.entities.Ledger.create(ledgerData);
     },
     onSuccess: (newLedger) => {
       queryClient.invalidateQueries({ queryKey: ['ledgers'] });
@@ -202,24 +202,24 @@ export default function SalesInvoice() {
 
         let voucher;
         if (voucherId) {
-          voucher = await base44.entities.Voucher.update(voucherId, voucherData);
+          voucher = await rcas.entities.Voucher.update(voucherId, voucherData);
           // Delete old items
           for (const item of existingItems) {
             try {
-              await base44.entities.VoucherItem.delete(item.id);
+              await rcas.entities.VoucherItem.delete(item.id);
             } catch (error) {
               console.warn('Failed to delete item:', error);
             }
           }
         } else {
-          voucher = await base44.entities.Voucher.create(voucherData);
+          voucher = await rcas.entities.Voucher.create(voucherData);
         }
 
         // Create new items
         for (const item of items) {
           if (item.stock_item_id) {
             try {
-              await base44.entities.VoucherItem.create({
+              await rcas.entities.VoucherItem.create({
                 voucher_id: voucher.id,
                 stock_item_id: item.stock_item_id,
                 stock_item_name: item.stock_item_name,

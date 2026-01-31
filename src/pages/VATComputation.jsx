@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { rcas } from '@/api/rcasClient';
 import { useQuery } from '@tanstack/react-query';
 import { formatCurrency } from '@/utils';
 import PageHeader from '@/components/common/PageHeader';
@@ -19,7 +19,7 @@ export default function VATComputation() {
 
   const { data: vouchers = [], isLoading } = useQuery({
     queryKey: ['vouchers'],
-    queryFn: () => base44.entities.Voucher.list()
+    queryFn: () => rcas.entities.Voucher.list()
   });
 
   const filteredVouchers = vouchers.filter(v => v.date >= filters.fromDate && v.date <= filters.toDate);

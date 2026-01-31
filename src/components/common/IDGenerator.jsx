@@ -1,11 +1,11 @@
-import { base44 } from '@/api/base44Client';
+import { rcas } from '@/api/rcasClient';
 
 export async function generateUniqueID(entityType, prefix) {
-  const counters = await base44.entities.IDCounter.list();
+  const counters = await rcas.entities.IDCounter.list();
   let counter = counters.find(c => c.entity_type === entityType);
   
   if (!counter) {
-    counter = await base44.entities.IDCounter.create({
+    counter = await rcas.entities.IDCounter.create({
       entity_type: entityType,
       prefix: prefix,
       last_number: 0,
@@ -14,7 +14,7 @@ export async function generateUniqueID(entityType, prefix) {
   }
   
   const newNumber = (counter.last_number || 0) + 1;
-  await base44.entities.IDCounter.update(counter.id, { last_number: newNumber });
+  await rcas.entities.IDCounter.update(counter.id, { last_number: newNumber });
   
   const paddedNumber = String(newNumber).padStart(counter.padding || 5, '0');
   return `${prefix}${paddedNumber}`;

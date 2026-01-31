@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { rcas } from '@/api/rcasClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import PageHeader from '@/components/common/PageHeader';
 import DataTable from '@/components/common/DataTable';
@@ -23,11 +23,11 @@ export default function StockGroups() {
 
   const { data: groups = [], isLoading } = useQuery({
     queryKey: ['stockGroups'],
-    queryFn: () => base44.entities.StockGroup.list()
+    queryFn: () => rcas.entities.StockGroup.list()
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.StockGroup.create(data),
+    mutationFn: (data) => rcas.entities.StockGroup.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['stockGroups'] });
       toast.success('Stock group created successfully');
@@ -36,7 +36,7 @@ export default function StockGroups() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.StockGroup.update(id, data),
+    mutationFn: ({ id, data }) => rcas.entities.StockGroup.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['stockGroups'] });
       toast.success('Stock group updated successfully');
@@ -45,7 +45,7 @@ export default function StockGroups() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.StockGroup.delete(id),
+    mutationFn: (id) => rcas.entities.StockGroup.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['stockGroups'] });
       toast.success('Stock group deleted successfully');

@@ -4,7 +4,7 @@ import { createPageUrl } from "@/lib/utils";
 import { useTheme } from '@/context/ThemeContext';
 import { useCompany } from '@/context/CompanyContext';
 import { useAuth, ROLES } from '@/context/AuthContext';
-import { base44 } from '@/api/base44Client';
+import { rcas } from '@/api/rcasClient';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { KeyboardShortcutsDialog } from '@/components/KeyboardShortcutsDialog';
 import AppLogo from '@/components/ui/AppLogo';
@@ -300,7 +300,7 @@ export default function Layout() {
     // In a real app, you would verify current password and update here
     // For this demo/mock, we'll just simulate success
     try {
-      // We can use the base44 client to update the user
+      // We can use the rcas client to update the user
       // But first we need to verify current password (mock check)
       if (user.password !== passwordData.current && user.password) {
          // Note: user.password might not be available in context for security, 
@@ -309,7 +309,7 @@ export default function Layout() {
       }
       
       // Update user password via API
-      await base44.entities.User.update(user.id, { password: passwordData.new });
+      await rcas.entities.User.update(user.id, { password: passwordData.new });
       
       toast.success("Password updated successfully");
       setChangePasswordOpen(false);

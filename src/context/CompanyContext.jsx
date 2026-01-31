@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { rcas } from '@/api/rcasClient';
 import { toast } from 'sonner';
 
 const CompanyContext = createContext();
@@ -16,7 +16,7 @@ export function CompanyProvider({ children }) {
   useEffect(() => {
     const loadCompanies = async () => {
       try {
-        const data = await base44.entities.Company.list();
+        const data = await rcas.entities.Company.list();
         setCompanies(data || []);
         
         // Set first company as default if not already set

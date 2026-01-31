@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { rcas } from '@/api/rcasClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import PageHeader from '@/components/common/PageHeader';
 import DataTable from '@/components/common/DataTable';
@@ -25,11 +25,11 @@ export default function Units() {
 
   const { data: units = [], isLoading } = useQuery({
     queryKey: ['units'],
-    queryFn: () => base44.entities.Unit.list()
+    queryFn: () => rcas.entities.Unit.list()
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.Unit.create(data),
+    mutationFn: (data) => rcas.entities.Unit.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['units'] });
       toast.success('Unit created successfully');
@@ -38,7 +38,7 @@ export default function Units() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Unit.update(id, data),
+    mutationFn: ({ id, data }) => rcas.entities.Unit.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['units'] });
       toast.success('Unit updated successfully');
@@ -47,7 +47,7 @@ export default function Units() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.Unit.delete(id),
+    mutationFn: (id) => rcas.entities.Unit.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['units'] });
       toast.success('Unit deleted successfully');

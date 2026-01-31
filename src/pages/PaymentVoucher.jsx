@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { rcas } from '@/api/rcasClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { createPageUrl, generateVoucherCode } from "@/utils";
 import PageHeader from '@/components/common/PageHeader';
@@ -31,11 +31,11 @@ export default function PaymentVoucher() {
     { ledger_id: '', debit_amount: 0, credit_amount: 0 }
   ]);
 
-  const { data: ledgers = [] } = useQuery({ queryKey: ['ledgers'], queryFn: () => base44.entities.Ledger.list() });
+  const { data: ledgers = [] } = useQuery({ queryKey: ['ledgers'], queryFn: () => rcas.entities.Ledger.list() });
 
   const { data: existingVoucher, isLoading } = useQuery({
     queryKey: ['voucher', voucherId],
-    queryFn: () => base44.entities.Voucher.list(),
+    queryFn: () => rcas.entities.Voucher.list(),
     enabled: !!voucherId,
     select: (data) => data.find(v => v.id === voucherId)
   });
@@ -43,7 +43,7 @@ export default function PaymentVoucher() {
   const { data: existingEntries = [] } = useQuery({
     queryKey: ['voucherEntries', voucherId],
     queryFn: async () => {
-      const all = await base44.entities.VoucherLedgerEntry.list();
+      const all = await rcas.entities.VoucherLedgerEntry.list();
       return all.filter(e => e.voucher_id === voucherId);
     },
     enabled: !!voucherId
@@ -65,7 +65,7 @@ export default function PaymentVoucher() {
   // Auto-generate voucher code on mount if creating new voucher
   useEffect(() => {
     if (!voucherId && !formData.voucher_number) {
-      generateVoucherCode(base44, 'Payment').then(code => {
+      generateVoucherCode('Payment').then(code => {
         setFormData(prev => ({
           ...prev,
           voucher_number: code
@@ -94,15 +94,15 @@ export default function PaymentVoucher() {
 
       let voucher;
       if (voucherId) {
-        voucher = await base44.entities.Voucher.update(voucherId, voucherData);
-        for (const entry of existingEntries) await base44.entities.VoucherLedgerEntry.delete(entry.id);
+        voucher = await rcas.entities.Voucher.update(voucherId, voucherData);
+        for (const entry of existingEntries) await rcas.entities.VoucherLedgerEntry.delete(entry.id);
       } else {
-        voucher = await base44.entities.Voucher.create(voucherData);
+        voucher = await rcas.entities.Voucher.create(voucherData);
       }
 
       for (const entry of entries) {
         if (entry.ledger_id && (entry.debit_amount || entry.credit_amount)) {
-          await base44.entities.VoucherLedgerEntry.create({
+          await rcas.entities.VoucherLedgerEntry.create({
             voucher_id: voucher.id, ledger_id: entry.ledger_id, ledger_name: entry.ledger_name,
             debit_amount: parseFloat(entry.debit_amount) || 0, credit_amount: parseFloat(entry.credit_amount) || 0
           });

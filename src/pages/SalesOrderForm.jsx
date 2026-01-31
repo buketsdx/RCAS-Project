@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { rcas } from '@/api/rcasClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { createPageUrl, formatCurrency, generateVoucherCode } from "@/utils";
 import PageHeader from '@/components/common/PageHeader';
@@ -30,12 +30,12 @@ export default function SalesOrderForm() {
 
   const [items, setItems] = useState([{ stock_item_id: '', quantity: 1, rate: 0, discount_percent: 0, vat_rate: 15 }]);
 
-  const { data: ledgers = [] } = useQuery({ queryKey: ['ledgers'], queryFn: () => base44.entities.Ledger.list() });
-  const { data: stockItems = [] } = useQuery({ queryKey: ['stockItems'], queryFn: () => base44.entities.StockItem.list() });
+  const { data: ledgers = [] } = useQuery({ queryKey: ['ledgers'], queryFn: () => rcas.entities.Ledger.list() });
+  const { data: stockItems = [] } = useQuery({ queryKey: ['stockItems'], queryFn: () => rcas.entities.StockItem.list() });
 
   const { data: existingVoucher, isLoading } = useQuery({
     queryKey: ['voucher', voucherId],
-    queryFn: () => base44.entities.Voucher.list(),
+    queryFn: () => rcas.entities.Voucher.list(),
     enabled: !!voucherId,
     select: (data) => data.find(v => v.id === voucherId)
   });
@@ -43,7 +43,7 @@ export default function SalesOrderForm() {
   const { data: existingItems = [] } = useQuery({
     queryKey: ['voucherItems', voucherId],
     queryFn: async () => {
-      const all = await base44.entities.VoucherItem.list();
+      const all = await rcas.entities.VoucherItem.list();
       return all.filter(item => item.voucher_id === voucherId);
     },
     enabled: !!voucherId
@@ -67,7 +67,7 @@ export default function SalesOrderForm() {
   // Auto-generate voucher code on mount if creating new voucher
   useEffect(() => {
     if (!voucherId && !formData.voucher_number) {
-      generateVoucherCode(base44, 'Sales Order').then(code => {
+      generateVoucherCode('Sales Order').then(code => {
         setFormData(prev => ({
           ...prev,
           voucher_number: code
@@ -97,15 +97,15 @@ export default function SalesOrderForm() {
 
       let voucher;
       if (voucherId) {
-        voucher = await base44.entities.Voucher.update(voucherId, voucherData);
-        for (const item of existingItems) await base44.entities.VoucherItem.delete(item.id);
+        voucher = await rcas.entities.Voucher.update(voucherId, voucherData);
+        for (const item of existingItems) await rcas.entities.VoucherItem.delete(item.id);
       } else {
-        voucher = await base44.entities.Voucher.create(voucherData);
+        voucher = await rcas.entities.Voucher.create(voucherData);
       }
 
       for (const item of items) {
         if (item.stock_item_id) {
-          await base44.entities.VoucherItem.create({
+          await rcas.entities.VoucherItem.create({
             voucher_id: voucher.id, stock_item_id: item.stock_item_id, stock_item_name: item.stock_item_name,
             quantity: parseFloat(item.quantity) || 0, rate: parseFloat(item.rate) || 0,
             discount_percent: parseFloat(item.discount_percent) || 0,

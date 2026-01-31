@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { rcas } from '@/api/rcasClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import PageHeader from '@/components/common/PageHeader';
 import DataTable from '@/components/common/DataTable';
@@ -28,11 +28,11 @@ export default function VoucherTypes() {
 
   const { data: types = [], isLoading } = useQuery({
     queryKey: ['voucherTypes'],
-    queryFn: () => base44.entities.VoucherType.list()
+    queryFn: () => rcas.entities.VoucherType.list()
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.VoucherType.create(data),
+    mutationFn: (data) => rcas.entities.VoucherType.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['voucherTypes'] });
       toast.success('Voucher type created');
@@ -41,7 +41,7 @@ export default function VoucherTypes() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.VoucherType.update(id, data),
+    mutationFn: ({ id, data }) => rcas.entities.VoucherType.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['voucherTypes'] });
       toast.success('Voucher type updated');
@@ -50,7 +50,7 @@ export default function VoucherTypes() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.VoucherType.delete(id),
+    mutationFn: (id) => rcas.entities.VoucherType.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['voucherTypes'] });
       toast.success('Voucher type deleted');

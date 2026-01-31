@@ -100,7 +100,7 @@ const createEntity = (name) => ({
   }
 });
 
-export const base44 = {
+export const rcas = {
   auth: {
     login: async (username, password) => {
       // Simulate network delay

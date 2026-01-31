@@ -207,7 +207,7 @@ User either:
 // Fetch all ledgers
 const { data: ledgers = [] } = useQuery({
   queryKey: ['ledgers'],
-  queryFn: () => base44.entities.Ledger.list()
+  queryFn: () => rcas.entities.Ledger.list()
 });
 
 // Filter for selected customer type
@@ -226,7 +226,7 @@ const ledgerData = {
   // ... other fields
   is_active: true
 };
-await base44.entities.Ledger.create(ledgerData);
+await rcas.entities.Ledger.create(ledgerData);
 ```
 
 ## Performance Considerations

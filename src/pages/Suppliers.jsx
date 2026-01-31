@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { rcas } from '@/api/rcasClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import PageHeader from '@/components/common/PageHeader';
 import DataTable from '@/components/common/DataTable';
@@ -34,7 +34,7 @@ export default function Suppliers() {
 
   const { data: ledgers = [], isLoading } = useQuery({
     queryKey: ['ledgers'],
-    queryFn: () => base44.entities.Ledger.list()
+    queryFn: () => rcas.entities.Ledger.list()
   });
 
   // Filter suppliers - show all ledgers that have customer_type field
@@ -51,7 +51,7 @@ export default function Suppliers() {
         group_id: 'Sundry Creditors',
         is_active: true
       };
-      return base44.entities.Ledger.create(ledgerData);
+      return rcas.entities.Ledger.create(ledgerData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['ledgers'] });
@@ -64,7 +64,7 @@ export default function Suppliers() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Ledger.update(id, data),
+    mutationFn: ({ id, data }) => rcas.entities.Ledger.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['ledgers'] });
       toast.success('Supplier updated successfully');
@@ -76,7 +76,7 @@ export default function Suppliers() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.Ledger.delete(id),
+    mutationFn: (id) => rcas.entities.Ledger.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['ledgers'] });
       toast.success('Supplier deleted successfully');

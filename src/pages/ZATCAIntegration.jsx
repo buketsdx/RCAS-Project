@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { rcas } from '@/api/rcasClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { formatCurrency } from '@/utils';
 import PageHeader from '@/components/common/PageHeader';
@@ -23,17 +23,17 @@ export default function ZATCAIntegration() {
 
   const { data: vouchers = [], isLoading: loadingVouchers } = useQuery({
     queryKey: ['vouchers'],
-    queryFn: () => base44.entities.Voucher.list('-date')
+    queryFn: () => rcas.entities.Voucher.list('-date')
   });
 
   const { data: zatcaInvoices = [] } = useQuery({
     queryKey: ['zatcaInvoices'],
-    queryFn: () => base44.entities.ZATCAInvoice.list()
+    queryFn: () => rcas.entities.ZATCAInvoice.list()
   });
 
   const { data: company } = useQuery({
     queryKey: ['companies'],
-    queryFn: () => base44.entities.Company.list(),
+    queryFn: () => rcas.entities.Company.list(),
     select: (data) => data[0]
   });
 
@@ -63,13 +63,13 @@ export default function ZATCAIntegration() {
       const uuid = crypto.randomUUID();
       
       if (existingZatca) {
-        return base44.entities.ZATCAInvoice.update(existingZatca.id, {
+        return rcas.entities.ZATCAInvoice.update(existingZatca.id, {
           invoice_uuid: uuid,
           qr_code: JSON.stringify(qrData),
           submission_status: 'Pending'
         });
       } else {
-        return base44.entities.ZATCAInvoice.create({
+        return rcas.entities.ZATCAInvoice.create({
           voucher_id: voucher.id,
           invoice_uuid: uuid,
           qr_code: JSON.stringify(qrData),
@@ -92,7 +92,7 @@ export default function ZATCAIntegration() {
       // Simulate API response
       const isSuccess = Math.random() > 0.1; // 90% success rate for demo
       
-      return base44.entities.ZATCAInvoice.update(zatcaRecord.id, {
+      return rcas.entities.ZATCAInvoice.update(zatcaRecord.id, {
         submission_status: isSuccess ? 'Cleared' : 'Rejected',
         submission_date: new Date().toISOString(),
         zatca_response: isSuccess ? 'Invoice cleared successfully' : 'Validation error',

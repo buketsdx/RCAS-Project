@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { rcas } from '@/api/rcasClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { formatCurrency } from '@/utils';
 import PageHeader from '@/components/common/PageHeader';
@@ -31,23 +31,23 @@ export default function SalaryComponents() {
     default_value: '', percentage: '', formula: '', is_taxable: false, affects_gosi: false, is_mandatory: false
   });
 
-  const { data: components = [], isLoading } = useQuery({ queryKey: ['salaryComponents'], queryFn: () => base44.entities.SalaryComponent.list() });
+  const { data: components = [], isLoading } = useQuery({ queryKey: ['salaryComponents'], queryFn: () => rcas.entities.SalaryComponent.list() });
 
   const createMutation = useMutation({
     mutationFn: async (data) => {
       const componentId = await generateUniqueID('salary_component', ID_PREFIXES.SALARY_COMP);
-      return base44.entities.SalaryComponent.create({ ...data, component_id: componentId });
+      return rcas.entities.SalaryComponent.create({ ...data, component_id: componentId });
     },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['salaryComponents'] }); toast.success('Component created'); closeDialog(); }
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.SalaryComponent.update(id, data),
+    mutationFn: ({ id, data }) => rcas.entities.SalaryComponent.update(id, data),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['salaryComponents'] }); toast.success('Component updated'); closeDialog(); }
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.SalaryComponent.delete(id),
+    mutationFn: (id) => rcas.entities.SalaryComponent.delete(id),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['salaryComponents'] }); toast.success('Component deleted'); }
   });
 

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { rcas } from '@/api/rcasClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { formatCurrency, generateVoucherCode } from '@/utils';
 import PageHeader from '@/components/common/PageHeader';
@@ -21,8 +21,8 @@ export default function SalaryProcessing() {
   const [selectedMonth, setSelectedMonth] = useState(months[currentDate.getMonth()]);
   const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear());
 
-  const { data: employees = [], isLoading: loadingEmployees } = useQuery({ queryKey: ['employees'], queryFn: () => base44.entities.Employee.list() });
-  const { data: payrolls = [], isLoading: loadingPayrolls } = useQuery({ queryKey: ['payrolls'], queryFn: () => base44.entities.Payroll.list() });
+  const { data: employees = [], isLoading: loadingEmployees } = useQuery({ queryKey: ['employees'], queryFn: () => rcas.entities.Employee.list() });
+  const { data: payrolls = [], isLoading: loadingPayrolls } = useQuery({ queryKey: ['payrolls'], queryFn: () => rcas.entities.Payroll.list() });
 
   const activeEmployees = employees.filter(e => e.is_active !== false);
   const monthPayrolls = payrolls.filter(p => p.month === selectedMonth && p.year === selectedYear);
@@ -46,7 +46,7 @@ export default function SalaryProcessing() {
         const netSalary = gross - totalDeductions;
 
         // Auto-generate payroll code
-        const payrollCode = await generateVoucherCode(base44, 'Payroll');
+        const payrollCode = await generateVoucherCode('Payroll');
 
         const payrollData = {
           payroll_code: payrollCode,
@@ -68,7 +68,7 @@ export default function SalaryProcessing() {
           status: 'Processed'
         };
 
-        results.push(await base44.entities.Payroll.create(payrollData));
+        results.push(await rcas.entities.Payroll.create(payrollData));
       }
       return results;
     },
