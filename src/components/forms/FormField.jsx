@@ -61,11 +61,14 @@ export default function FormField({
           </SelectTrigger>
           <SelectContent className="z-50 bg-white text-slate-900 border border-slate-300">
             {options && options.length > 0 ? (
-              options.map((opt) => {
-                const optValue = opt.value || opt.id || opt.name;
+              options.map((opt, index) => {
+                const optValue = opt?.value || opt?.id || opt?.name || opt;
+                const optLabel = opt?.label || opt?.name || opt?.value || opt;
+                const key = optValue || `opt-${index}`;
+                
                 return (
-                  <SelectItem key={optValue} value={String(optValue)} className="hover:bg-emerald-50">
-                    {opt.label || opt.name || opt.value}
+                  <SelectItem key={key} value={String(optValue)} className="hover:bg-emerald-50">
+                    {optLabel}
                   </SelectItem>
                 );
               })

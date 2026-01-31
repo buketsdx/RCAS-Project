@@ -1,210 +1,316 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import PageHeader from '@/components/common/PageHeader';
+import DataTable from '@/components/common/DataTable';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { BarChart3, ArrowUpDown, TrendingUp, TrendingDown, Package, History } from 'lucide-react';
+import { formatCurrency, formatDate } from '@/utils';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Legend, ResponsiveContainer, Tooltip } from 'recharts';
-import { AlertTriangle, CheckCircle, Trophy, TrendingUp, Truck, ShieldCheck } from 'lucide-react';
 
 export default function SupplierComparison() {
-  const [selectedSuppliers, setSelectedSuppliers] = useState([]);
+  const [activeTab, setActiveTab] = useState('overview');
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
-  const { data: ledgers = [], isLoading } = useQuery({
+  // Fetch Suppliers
+  const { data: ledgers = [], isLoading: isLoadingLedgers } = useQuery({
     queryKey: ['ledgers'],
     queryFn: () => base44.entities.Ledger.list()
   });
 
-  // Filter for suppliers
-  const suppliers = ledgers.filter(l => l.group_id === 'Sundry Creditors' || l.customer_type === 'VAT Customer' || l.customer_type === 'General'); // Adjust filter as needed based on actual data structure
-
-  // Mock performance metrics generator (since we don't have real historical data for these yet)
-  const getSupplierMetrics = (supplier) => {
-    // Deterministic random based on ID
-    const seed = supplier.id.toString().split('').reduce((a, b) => a + b.charCodeAt(0), 0);
-    const rand = (min, max) => {
-      const x = Math.sin(seed + min) * 10000;
-      return Math.floor((x - Math.floor(x)) * (max - min + 1)) + min;
-    };
-
-    return {
-      ...supplier,
-      pricing_score: rand(60, 95),
-      delivery_reliability: rand(70, 99),
-      quality_score: rand(65, 98),
-      payment_flexibility: rand(50, 90),
-      zatca_compliance: rand(80, 100),
-      total_score: 0 // calculated later
-    };
-  };
-
-  const enrichedSuppliers = suppliers.map(getSupplierMetrics);
-
-  const handleSelect = (id) => {
-    setSelectedSuppliers(prev => {
-      if (prev.includes(id)) return prev.filter(s => s !== id);
-      if (prev.length >= 5) return prev; // Max 5 for readability
-      return [...prev, id];
-    });
-  };
-
-  const comparisonData = selectedSuppliers.map(id => {
-    const s = enrichedSuppliers.find(sup => sup.id === id);
-    if (!s) return null;
-    return s;
-  }).filter(Boolean);
-
-  // Calculate weighted score
-  const weightedSuppliers = comparisonData.map(s => ({
-    ...s,
-    total_score: (
-      (s.pricing_score * 0.3) +
-      (s.delivery_reliability * 0.25) +
-      (s.quality_score * 0.25) +
-      (s.payment_flexibility * 0.1) +
-      (s.zatca_compliance * 0.1)
-    ).toFixed(1)
-  })).sort((a, b) => b.total_score - a.total_score);
-
-  const bestSupplier = weightedSuppliers[0];
-
-  // Prepare chart data
-  const chartData = [
-    { subject: 'Pricing', fullMark: 100 },
-    { subject: 'Delivery', fullMark: 100 },
-    { subject: 'Quality', fullMark: 100 },
-    { subject: 'Flexibility', fullMark: 100 },
-    { subject: 'Compliance', fullMark: 100 },
-  ];
-
-  comparisonData.forEach(s => {
-    chartData[0][s.name] = s.pricing_score;
-    chartData[1][s.name] = s.delivery_reliability;
-    chartData[2][s.name] = s.quality_score;
-    chartData[3][s.name] = s.payment_flexibility;
-    chartData[4][s.name] = s.zatca_compliance;
+  // Fetch Transactions and Vouchers
+  const { data: vouchers = [], isLoading: isLoadingVouchers } = useQuery({
+    queryKey: ['vouchers'],
+    queryFn: () => base44.entities.Voucher.list()
   });
 
-  const colors = ['#2563eb', '#16a34a', '#dc2626', '#d97706', '#9333ea'];
+  const { data: voucherItems = [], isLoading: isLoadingVoucherItems } = useQuery({
+    queryKey: ['voucherItems'],
+    queryFn: () => base44.entities.VoucherItem.list()
+  });
+
+  const { data: stockItems = [], isLoading: isLoadingStockItems } = useQuery({
+    queryKey: ['stockItems'],
+    queryFn: () => base44.entities.StockItem.list()
+  });
+
+  // Filter for Suppliers
+  const suppliers = useMemo(() => {
+    return ledgers.filter(l => l.customer_type === 'VAT Customer' || l.customer_type === 'General');
+  }, [ledgers]);
+
+  // Overview Metrics
+  const supplierMetrics = useMemo(() => {
+    if (!suppliers.length) return [];
+    return suppliers.map(supplier => {
+      const totalPurchases = Math.random() * 50000; // Mock until real linking
+      const outstanding = parseFloat(supplier.opening_balance || 0); 
+      const transactionCount = Math.floor(Math.random() * 20); 
+      return {
+        ...supplier,
+        total_purchases: totalPurchases,
+        outstanding: outstanding,
+        transaction_count: transactionCount,
+        rating: (Math.random() * 2 + 3).toFixed(1)
+      };
+    }).sort((a, b) => b.total_purchases - a.total_purchases);
+  }, [suppliers]);
+
+  // Rate Comparison Data Processing
+  const itemRateAnalysis = useMemo(() => {
+    if (!vouchers.length || !voucherItems.length || !stockItems.length) return [];
+
+    // Filter Purchase Vouchers
+    const purchaseVouchers = vouchers.filter(v => v.voucher_type === 'Purchase');
+    const purchaseVoucherIds = new Set(purchaseVouchers.map(v => v.id));
+
+    // Group Items by Stock ID
+    const itemMap = {};
+
+    voucherItems.forEach(item => {
+      if (purchaseVoucherIds.has(item.voucher_id) && item.stock_item_id) {
+        if (!itemMap[item.stock_item_id]) {
+          const stockItem = stockItems.find(si => si.id === item.stock_item_id);
+          itemMap[item.stock_item_id] = {
+            id: item.stock_item_id,
+            name: stockItem?.name || item.stock_item_name || 'Unknown Item',
+            purchases: []
+          };
+        }
+
+        const voucher = purchaseVouchers.find(v => v.id === item.voucher_id);
+        if (voucher) {
+          itemMap[item.stock_item_id].purchases.push({
+            supplierId: voucher.party_ledger_id,
+            supplierName: voucher.party_name || 'Unknown Supplier',
+            date: voucher.date,
+            rate: parseFloat(item.rate) || 0,
+            quantity: parseFloat(item.quantity) || 0,
+            voucherNumber: voucher.voucher_number
+          });
+        }
+      }
+    });
+
+    // Calculate Statistics per Item
+    return Object.values(itemMap).map(item => {
+      const rates = item.purchases.map(p => p.rate);
+      const minRate = Math.min(...rates);
+      const maxRate = Math.max(...rates);
+      const avgRate = rates.reduce((a, b) => a + b, 0) / rates.length;
+      
+      // Find Best Supplier (Lowest Rate)
+      const bestPurchase = item.purchases.reduce((prev, curr) => curr.rate < prev.rate ? curr : prev, item.purchases[0]);
+
+      return {
+        ...item,
+        minRate,
+        maxRate,
+        avgRate,
+        purchaseCount: item.purchases.length,
+        bestSupplier: bestPurchase?.supplierName,
+        bestRate: bestPurchase?.rate,
+        lastPurchaseDate: item.purchases.sort((a,b) => new Date(b.date) - new Date(a.date))[0]?.date
+      };
+    });
+  }, [vouchers, voucherItems, stockItems]);
+
+  const overviewColumns = [
+    { 
+      header: 'Supplier Name', 
+      accessor: 'name',
+      render: (row) => (
+        <div>
+          <div className="font-medium">{row.name}</div>
+          <div className="text-xs text-slate-500">{row.customer_type}</div>
+        </div>
+      )
+    },
+    { header: 'Total Purchases', accessor: 'total_purchases', render: (row) => formatCurrency(row.total_purchases) },
+    { 
+      header: 'Outstanding Balance', 
+      accessor: 'outstanding',
+      render: (row) => (
+        <span className={row.outstanding > 0 ? "text-red-600 font-medium" : "text-slate-600"}>
+          {formatCurrency(row.outstanding)}
+        </span>
+      )
+    },
+    { header: 'Transactions', accessor: 'transaction_count', className: 'text-center' },
+    { 
+      header: 'Performance Rating', 
+      accessor: 'rating',
+      render: (row) => (
+        <div className="flex items-center gap-1">
+          <span className={`font-bold ${row.rating >= 4.5 ? 'text-emerald-600' : row.rating >= 4.0 ? 'text-blue-600' : 'text-amber-600'}`}>
+            {row.rating}
+          </span>
+          <span className="text-xs text-slate-400">/ 5.0</span>
+        </div>
+      )
+    }
+  ];
+
+  const rateColumns = [
+    { header: 'Item Name', accessor: 'name', className: 'font-medium' },
+    { header: 'Purchase Count', accessor: 'purchaseCount', className: 'text-center' },
+    { header: 'Lowest Rate', accessor: 'minRate', render: (row) => <span className="text-emerald-600 font-bold">{formatCurrency(row.minRate)}</span> },
+    { header: 'Highest Rate', accessor: 'maxRate', render: (row) => formatCurrency(row.maxRate) },
+    { header: 'Best Supplier', accessor: 'bestSupplier', render: (row) => <span className="text-sm">{row.bestSupplier}</span> },
+    { 
+      header: 'Actions', 
+      render: (row) => (
+        <Button variant="ghost" size="sm" onClick={() => { setSelectedItem(row); setDialogOpen(true); }}>
+          View History
+        </Button>
+      )
+    }
+  ];
+
+  if (isLoadingLedgers || isLoadingVouchers || isLoadingVoucherItems || isLoadingStockItems) {
+    return <LoadingSpinner text="Loading comparison data..." />;
+  }
 
   return (
     <div className="space-y-6">
       <PageHeader 
-        title="Supplier Comparison Engine" 
-        subtitle="Analyze and compare supplier performance metrics"
+        title="Supplier Comparison" 
+        subtitle="Compare supplier performance and item rates"
+        icon={BarChart3}
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Selection Panel */}
-        <Card className="lg:col-span-1">
-          <CardHeader>
-            <CardTitle>Select Suppliers</CardTitle>
-            <CardDescription>Choose up to 5 suppliers to compare</CardDescription>
-          </CardHeader>
-          <CardContent className="h-[500px] overflow-y-auto">
-            <div className="space-y-3">
-              {enrichedSuppliers.map(s => (
-                <div key={s.id} className="flex items-center space-x-2 p-2 border rounded hover:bg-slate-50">
-                  <Checkbox 
-                    id={s.id} 
-                    checked={selectedSuppliers.includes(s.id)}
-                    onCheckedChange={() => handleSelect(s.id)}
-                    disabled={!selectedSuppliers.includes(s.id) && selectedSuppliers.length >= 5}
-                  />
-                  <div className="flex-1">
-                    <label htmlFor={s.id} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer">
-                      {s.name}
-                    </label>
-                    <div className="flex gap-2 mt-1">
-                      <Badge variant="outline" className="text-[10px]">ZATCA: {s.zatca_compliance}%</Badge>
-                    </div>
-                  </div>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="overview">Performance Overview</TabsTrigger>
+          <TabsTrigger value="rates">Rate Comparison</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview" className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-slate-500">Top Supplier (Volume)</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-slate-800">
+                  {supplierMetrics[0]?.name || '-'}
                 </div>
-              ))}
-              {enrichedSuppliers.length === 0 && <p className="text-sm text-slate-500">No suppliers found.</p>}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Visualization Panel */}
-        <div className="lg:col-span-2 space-y-6">
-          {selectedSuppliers.length < 2 ? (
-            <Card className="h-full flex items-center justify-center bg-slate-50 border-dashed">
-              <div className="text-center text-slate-500">
-                <TrendingUp className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <h3 className="text-lg font-medium">Select at least 2 suppliers</h3>
-                <p>Compare performance across key metrics</p>
-              </div>
+                <p className="text-xs text-emerald-600 flex items-center mt-1">
+                  <TrendingUp className="h-3 w-3 mr-1" />
+                  Highest purchase volume
+                </p>
+              </CardContent>
             </Card>
-          ) : (
-            <>
-              {/* Radar Chart */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Performance Radar</CardTitle>
-                </CardHeader>
-                <CardContent className="h-[400px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <RadarChart cx="50%" cy="50%" outerRadius="80%" data={chartData}>
-                      <PolarGrid />
-                      <PolarAngleAxis dataKey="subject" />
-                      <PolarRadiusAxis angle={30} domain={[0, 100]} />
-                      {comparisonData.map((s, index) => (
-                        <Radar
-                          key={s.id}
-                          name={s.name}
-                          dataKey={s.name}
-                          stroke={colors[index % colors.length]}
-                          fill={colors[index % colors.length]}
-                          fillOpacity={0.3}
-                        />
-                      ))}
-                      <Legend />
-                      <Tooltip />
-                    </RadarChart>
-                  </ResponsiveContainer>
-                </CardContent>
-              </Card>
 
-              {/* Best Value Analysis */}
-              <Card className="bg-gradient-to-br from-slate-900 to-slate-800 text-white">
-                <CardHeader>
-                  <div className="flex items-center gap-2">
-                    <Trophy className="h-5 w-5 text-yellow-400" />
-                    <CardTitle className="text-white">Best Value Analysis</CardTitle>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {weightedSuppliers.map((s, idx) => (
-                      <div key={s.id} className="flex items-center justify-between p-3 rounded bg-white/5 border border-white/10">
-                        <div className="flex items-center gap-3">
-                          <div className={`flex items-center justify-center h-8 w-8 rounded-full font-bold ${idx === 0 ? 'bg-yellow-400 text-slate-900' : 'bg-slate-700 text-slate-300'}`}>
-                            {idx + 1}
-                          </div>
-                          <div>
-                            <p className="font-semibold">{s.name}</p>
-                            <p className="text-xs text-slate-400">Weighted Score: {s.total_score}/100</p>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <div className="flex gap-2 text-xs">
-                            <Badge variant="secondary" className="bg-emerald-500/20 text-emerald-300 border-0">Price {s.pricing_score}</Badge>
-                            <Badge variant="secondary" className="bg-blue-500/20 text-blue-300 border-0">Rel {s.delivery_reliability}</Badge>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </>
-          )}
-        </div>
-      </div>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-slate-500">Most Outstanding</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-slate-800">
+                  {supplierMetrics.sort((a,b) => b.outstanding - a.outstanding)[0]?.name || '-'}
+                </div>
+                <p className="text-xs text-red-600 flex items-center mt-1">
+                  <ArrowUpDown className="h-3 w-3 mr-1" />
+                  Highest pending payment
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-slate-500">Total Suppliers</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-slate-800">{suppliers.length}</div>
+                <div className="flex gap-2 mt-1">
+                  <span className="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">
+                    {suppliers.filter(s => s.customer_type === 'VAT Customer').length} VAT
+                  </span>
+                  <span className="text-xs bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded">
+                    {suppliers.filter(s => s.customer_type !== 'VAT Customer').length} General
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Supplier Performance Matrix</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <DataTable 
+                columns={overviewColumns} 
+                data={supplierMetrics}
+                searchable
+                searchKey="name"
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="rates">
+          <Card>
+            <CardHeader>
+              <CardTitle>Item Rate Analysis</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {itemRateAnalysis.length === 0 ? (
+                <div className="text-center py-12 text-slate-500">
+                  <Package className="h-12 w-12 mx-auto text-slate-300 mb-3" />
+                  <p>No purchase history available for comparison.</p>
+                </div>
+              ) : (
+                <DataTable 
+                  columns={rateColumns} 
+                  data={itemRateAnalysis}
+                  searchable
+                  searchKey="name"
+                />
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Rate History: {selectedItem?.name}</DialogTitle>
+          </DialogHeader>
+          <div className="mt-4">
+            <div className="rounded-md border">
+              <table className="w-full text-sm text-left">
+                <thead className="bg-slate-50 text-slate-500 font-medium">
+                  <tr>
+                    <th className="px-4 py-2">Date</th>
+                    <th className="px-4 py-2">Supplier</th>
+                    <th className="px-4 py-2 text-right">Rate</th>
+                    <th className="px-4 py-2 text-right">Quantity</th>
+                    <th className="px-4 py-2">Voucher</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {selectedItem?.purchases?.sort((a,b) => new Date(b.date) - new Date(a.date)).map((p, idx) => (
+                    <tr key={idx} className="hover:bg-slate-50">
+                      <td className="px-4 py-2">{formatDate(p.date)}</td>
+                      <td className="px-4 py-2 font-medium">{p.supplierName}</td>
+                      <td className="px-4 py-2 text-right font-bold text-slate-700">{formatCurrency(p.rate)}</td>
+                      <td className="px-4 py-2 text-right">{p.quantity}</td>
+                      <td className="px-4 py-2 text-xs text-slate-500">{p.voucherNumber}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

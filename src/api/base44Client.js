@@ -21,11 +21,13 @@ const storage = {
   Payroll: [],
   CustodyWallet: [],
   CustodyTransaction: [],
-  WasteRecord: [],
+  FlowerWaste: [],
   BankReconciliation: [],
   ZATCAInvoice: [],
   IDCounter: [],
-  EmployeeSalaryStrucure: []
+  EmployeeSalaryStrucure: [],
+  User: [],
+  Settings: []
 };
 
 // Initialize storage from localStorage
@@ -39,6 +41,19 @@ const initializeStorage = () => {
           storage[key] = parsedData[key];
         }
       });
+    }
+
+    // Seed default admin user if no users exist
+    if (!storage.User || storage.User.length === 0) {
+      storage.User = [{
+        id: 1,
+        username: 'admin',
+        password: '123',
+        full_name: 'System Administrator',
+        role: 'Super Admin',
+        email: 'admin@rcas.com'
+      }];
+      saveStorage();
     }
   } catch (e) {
     console.log('Failed to load from localStorage:', e);
@@ -87,17 +102,33 @@ const createEntity = (name) => ({
 
 export const base44 = {
   auth: {
-    me: async () => ({
-      id: "1",
-      full_name: "Rustam Ali",
-      role: "Admin"
-    }),
+    login: async (username, password) => {
+      // Simulate network delay
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      const user = storage.User.find(u => 
+        (u.username.toLowerCase() === username.toLowerCase() || u.email?.toLowerCase() === username.toLowerCase()) && 
+        u.password === password
+      );
+
+      if (user) {
+        const { password, ...userWithoutPassword } = user;
+        return userWithoutPassword;
+      }
+      throw new Error("Invalid username or password");
+    },
+    me: async () => {
+      // In a real app, this would validate the token
+      return null;
+    },
     logout: () => {
-      console.log("Logging out...");
-      window.location.reload();
+      return Promise.resolve();
     }
   },
   entities: {
+    // Users
+    User: createEntity('User'),
+
     // Company & Settings
     Company: createEntity('Company'),
     Branch: createEntity('Branch'),
@@ -126,10 +157,20 @@ export const base44 = {
     // Special
     CustodyWallet: createEntity('CustodyWallet'),
     CustodyTransaction: createEntity('CustodyTransaction'),
-    WasteRecord: createEntity('WasteRecord'),
+    FlowerWaste: createEntity('FlowerWaste'),
     BankReconciliation: createEntity('BankReconciliation'),
     ZATCAInvoice: createEntity('ZATCAInvoice'),
     IDCounter: createEntity('IDCounter'),
-    EmployeeSalaryStrucure: createEntity('EmployeeSalaryStrucure')
+    EmployeeSalaryStrucure: createEntity('EmployeeSalaryStrucure'),
+    Settings: createEntity('Settings')
+  },
+  integrations: {
+    Core: {
+      UploadFile: async ({ file }) => {
+        // Mock upload - return a local blob URL
+        await new Promise(resolve => setTimeout(resolve, 500));
+        return { file_url: URL.createObjectURL(file) };
+      }
+    }
   }
 };
