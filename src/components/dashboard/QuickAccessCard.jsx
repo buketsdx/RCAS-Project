@@ -14,15 +14,15 @@ export default function QuickAccessCard({ icon: Icon, title, description, href, 
 
   return (
     <Link to={createPageUrl(href)}>
-      <div className="bg-white rounded-2xl p-5 border border-slate-100 hover:shadow-lg transition-all duration-300 cursor-pointer group hover:scale-[1.02]">
+      <div className="bg-card rounded-2xl p-5 border border-border shadow-sm hover:shadow-xl hover:border-primary/20 transition-all duration-300 cursor-pointer group hover:-translate-y-1 h-full">
         <div className={cn(
-          "w-12 h-12 rounded-xl bg-gradient-to-br flex items-center justify-center mb-4 shadow-lg",
+          "w-12 h-12 rounded-xl bg-gradient-to-br flex items-center justify-center mb-4 shadow-md group-hover:shadow-lg transition-all duration-300",
           colors[color]
         )}>
-          <Icon className="h-6 w-6 text-white" />
+          <Icon className="h-6 w-6 text-white transform group-hover:scale-110 transition-transform duration-300" />
         </div>
-        <h3 className="font-semibold text-slate-800 group-hover:text-emerald-600 transition-colors">{title}</h3>
-        <p className="text-sm text-slate-500 mt-1">{description}</p>
+        <h3 className="font-semibold text-card-foreground group-hover:text-primary transition-colors">{title}</h3>
+        <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{description}</p>
       </div>
     </Link>
   );

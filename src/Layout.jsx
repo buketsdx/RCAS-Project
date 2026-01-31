@@ -192,8 +192,8 @@ function MenuItem({ item, isActive, isOpen, onToggle, collapsed, isDark }) {
           className={cn(
             "w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200",
             (isOpen || isChildActive) 
-              ? isDark ? "bg-emerald-900/40 text-emerald-300" : "bg-emerald-50 text-emerald-700"
-              : isDark ? "text-slate-400 hover:bg-slate-800/50" : "text-slate-600 hover:bg-slate-50"
+              ? "bg-primary/10 text-primary" 
+              : "text-muted-foreground hover:bg-muted hover:text-foreground"
           )}
         >
           <item.icon className="h-5 w-5 flex-shrink-0" />
@@ -205,7 +205,7 @@ function MenuItem({ item, isActive, isOpen, onToggle, collapsed, isDark }) {
           )}
         </button>
         {!collapsed && isOpen && (
-          <div className={cn("ml-4 mt-1 space-y-1 border-l-2 pl-4", isDark ? "border-slate-700" : "border-slate-100")}>
+          <div className="ml-4 mt-1 space-y-1 border-l-2 pl-4 border-border">
             {item.children.map((child) => (
               <Link
                 key={child.href}
@@ -213,11 +213,11 @@ function MenuItem({ item, isActive, isOpen, onToggle, collapsed, isDark }) {
                 className={cn(
                   "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all duration-200",
                   location.pathname.includes(child.href)
-                    ? isDark ? "bg-emerald-900/40 text-emerald-300 font-medium" : "bg-emerald-100 text-emerald-700 font-medium"
-                    : isDark ? "text-slate-400 hover:bg-slate-800/50 hover:text-slate-300" : "text-slate-500 hover:bg-slate-50 hover:text-slate-700"
+                    ? "bg-primary/10 text-primary font-medium translate-x-1" 
+                    : "text-muted-foreground hover:text-foreground hover:translate-x-1"
                 )}
               >
-                <child.icon className="h-4 w-4" />
+                <div className={cn("h-1.5 w-1.5 rounded-full transition-colors", location.pathname.includes(child.href) ? "bg-primary" : "bg-muted-foreground/30")} />
                 {child.title}
               </Link>
             ))}
@@ -233,11 +233,11 @@ function MenuItem({ item, isActive, isOpen, onToggle, collapsed, isDark }) {
       className={cn(
         "flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200",
         isActive 
-          ? isDark ? "bg-emerald-900/40 text-emerald-300" : "bg-emerald-100 text-emerald-700"
-          : isDark ? "text-slate-400 hover:bg-slate-800/50" : "text-slate-600 hover:bg-slate-50"
+          ? "bg-primary/10 text-primary shadow-sm border border-primary/10" 
+          : "text-muted-foreground hover:bg-muted hover:text-foreground"
       )}
     >
-      <item.icon className="h-5 w-5 flex-shrink-0" />
+      <item.icon className={cn("h-5 w-5 flex-shrink-0 transition-transform duration-300", isActive ? "" : "group-hover:scale-110")} />
       {!collapsed && <span>{item.title}</span>}
     </Link>
   );
@@ -320,13 +320,9 @@ export default function Layout() {
   };
 
   return (
-    <div className={cn("min-h-screen transition-colors", isDark ? "bg-slate-950" : "bg-slate-50")}>
+    <div className="min-h-screen transition-colors bg-background">
       {/* Mobile Header */}
-      <div className={cn("lg:hidden fixed top-0 left-0 right-0 h-16 border-b flex items-center justify-between px-4 z-50 transition-colors",
-        isDark 
-          ? "bg-slate-900 border-slate-800"
-          : "bg-white border-slate-200"
-      )}>
+      <div className="lg:hidden fixed top-0 left-0 right-0 h-16 border-b flex items-center justify-between px-4 z-50 transition-colors bg-card border-border">
         <AppLogo size="sm" />
         <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(!sidebarOpen)}>
           {sidebarOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
@@ -343,11 +339,10 @@ export default function Layout() {
 
       {/* Mobile Sidebar */}
       <div className={cn(
-        "lg:hidden fixed inset-y-0 left-0 w-64 border-r z-50 transform transition-transform duration-300",
-        sidebarOpen ? "translate-x-0" : "-translate-x-full",
-        isDark ? "bg-slate-900 border-slate-800" : "bg-white border-slate-200"
+        "lg:hidden fixed inset-y-0 left-0 w-64 border-r z-50 transform transition-transform duration-300 bg-card border-border",
+        sidebarOpen ? "translate-x-0" : "-translate-x-full"
       )}>
-        <div className="h-16 flex items-center justify-between px-4 border-b border-slate-200 dark:border-slate-800">
+        <div className="h-16 flex items-center justify-between px-4 border-b border-border">
           <AppLogo size="sm" />
           <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(false)}>
             <X className="h-5 w-5" />
@@ -370,23 +365,23 @@ export default function Layout() {
             ))}
           </nav>
         </ScrollArea>
-        <div className="p-4 border-t border-slate-200 dark:border-slate-800">
+        <div className="p-4 border-t border-border">
           <div className="flex items-center gap-3 mb-4 px-2">
-            <div className="h-8 w-8 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center text-emerald-700 dark:text-emerald-300">
+            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
               <UserCircle className="h-5 w-5" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate text-slate-900 dark:text-slate-100">
+              <p className="text-sm font-medium truncate text-foreground">
                 {user?.full_name || 'User'}
               </p>
-              <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+              <p className="text-xs text-muted-foreground truncate">
                 {user?.role || 'Guest'}
               </p>
             </div>
           </div>
           <Button 
             variant="ghost" 
-            className="w-full justify-start text-slate-600 dark:text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 mb-1"
+            className="w-full justify-start text-muted-foreground hover:text-primary hover:bg-primary/10 mb-1"
             onClick={() => setChangePasswordOpen(true)}
           >
             <KeyRound className="mr-2 h-4 w-4" />
@@ -394,7 +389,7 @@ export default function Layout() {
           </Button>
           <Button 
             variant="ghost" 
-            className="w-full justify-start text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+            className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10"
             onClick={handleLogout}
           >
             <LogOut className="mr-2 h-4 w-4" />
@@ -405,11 +400,10 @@ export default function Layout() {
 
       {/* Desktop Sidebar */}
       <div className={cn(
-        "hidden lg:flex fixed inset-y-0 left-0 flex-col border-r transition-all duration-300 z-30",
-        sidebarCollapsed ? "w-20" : "w-64",
-        isDark ? "bg-slate-900 border-slate-800" : "bg-white border-slate-200"
+        "hidden lg:flex fixed inset-y-0 left-0 flex-col border-r transition-all duration-300 z-30 bg-card border-border",
+        sidebarCollapsed ? "w-20" : "w-64"
       )}>
-        <div className="h-16 flex items-center justify-between px-4 border-b border-slate-200 dark:border-slate-800">
+        <div className="h-16 flex items-center justify-between px-4 border-b border-border">
           {!sidebarCollapsed && <AppLogo size="sm" />}
           <Button 
             variant="ghost" 
@@ -439,25 +433,25 @@ export default function Layout() {
           </nav>
         </ScrollArea>
 
-        <div className="p-4 border-t border-slate-200 dark:border-slate-800">
+        <div className="p-4 border-t border-border">
           {!sidebarCollapsed ? (
             <>
               <div className="flex items-center gap-3 mb-4 px-2">
-                <div className="h-8 w-8 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center text-emerald-700 dark:text-emerald-300">
+                <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
                   <UserCircle className="h-5 w-5" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate text-slate-900 dark:text-slate-100">
+                  <p className="text-sm font-medium truncate text-foreground">
                     {user?.full_name || 'User'}
                   </p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                  <p className="text-xs text-muted-foreground truncate">
                     {user?.role || 'Guest'}
                   </p>
                 </div>
               </div>
               <Button 
                 variant="ghost" 
-                className="w-full justify-start text-slate-600 dark:text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 mb-1"
+                className="w-full justify-start text-muted-foreground hover:text-primary hover:bg-primary/10 mb-1"
                 onClick={() => setChangePasswordOpen(true)}
               >
                 <KeyRound className="mr-2 h-4 w-4" />
@@ -465,7 +459,7 @@ export default function Layout() {
               </Button>
               <Button 
                 variant="ghost" 
-                className="w-full justify-start text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10"
                 onClick={handleLogout}
               >
                 <LogOut className="mr-2 h-4 w-4" />
@@ -474,13 +468,13 @@ export default function Layout() {
             </>
           ) : (
             <div className="flex flex-col items-center gap-4">
-              <div className="h-8 w-8 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center text-emerald-700 dark:text-emerald-300" title={user?.full_name}>
+              <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary" title={user?.full_name}>
                 <UserCircle className="h-5 w-5" />
               </div>
               <Button 
                 variant="ghost" 
                 size="icon"
-                className="text-slate-600 dark:text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20"
+                className="text-muted-foreground hover:text-primary hover:bg-primary/10"
                 onClick={() => setChangePasswordOpen(true)}
                 title="Change Password"
               >
@@ -489,7 +483,7 @@ export default function Layout() {
               <Button 
                 variant="ghost" 
                 size="icon"
-                className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                className="text-destructive hover:text-destructive hover:bg-destructive/10"
                 onClick={handleLogout}
                 title="Logout"
               >
@@ -506,9 +500,11 @@ export default function Layout() {
         "lg:pl-64",
         sidebarCollapsed && "lg:pl-20"
       )}>
-        <main className="min-h-screen pt-16 lg:pt-0">
-          <Outlet />
-          <div className="p-6">
+        <main className="min-h-screen pt-16 lg:pt-0 bg-background">
+          <div className="p-6 lg:p-8">
+            <Outlet />
+          </div>
+          <div className="px-6 lg:px-8 pb-6">
             <Footer />
           </div>
         </main>

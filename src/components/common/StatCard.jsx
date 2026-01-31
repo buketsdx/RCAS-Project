@@ -5,29 +5,29 @@ export default function StatCard({ title, value, subtitle, icon: Icon, trend, tr
   return (
     <div 
       className={cn(
-        "bg-white rounded-2xl p-6 shadow-sm border border-slate-100 hover:shadow-md transition-all duration-300",
-        onClick && "cursor-pointer hover:scale-[1.02]",
+        "bg-card rounded-2xl p-6 shadow-sm border border-border hover:shadow-xl hover:border-primary/20 transition-all duration-300 group",
+        onClick && "cursor-pointer hover:-translate-y-1",
         className
       )}
       onClick={onClick}
     >
       <div className="flex items-start justify-between">
         <div className="flex-1">
-          <p className="text-slate-500 text-sm font-medium">{title}</p>
-          <h3 className="text-2xl font-bold text-slate-800 mt-1">{value}</h3>
-          {subtitle && <p className="text-slate-400 text-xs mt-1">{subtitle}</p>}
+          <p className="text-muted-foreground text-sm font-medium">{title}</p>
+          <h3 className="text-2xl font-bold text-card-foreground mt-2">{value}</h3>
+          {subtitle && <p className="text-muted-foreground text-xs mt-1">{subtitle}</p>}
           {trend && (
             <div className={cn(
-              "flex items-center gap-1 mt-2 text-sm font-medium",
-              trendUp ? "text-emerald-600" : "text-red-500"
+              "flex items-center gap-1 mt-3 text-sm font-medium",
+              trendUp ? "text-emerald-600 bg-emerald-500/10 w-fit px-2 py-0.5 rounded-full" : "text-red-500 bg-red-500/10 w-fit px-2 py-0.5 rounded-full"
             )}>
               <span>{trendUp ? '↑' : '↓'} {trend}</span>
             </div>
           )}
         </div>
         {Icon && (
-          <div className="p-3 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl">
-            <Icon className="h-6 w-6 text-emerald-600" />
+          <div className="p-3.5 bg-primary/10 rounded-xl shadow-sm group-hover:shadow-md transition-all duration-300">
+            <Icon className="h-6 w-6 text-primary group-hover:scale-110 transition-transform duration-300" />
           </div>
         )}
       </div>

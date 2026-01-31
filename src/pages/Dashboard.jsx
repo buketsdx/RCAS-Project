@@ -78,12 +78,12 @@ export default function Dashboard() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800">Dashboard</h1>
-          <p className="text-slate-500">{format(new Date(), 'EEEE, dd MMMM yyyy')}</p>
+          <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
+          <p className="text-muted-foreground">{format(new Date(), 'EEEE, dd MMMM yyyy')}</p>
         </div>
-        <div className="flex items-center gap-2 px-4 py-2 bg-emerald-50 rounded-xl">
-          <Calculator className="h-5 w-5 text-emerald-600" />
-          <span className="text-sm font-medium text-emerald-700">Financial Year: {format(new Date(), 'yyyy')}</span>
+        <div className="flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-xl">
+          <Calculator className="h-5 w-5 text-primary" />
+          <span className="text-sm font-medium text-primary">Financial Year: {format(new Date(), 'yyyy')}</span>
         </div>
       </div>
 
