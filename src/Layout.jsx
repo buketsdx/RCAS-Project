@@ -48,7 +48,8 @@ import {
   UsersRound,
   Banknote,
   Coins,
-  Flower2
+  Flower2,
+  Recycle
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 
@@ -120,11 +121,12 @@ const menuItems = [
     ]
   },
   {
-    title: 'VAT Reports',
+    title: 'Taxation',
     icon: BadgePercent,
     children: [
       { title: 'VAT Computation', icon: Calculator, href: 'VATComputation' },
       { title: 'VAT Returns', icon: FileText, href: 'VATReturns' },
+      { title: 'Zakat Declaration', icon: Scale, href: 'ZakatCalc' },
     ]
   },
   {
@@ -145,7 +147,8 @@ const menuItems = [
       { title: 'New Transaction', icon: ArrowRightLeft, href: 'CustodyWalletEntry' },
     ]
   },
-  { title: 'Flower Waste', icon: Package, href: 'FlowerWasteTracker' },
+  { title: 'Waste Tracker', icon: Recycle, href: 'WasteTracker' },
+  { title: 'Supplier Comparison', icon: BarChart3, href: 'SupplierComparison' },
   { title: 'ZATCA e-Invoice', icon: FileCheck, href: 'ZATCAIntegration' },
   { title: 'Advanced Reports', icon: BarChart3, href: 'AdvancedReports' },
   { title: 'Settings', icon: Settings, href: 'AppSettings' },

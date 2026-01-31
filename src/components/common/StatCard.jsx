@@ -27,7 +27,7 @@ export default function StatCard({ title, value, subtitle, icon: Icon, trend, tr
         </div>
         {Icon && (
           <div className="p-3 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl">
-            <Icon className="h-6 w-6 text-emerald-600" />
+            {React.isValidElement(Icon) ? Icon : <Icon className="h-6 w-6 text-emerald-600" />}
           </div>
         )}
       </div>

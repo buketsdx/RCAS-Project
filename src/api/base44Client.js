@@ -21,7 +21,7 @@ const storage = {
   Payroll: [],
   CustodyWallet: [],
   CustodyTransaction: [],
-  FlowerWaste: [],
+  WasteRecord: [],
   BankReconciliation: [],
   ZATCAInvoice: [],
   IDCounter: [],
@@ -126,7 +126,7 @@ export const base44 = {
     // Special
     CustodyWallet: createEntity('CustodyWallet'),
     CustodyTransaction: createEntity('CustodyTransaction'),
-    FlowerWaste: createEntity('FlowerWaste'),
+    WasteRecord: createEntity('WasteRecord'),
     BankReconciliation: createEntity('BankReconciliation'),
     ZATCAInvoice: createEntity('ZATCAInvoice'),
     IDCounter: createEntity('IDCounter'),

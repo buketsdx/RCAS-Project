@@ -21,6 +21,7 @@ import AccountGroups from './pages/AccountGroups';
 import Ledgers from './pages/Ledgers';
 import Customers from './pages/Customers';
 import Suppliers from './pages/Suppliers';
+import SupplierComparison from './pages/SupplierComparison';
 import StockGroups from './pages/StockGroups';
 import StockItems from './pages/StockItems';
 import Units from './pages/Units';
@@ -65,6 +66,7 @@ import Outstanding from './pages/Outstanding';
 // Pages - VAT & Payroll
 import VATComputation from './pages/VATComputation';
 import VATReturns from './pages/VATReturns';
+import ZakatCalc from './pages/ZakatCalc';
 import Employees from './pages/Employees';
 import SalaryComponents from './pages/SalaryComponents';
 import SalaryProcessing from './pages/SalaryProcessing';
@@ -73,7 +75,7 @@ import PayrollReprts from './pages/PayrollReprts';
 // Pages - Special Trackers
 import CustodyWallets from './pages/CustodyWallets';
 import CustodyWalletEntry from './pages/CustodyWalletEntry';
-import FlowerWasteTracker from './pages/FlowerWasteTracker';
+import WasteTracker from './pages/WasteTracker';
 import ZATCAIntegration from './pages/ZATCAIntegration';
 import AdvancedReports from './pages/AdvancedReports';
 import AppSettings from './pages/AppSettings';
@@ -116,6 +118,7 @@ function App() {
             <Route path="Ledgers" element={<Ledgers />} />
             <Route path="Customers" element={<Customers />} />
             <Route path="Suppliers" element={<Suppliers />} />
+            <Route path="SupplierComparison" element={<SupplierComparison />} />
             <Route path="StockGroups" element={<StockGroups />} />
             <Route path="StockItems" element={<StockItems />} />
             <Route path="Units" element={<Units />} />
@@ -165,6 +168,7 @@ function App() {
             {/* --- VAT & PAYROLL --- */}
             <Route path="VATComputation" element={<VATComputation />} />
             <Route path="VATReturns" element={<VATReturns />} />
+            <Route path="ZakatCalc" element={<ZakatCalc />} />
             <Route path="Employees" element={<Employees />} />
             <Route path="SalaryComponents" element={<SalaryComponents />} />
             <Route path="SalaryProcessing" element={<SalaryProcessing />} />
@@ -174,7 +178,7 @@ function App() {
             {/* --- SPECIAL TRACKERS --- */}
             <Route path="CustodyWallets" element={<CustodyWallets />} />
             <Route path="CustodyWalletEntry" element={<CustodyWalletEntry />} /> {/*Custody Wallet Entry Route Added*/}
-            <Route path="FlowerWasteTracker" element={<FlowerWasteTracker />} />
+            <Route path="WasteTracker" element={<WasteTracker />} />
             <Route path="ZATCAIntegration" element={<ZATCAIntegration />} />
             <Route path="AdvancedReports" element={<AdvancedReports />} />
             <Route path="AppSettings" element={<AppSettings />} />

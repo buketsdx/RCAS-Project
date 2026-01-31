@@ -1,5 +1,5 @@
-export const FlowerrWaste = {
-  "name": "FlowerWaste",
+export const WasteRecord = {
+  "name": "WasteRecord",
   "type": "object",
   "properties": {
     "waste_id": {
@@ -12,6 +12,19 @@ export const FlowerrWaste = {
     },
     "branch_id": {
       "type": "string"
+    },
+    "waste_type": {
+      "type": "string",
+      "enum": [
+        "Paper",
+        "Plastic",
+        "E-Waste",
+        "Organic",
+        "Metal",
+        "Glass",
+        "Hazardous",
+        "Other"
+      ]
     },
     "stock_item_id": {
       "type": "string"
@@ -30,8 +43,8 @@ export const FlowerrWaste = {
       "enum": [
         "Expired",
         "Damaged",
-        "Wilted",
-        "Pest Infestation",
+        "Obsolescence",
+        "Production Defect",
         "Storage Issue",
         "Transportation Damage",
         "Customer Return",
@@ -44,11 +57,17 @@ export const FlowerrWaste = {
     "disposal_method": {
       "type": "string",
       "enum": [
-        "Composting",
-        "Disposal",
+        "Recycling",
+        "Landfill",
+        "Incineration",
         "Donation",
-        "Recycling"
+        "Return to Vendor",
+        "Composting"
       ]
+    },
+    "vendor_name": {
+      "type": "string",
+      "description": "Vendor associated with disposal or original purchase"
     },
     "recorded_by": {
       "type": "string"
@@ -62,7 +81,7 @@ export const FlowerrWaste = {
   },
   "required": [
     "date",
-    "stock_item_id",
+    "waste_type",
     "quantity",
     "waste_reason"
   ],
@@ -116,4 +135,4 @@ export const FlowerrWaste = {
       ]
     }
   }
-}
+};
