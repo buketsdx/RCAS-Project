@@ -143,7 +143,7 @@ export default function Dashboard() {
 
       {/* Quick Access */}
       <div>
-        <h2 className="text-lg font-semibold text-slate-800 mb-4">Quick Access</h2>
+        <h2 className="text-lg font-semibold text-foreground mb-4">Quick Access</h2>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           {quickAccessItems.map((item) => (
             <QuickAccessCard key={item.href} {...item} />
@@ -156,33 +156,33 @@ export default function Dashboard() {
         <RecentVouchers vouchers={vouchers} />
         
         {/* Monthly Overview */}
-        <div className="bg-white rounded-2xl border border-slate-100 p-6">
-          <h3 className="font-semibold text-slate-800 mb-4 flex items-center gap-2">
-            <BarChart3 className="h-5 w-5 text-emerald-600" />
+        <div className="bg-card rounded-2xl border border-border p-6 shadow-sm">
+          <h3 className="font-semibold text-card-foreground mb-4 flex items-center gap-2">
+            <BarChart3 className="h-5 w-5 text-primary" />
             Monthly Overview
           </h3>
           <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 bg-emerald-50 rounded-xl">
+            <div className="flex items-center justify-between p-4 bg-primary/10 rounded-xl">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-emerald-100 rounded-lg">
-                  <TrendingUp className="h-5 w-5 text-emerald-600" />
+                <div className="p-2 bg-primary/20 rounded-lg">
+                  <TrendingUp className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <p className="text-sm text-slate-600">Gross Profit</p>
-                  <p className="text-lg font-bold text-emerald-700">
+                  <p className="text-sm text-muted-foreground">Gross Profit</p>
+                  <p className="text-lg font-bold text-primary">
                     {formatCurrency(totalSales - totalPurchases, 'SAR')}
                   </p>
                 </div>
               </div>
             </div>
-            <div className="flex items-center justify-between p-4 bg-blue-50 rounded-xl">
+            <div className="flex items-center justify-between p-4 bg-blue-500/10 rounded-xl">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <Wallet className="h-5 w-5 text-blue-600" />
+                <div className="p-2 bg-blue-500/20 rounded-lg">
+                  <Wallet className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                 </div>
                 <div>
-                  <p className="text-sm text-slate-600">Net Cash Flow</p>
-                  <p className="text-lg font-bold text-blue-700">
+                  <p className="text-sm text-muted-foreground">Net Cash Flow</p>
+                  <p className="text-lg font-bold text-blue-700 dark:text-blue-400">
                     {formatCurrency(totalReceipts - totalPayments, 'SAR')}
                   </p>
                 </div>
