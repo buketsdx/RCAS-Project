@@ -1,4 +1,5 @@
 import React from 'react';
+import { useCompany } from '@/context/CompanyContext';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -12,6 +13,34 @@ export default function VoucherItemsTable({
   onRemoveItem,
   showVAT = true
 }) {
+  const { company } = useCompany();
+  const type = company?.type || 'General';
+
+  const getTerminology = () => {
+    switch (type) {
+      case 'Salon':
+        return {
+          item: 'Service/Product',
+          addItem: 'Add Service/Product',
+          selectItem: 'Select Service/Product'
+        };
+      case 'Restaurant':
+        return {
+          item: 'Menu Item',
+          addItem: 'Add Menu Item',
+          selectItem: 'Select Menu Item'
+        };
+      default:
+        return {
+          item: 'Item',
+          addItem: 'Add Item',
+          selectItem: 'Select item'
+        };
+    }
+  };
+
+  const terms = getTerminology();
+
   const calculateItem = (item) => {
     const qty = parseFloat(item.quantity) || 0;
     const rate = parseFloat(item.rate) || 0;
@@ -56,7 +85,7 @@ export default function VoucherItemsTable({
         <table className="w-full">
           <thead className="bg-slate-50">
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Item</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">{terms.item}</th>
               <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Qty</th>
               <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Rate</th>
               <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Disc %</th>
@@ -76,7 +105,7 @@ export default function VoucherItemsTable({
                     onValueChange={(v) => handleItemChange(index, 'stock_item_id', v)}
                   >
                     <SelectTrigger className="min-w-[200px] bg-white">
-                      <SelectValue placeholder="Select item" />
+                      <SelectValue placeholder={terms.selectItem} />
                     </SelectTrigger>
                     <SelectContent>
                       {stockItems.map(s => (
@@ -145,7 +174,7 @@ export default function VoucherItemsTable({
           className="text-emerald-600 border-emerald-200 hover:bg-emerald-50"
         >
           <Plus className="h-4 w-4 mr-2" />
-          Add Item
+          {terms.addItem}
         </Button>
       </div>
     </div>

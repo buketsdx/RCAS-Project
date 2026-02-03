@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { rcas } from '@/api/rcasClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useCompany } from '@/context/CompanyContext';
 import PageHeader from '@/components/common/PageHeader';
 import DataTable from '@/components/common/DataTable';
 import FormField from '@/components/forms/FormField';
@@ -14,6 +15,49 @@ import { toast } from "sonner";
 import { Plus, Pencil, Trash2, Users } from 'lucide-react';
 
 export default function Customers() {
+  const { company } = useCompany();
+  const type = company?.type || 'General';
+
+  const getTerminology = () => {
+    switch (type) {
+      case 'Salon':
+        return {
+          title: 'Clients',
+          subtitle: 'Manage your client list',
+          customer: 'Client',
+          add: 'Add Client',
+          edit: 'Edit Client',
+          total: 'Total Clients',
+          noItems: 'No clients found',
+          start: 'Start by adding your first client'
+        };
+      case 'Restaurant':
+        return {
+          title: 'Guests',
+          subtitle: 'Manage your guest list',
+          customer: 'Guest',
+          add: 'Add Guest',
+          edit: 'Edit Guest',
+          total: 'Total Guests',
+          noItems: 'No guests found',
+          start: 'Start by adding your first guest'
+        };
+      default:
+        return {
+          title: 'Customers',
+          subtitle: 'Manage your customer list',
+          customer: 'Customer',
+          add: 'Add Customer',
+          edit: 'Edit Customer',
+          total: 'Total Customers',
+          noItems: 'No customers found',
+          start: 'Start by adding your first customer'
+        };
+    }
+  };
+
+  const terms = getTerminology();
+
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState(null);

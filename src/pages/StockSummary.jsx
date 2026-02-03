@@ -1,6 +1,7 @@
 import React from 'react';
 import { rcas } from '@/api/rcasClient';
 import { useQuery } from '@tanstack/react-query';
+import { useCompany } from '../context/CompanyContext';
 import { formatCurrency } from '@/utils';
 import PageHeader from '@/components/common/PageHeader';
 import DataTable from '@/components/common/DataTable';
@@ -11,7 +12,36 @@ import { Badge } from "@/components/ui/badge";
 import { Package, AlertTriangle, TrendingUp } from 'lucide-react';
 
 export default function StockSummary() {
+  const { type } = useCompany();
   const { data: items = [], isLoading } = useQuery({ queryKey: ['stockItems'], queryFn: () => rcas.entities.StockItem.list() });
+
+  const getTerminology = () => {
+    switch (type) {
+      case 'Salon':
+        return {
+          title: 'Product Inventory',
+          subtitle: 'Overview of retail products and consumables',
+          item: 'Product',
+          qty: 'Quantity'
+        };
+      case 'Restaurant':
+        return {
+          title: 'Kitchen Inventory',
+          subtitle: 'Overview of ingredients and menu items',
+          item: 'Item',
+          qty: 'Stock'
+        };
+      default:
+        return {
+          title: 'Stock Summary',
+          subtitle: 'Current inventory overview',
+          item: 'Item',
+          qty: 'Stock Qty'
+        };
+    }
+  };
+
+  const terms = getTerminology();
   const { data: groups = [] } = useQuery({ queryKey: ['stockGroups'], queryFn: () => rcas.entities.StockGroup.list() });
   const { data: units = [] } = useQuery({ queryKey: ['units'], queryFn: () => rcas.entities.Unit.list() });
 
@@ -48,7 +78,7 @@ export default function StockSummary() {
       }
     },
     {
-      header: 'Stock Qty',
+      header: terms.qty,
       accessor: 'current_qty',
       render: (row) => {
         const qty = parseFloat(row.current_qty || 0);
@@ -76,17 +106,17 @@ export default function StockSummary() {
     }
   ];
 
-  if (isLoading) return <LoadingSpinner text="Loading stock summary..." />;
+  if (isLoading) return <LoadingSpinner text={`Loading ${terms.title.toLowerCase()}...`} />;
 
   return (
     <div>
-      <PageHeader title="Stock Summary" subtitle="Current inventory overview" />
+      <PageHeader title={terms.title} subtitle={terms.subtitle} />
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <StatCard title="Total Items" value={items.length} icon={Package} />
+        <StatCard title={`Total ${terms.item}s`} value={items.length} icon={Package} />
         <StatCard title="Total Value" value={formatCurrency(totalValue, 'SAR')} icon={TrendingUp} />
-        <StatCard title="Low Stock" value={lowStockItems.length} icon={AlertTriangle} className={lowStockItems.length > 0 ? 'border-yellow-200' : ''} />
-        <StatCard title="Out of Stock" value={outOfStockItems.length} icon={AlertTriangle} className={outOfStockItems.length > 0 ? 'border-red-200' : ''} />
+        <StatCard title={`Low ${terms.qty}`} value={lowStockItems.length} icon={AlertTriangle} className={lowStockItems.length > 0 ? 'border-yellow-200' : ''} />
+        <StatCard title={`Out of ${terms.qty}`} value={outOfStockItems.length} icon={AlertTriangle} className={outOfStockItems.length > 0 ? 'border-red-200' : ''} />
       </div>
 
       <DataTable columns={columns} data={items} />

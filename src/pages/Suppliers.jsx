@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { rcas } from '@/api/rcasClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useCompany } from '../context/CompanyContext';
 import PageHeader from '@/components/common/PageHeader';
 import DataTable from '@/components/common/DataTable';
 import FormField from '@/components/forms/FormField';
@@ -14,7 +15,36 @@ import { toast } from "sonner";
 import { Plus, Pencil, Trash2, Truck } from 'lucide-react';
 
 export default function Suppliers() {
+  const { type } = useCompany();
   const queryClient = useQueryClient();
+
+  const getTerminology = () => {
+    switch (type) {
+      case 'Salon':
+      case 'Restaurant':
+        return {
+          title: 'Vendors',
+          subtitle: 'Manage your vendors and suppliers',
+          entity: 'Vendor',
+          add: 'Add Vendor',
+          edit: 'Edit Vendor',
+          noItems: 'No vendors found',
+          start: 'Start by adding your first vendor'
+        };
+      default:
+        return {
+          title: 'Suppliers',
+          subtitle: 'Manage your supplier list',
+          entity: 'Supplier',
+          add: 'Add Supplier',
+          edit: 'Edit Supplier',
+          noItems: 'No suppliers found',
+          start: 'Start by adding your first supplier'
+        };
+    }
+  };
+
+  const terms = getTerminology();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState(null);
   const [supplierTypeFilter, setSupplierTypeFilter] = useState('All');
@@ -55,11 +85,11 @@ export default function Suppliers() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['ledgers'] });
-      toast.success('Supplier created successfully');
+      toast.success(`${terms.entity} created successfully`);
       closeDialog();
     },
     onError: (error) => {
-      toast.error(error.message || 'Failed to create supplier');
+      toast.error(error.message || `Failed to create ${terms.entity.toLowerCase()}`);
     }
   });
 
@@ -67,11 +97,11 @@ export default function Suppliers() {
     mutationFn: ({ id, data }) => rcas.entities.Ledger.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['ledgers'] });
-      toast.success('Supplier updated successfully');
+      toast.success(`${terms.entity} updated successfully`);
       closeDialog();
     },
     onError: (error) => {
-      toast.error(error.message || 'Failed to update supplier');
+      toast.error(error.message || `Failed to update ${terms.entity.toLowerCase()}`);
     }
   });
 
@@ -79,10 +109,10 @@ export default function Suppliers() {
     mutationFn: (id) => rcas.entities.Ledger.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['ledgers'] });
-      toast.success('Supplier deleted successfully');
+      toast.success(`${terms.entity} deleted successfully`);
     },
     onError: (error) => {
-      toast.error(error.message || 'Failed to delete supplier');
+      toast.error(error.message || `Failed to delete ${terms.entity.toLowerCase()}`);
     }
   });
 
@@ -134,7 +164,7 @@ export default function Suppliers() {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!formData.name.trim()) {
-      toast.error('Supplier name is required');
+      toast.error(`${terms.entity} name is required`);
       return;
     }
 
@@ -234,13 +264,13 @@ export default function Suppliers() {
     }
   ];
 
-  if (isLoading) return <LoadingSpinner text="Loading suppliers..." />;
+  if (isLoading) return <LoadingSpinner text={`Loading ${terms.entity.toLowerCase()}s...`} />;
 
   return (
     <div className="max-w-7xl mx-auto">
       <PageHeader
-        title="Suppliers"
-        subtitle="Manage your supplier list"
+        title={terms.title}
+        subtitle={terms.subtitle}
         icon={Truck}
       />
 
@@ -251,7 +281,7 @@ export default function Suppliers() {
             <CardContent className="pt-6">
               <div className="text-center">
                 <div className="text-3xl font-bold text-slate-800">{suppliers.length}</div>
-                <p className="text-sm text-slate-600 mt-1">Total Suppliers</p>
+                <p className="text-sm text-slate-600 mt-1">Total {terms.title}</p>
               </div>
             </CardContent>
           </Card>
@@ -259,7 +289,7 @@ export default function Suppliers() {
             <CardContent className="pt-6">
               <div className="text-center">
                 <div className="text-3xl font-bold text-blue-600">{suppliers.filter(s => s.customer_type === 'VAT Customer').length}</div>
-                <p className="text-sm text-slate-600 mt-1">VAT Suppliers</p>
+                <p className="text-sm text-slate-600 mt-1">VAT {terms.title}</p>
               </div>
             </CardContent>
           </Card>
@@ -267,7 +297,7 @@ export default function Suppliers() {
             <CardContent className="pt-6">
               <div className="text-center">
                 <div className="text-3xl font-bold text-slate-600">{suppliers.filter(s => s.customer_type !== 'VAT Customer').length}</div>
-                <p className="text-sm text-slate-600 mt-1">General Suppliers</p>
+                <p className="text-sm text-slate-600 mt-1">General {terms.title}</p>
               </div>
             </CardContent>
           </Card>
@@ -277,13 +307,13 @@ export default function Suppliers() {
         <Card>
           <CardHeader>
             <div className="flex justify-between items-center">
-              <CardTitle>Supplier List</CardTitle>
+              <CardTitle>{terms.entity} List</CardTitle>
               <Button
                 onClick={() => openDialog()}
                 className="bg-blue-600 hover:bg-blue-700"
               >
                 <Plus className="h-4 w-4 mr-2" />
-                Add Supplier
+                {terms.add}
               </Button>
             </div>
           </CardHeader>
@@ -299,7 +329,7 @@ export default function Suppliers() {
                     onClick={() => setSupplierTypeFilter(type)}
                     className={supplierTypeFilter === type ? 'bg-blue-600 hover:bg-blue-700' : ''}
                   >
-                    {type === 'VAT Customer' ? 'VAT Supplier' : type}
+                    {type === 'VAT Customer' ? `VAT ${terms.entity}` : type}
                   </Button>
                 ))}
               </div>
@@ -310,8 +340,8 @@ export default function Suppliers() {
         {/* Data Table */}
         {suppliers.length === 0 ? (
           <EmptyState
-            title="No suppliers found"
-            description="Start by adding your first supplier"
+            title={terms.noItems}
+            description={terms.start}
             icon={Truck}
           />
         ) : (
@@ -327,25 +357,25 @@ export default function Suppliers() {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>{editingSupplier ? 'Edit Supplier' : 'Add New Supplier'}</DialogTitle>
+            <DialogTitle>{editingSupplier ? terms.edit : terms.add}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <FormField
-              label="Supplier Name *"
+              label={`${terms.entity} Name *`}
               name="name"
               value={formData.name}
               onChange={handleChange}
-              placeholder="Enter supplier name"
+              placeholder={`Enter ${terms.entity.toLowerCase()} name`}
               required
             />
             <FormField
-              label="Supplier Type"
+              label={`${terms.entity} Type`}
               name="customer_type"
               type="select"
               value={formData.customer_type}
               onChange={handleChange}
               options={[
-                { value: 'VAT Customer', label: 'VAT Supplier' },
+                { value: 'VAT Customer', label: `VAT ${terms.entity}` },
                 { value: 'General', label: 'General (Non-VAT)' }
               ]}
             />

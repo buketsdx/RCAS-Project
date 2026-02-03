@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { rcas } from '@/api/rcasClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useCompany } from '@/context/CompanyContext';
 import PageHeader from '@/components/common/PageHeader';
 import DataTable from '@/components/common/DataTable';
 import FormField from '@/components/forms/FormField';
@@ -12,6 +13,55 @@ import { toast } from "sonner";
 import { Package, Plus, Pencil, Trash2 } from 'lucide-react';
 
 export default function StockGroups() {
+  const { company } = useCompany();
+  const type = company?.type || 'General';
+
+  const getTerminology = () => {
+    switch (type) {
+      case 'Salon':
+        return {
+          title: 'Categories',
+          subtitle: 'Manage service categories',
+          add: 'Add Category',
+          name: 'Category Name',
+          parent: 'Parent Category',
+          noItems: 'No Categories',
+          noItemsDesc: 'Create categories to organize your services',
+          addFirst: 'Add First Category',
+          edit: 'Edit Category',
+          create: 'Create Category'
+        };
+      case 'Restaurant':
+        return {
+          title: 'Menu Categories',
+          subtitle: 'Manage menu categories',
+          add: 'Add Menu Category',
+          name: 'Category Name',
+          parent: 'Parent Category',
+          noItems: 'No Menu Categories',
+          noItemsDesc: 'Create categories to organize your menu',
+          addFirst: 'Add First Category',
+          edit: 'Edit Menu Category',
+          create: 'Create Menu Category'
+        };
+      default:
+        return {
+          title: 'Stock Groups',
+          subtitle: 'Manage your inventory categories',
+          add: 'Add Group',
+          name: 'Group Name',
+          parent: 'Parent Group',
+          noItems: 'No Stock Groups',
+          noItemsDesc: 'Create stock groups to organize your inventory',
+          addFirst: 'Add First Group',
+          edit: 'Edit Stock Group',
+          create: 'Create Stock Group'
+        };
+    }
+  };
+
+  const terms = getTerminology();
+
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingGroup, setEditingGroup] = useState(null);
@@ -92,7 +142,7 @@ export default function StockGroups() {
 
   const columns = [
     {
-      header: 'Group Name',
+      header: terms.name,
       accessor: 'name',
       render: (row) => (
         <div>
@@ -102,7 +152,7 @@ export default function StockGroups() {
       )
     },
     {
-      header: 'Parent Group',
+      header: terms.parent,
       accessor: 'parent_group_id',
       render: (row) => {
         const parent = groups.find(g => g.id === row.parent_group_id);
@@ -140,17 +190,17 @@ export default function StockGroups() {
   return (
     <div>
       <PageHeader 
-        title="Stock Groups" 
-        subtitle="Manage your inventory categories"
-        primaryAction={{ label: 'Add Group', onClick: () => openDialog() }}
+        title={terms.title}
+        subtitle={terms.subtitle}
+        primaryAction={{ label: terms.add, onClick: () => openDialog() }}
       />
 
       {groups.length === 0 ? (
         <EmptyState
           icon={Package}
-          title="No Stock Groups"
-          description="Create stock groups to organize your inventory"
-          action={{ label: 'Add First Group', onClick: () => openDialog() }}
+          title={terms.noItems}
+          description={terms.noItemsDesc}
+          action={{ label: terms.addFirst, onClick: () => openDialog() }}
         />
       ) : (
         <DataTable columns={columns} data={groups} />
@@ -159,25 +209,25 @@ export default function StockGroups() {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>{editingGroup ? 'Edit Stock Group' : 'Create Stock Group'}</DialogTitle>
+            <DialogTitle>{editingGroup ? terms.edit : terms.create}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit}>
             <div className="space-y-4 py-4">
               <FormField
-                label="Group Name (English)"
+                label={`${terms.name} (English)`}
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
                 required
               />
               <FormField
-                label="Group Name (Arabic)"
+                label={`${terms.name} (Arabic)`}
                 name="name_arabic"
                 value={formData.name_arabic}
                 onChange={handleChange}
               />
               <FormField
-                label="Parent Group"
+                label={terms.parent}
                 name="parent_group_id"
                 type="select"
                 value={formData.parent_group_id}

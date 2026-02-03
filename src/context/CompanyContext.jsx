@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { rcas } from '@/api/rcasClient';
 import { toast } from 'sonner';
+import { useQuery } from '@tanstack/react-query';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,60 +11,49 @@ const CompanyContext = createContext();
 
 export function CompanyProvider({ children }) {
   const { user } = useAuth();
-  const [companies, setCompanies] = useState([]);
   const [selectedCompanyId, setSelectedCompanyId] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');
   const [pendingCompanyId, setPendingCompanyId] = useState(null);
 
-  // Load companies on mount
-  useEffect(() => {
-    const loadCompanies = async () => {
-      try {
-        const allCompanies = await rcas.entities.Company.list();
-        
-        // Filter companies based on user access
-        let accessibleCompanies = [];
-        if (user?.role === 'Super Admin') {
-          accessibleCompanies = allCompanies;
-        } else if (user?.allowed_companies) {
-          accessibleCompanies = allCompanies.filter(c => user.allowed_companies.includes(c.id));
-        } else {
-          // If no allowed_companies defined but not super admin, maybe allow none? 
-          // Or for backward compatibility, allow all? 
-          // Strict mode: allow none. But let's check if user is creator?
-          // For now, if user has NO allowed_companies array (legacy users), we might want to allow access or migrate them.
-          // Let's assume strict:
-          accessibleCompanies = [];
-        }
+  const { data: allCompanies = [], isLoading } = useQuery({
+    queryKey: ['companies'],
+    queryFn: () => rcas.entities.Company.list(),
+    enabled: !!user,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
 
-        // Fix for demo: If user is admin but has no array, give access to all (Legacy fix)
-        if (user && !user.allowed_companies && user.role === 'Admin') {
-           accessibleCompanies = allCompanies;
-        }
-
-        setCompanies(accessibleCompanies || []);
-        
-        // Set first company as default if not already set
-        if (accessibleCompanies?.length > 0 && !selectedCompanyId) {
-          const defaultId = accessibleCompanies[0].id;
-          setSelectedCompanyId(defaultId);
-          rcas.setContext({ companyId: defaultId });
-        }
-      } catch (error) {
-        console.error('Failed to load companies:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    if (user) {
-      loadCompanies();
+  // Filter companies based on user access
+  const companies = React.useMemo(() => {
+    if (!user) return [];
+    
+    let accessibleCompanies = [];
+    if (user.role === 'Super Admin') {
+      accessibleCompanies = allCompanies;
+    } else if (user.allowed_companies && user.allowed_companies.length > 0) {
+      accessibleCompanies = allCompanies.filter(c => user.allowed_companies.includes(c.id));
     } else {
-      setIsLoading(false);
+      // Fix for demo: If user is admin/owner but has no array, give access to all (Legacy fix)
+      if (user.role === 'Admin' || user.role === 'Owner') {
+         accessibleCompanies = allCompanies;
+      } else {
+         accessibleCompanies = [];
+      }
     }
-  }, [user]);
+    return accessibleCompanies;
+  }, [user, allCompanies]);
+
+  // Set first company as default if not already set
+  useEffect(() => {
+    if (companies.length > 0 && !selectedCompanyId) {
+      // Check if we have a stored preference
+      const storedId = localStorage.getItem('rcas_selected_company_id');
+      const companyToSelect = companies.find(c => c.id === storedId) || companies[0];
+      
+      setSelectedCompanyId(companyToSelect.id);
+      rcas.setContext({ companyId: companyToSelect.id });
+    }
+  }, [companies, selectedCompanyId]);
 
   const currentCompany = companies.find(c => c.id === selectedCompanyId);
 
@@ -80,6 +70,7 @@ export function CompanyProvider({ children }) {
     } else {
       // No password, switch directly
       setSelectedCompanyId(companyId);
+      localStorage.setItem('rcas_selected_company_id', companyId);
       rcas.setContext({ companyId });
       toast.success(`Switched to ${company.name}`);
     }
@@ -90,6 +81,7 @@ export function CompanyProvider({ children }) {
     
     if (passwordInput === company.password) {
       setSelectedCompanyId(pendingCompanyId);
+      localStorage.setItem('rcas_selected_company_id', pendingCompanyId);
       rcas.setContext({ companyId: pendingCompanyId });
       setShowPasswordDialog(false);
       setPasswordInput('');
@@ -118,6 +110,27 @@ export function CompanyProvider({ children }) {
       }}
     >
       {children}
+      
+      <Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Enter Company Password</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <Input
+              type="password"
+              placeholder="Enter password"
+              value={passwordInput}
+              onChange={(e) => setPasswordInput(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && verifyPassword()}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowPasswordDialog(false)}>Cancel</Button>
+            <Button onClick={verifyPassword}>Unlock</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </CompanyContext.Provider>
   );
 }

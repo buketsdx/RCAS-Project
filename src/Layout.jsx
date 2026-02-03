@@ -13,6 +13,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { toast } from 'sonner';
 import {
   LayoutDashboard,
@@ -50,7 +58,8 @@ import {
   Banknote,
   Recycle,
   UserCircle,
-  Store
+  Store,
+  Check
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 
@@ -256,6 +265,103 @@ export default function Layout() {
 
   const selectedCompany = companies.find(c => c.id === selectedCompanyId);
 
+  const filteredMenuItems = React.useMemo(() => {
+    const type = selectedCompany?.business_type;
+    let items = [...menuItems]; // Create a shallow copy of the array
+
+    if (type === 'Salon') {
+      items = items.map(item => {
+        if (item.title === 'Inventory') {
+          return { ...item, title: 'Products & Services' };
+        }
+        if (item.title === 'Transactions') {
+          return {
+            ...item,
+            children: item.children.map(child => {
+              if (child.title === 'Sales') return { ...child, title: 'Appointments / Billing', icon: UsersRound };
+              return child;
+            })
+          };
+        }
+        if (item.title === 'Masters') {
+          return {
+            ...item,
+            children: item.children.map(child => {
+              if (child.title === 'Stock Items') return { ...child, title: 'Services & Products', icon: Package };
+              if (child.title === 'Stock Groups') return { ...child, title: 'Categories', icon: FolderTree };
+              if (child.title === 'Suppliers') return { ...child, title: 'Vendors', icon: Truck };
+              return child;
+            })
+          };
+        }
+        if (item.title === 'Payroll') {
+          return {
+            ...item,
+            children: item.children.map(child => {
+              if (child.title === 'Employees') return { ...child, title: 'Stylists & Staff', icon: Users };
+              return child;
+            })
+          };
+        }
+        return item;
+      });
+    } else if (type === 'Restaurant') {
+      items = items.map(item => {
+        if (item.title === 'Inventory') {
+          return { ...item, title: 'Kitchen Inventory' };
+        }
+        if (item.title === 'Transactions') {
+          return {
+            ...item,
+            children: item.children.map(child => {
+              if (child.title === 'Sales') return { ...child, title: 'Orders / Billing', icon: ClipboardList };
+              return child;
+            })
+          };
+        }
+        if (item.title === 'Masters') {
+          return {
+            ...item,
+            children: item.children.map(child => {
+              if (child.title === 'Stock Items') return { ...child, title: 'Menu Items & Ingredients', icon: Package };
+              if (child.title === 'Stock Groups') return { ...child, title: 'Menu Categories', icon: FolderTree };
+              if (child.title === 'Suppliers') return { ...child, title: 'Vendors', icon: Truck };
+              return child;
+            })
+          };
+        }
+        if (item.title === 'Payroll') {
+          return {
+            ...item,
+            children: item.children.map(child => {
+              if (child.title === 'Employees') return { ...child, title: 'Kitchen & Service Staff', icon: Users };
+              return child;
+            })
+          };
+        }
+        return item;
+      });
+    } else if (type === 'Service') {
+       items = items.map(item => {
+        if (item.title === 'Inventory') {
+          return { ...item, title: 'Service Items' };
+        }
+        if (item.title === 'Masters') {
+          return {
+            ...item,
+            children: item.children.map(child => {
+              if (child.title === 'Stock Items') return { ...child, title: 'Service List', icon: Package };
+              return child;
+            })
+          };
+        }
+        return item;
+      });
+    }
+
+    return items;
+  }, [selectedCompany?.business_type]);
+
   // Keyboard shortcuts for data entry
   useKeyboardShortcuts({
     onHelp: () => setShowShortcutsDialog(true),
@@ -336,7 +442,7 @@ export default function Layout() {
         </div>
         <ScrollArea className="flex-1 py-4">
           <nav className="space-y-1 px-3">
-            {menuItems
+            {filteredMenuItems
               .filter(item => !item.roles || hasRole(item.roles))
               .map((item) => (
               <MenuItem
@@ -395,7 +501,7 @@ export default function Layout() {
 
         <ScrollArea className="flex-1 py-4">
           <nav className={cn("space-y-1", sidebarCollapsed ? "px-1" : "px-3")}>
-            {menuItems
+            {filteredMenuItems
               .filter(item => !item.roles || hasRole(item.roles))
               .map((item) => (
               <MenuItem
@@ -464,10 +570,42 @@ export default function Layout() {
         {/* Desktop Header */}
         <header className="hidden lg:flex h-16 items-center justify-between px-8 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-20">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-primary/10 rounded-lg">
-              <Building2 className="h-5 w-5 text-primary" />
-            </div>
-            <span className="font-bold text-lg tracking-tight">{selectedCompany?.name || 'Select Company'}</span>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="flex items-center gap-3 h-auto p-2 -ml-2 hover:bg-muted group">
+                  <div className="p-2 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
+                    <Building2 className="h-5 w-5 text-primary" />
+                  </div>
+                  <div className="flex flex-col items-start">
+                    <span className="font-bold text-lg tracking-tight leading-none">{selectedCompany?.name || 'Select Company'}</span>
+                    <span className="text-xs text-muted-foreground mt-1 group-hover:text-primary transition-colors">Switch Company</span>
+                  </div>
+                  <ChevronDown className="h-4 w-4 text-muted-foreground ml-2 group-hover:text-primary transition-colors" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-64">
+                <DropdownMenuLabel>My Companies</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {companies.map(company => (
+                  <DropdownMenuItem 
+                    key={company.id} 
+                    onClick={() => setSelectedCompanyId(company.id)}
+                    className="cursor-pointer"
+                  >
+                    <span className={cn("flex-1", selectedCompanyId === company.id && "font-bold")}>{company.name}</span>
+                    {selectedCompanyId === company.id && <Check className="h-4 w-4 ml-2 text-primary" />}
+                  </DropdownMenuItem>
+                ))}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem 
+                  onClick={() => navigate('/CompanyInfo')}
+                  className="cursor-pointer text-muted-foreground hover:text-primary"
+                >
+                  <Settings className="h-4 w-4 mr-2" />
+                  Manage Companies
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </header>
 

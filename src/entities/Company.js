@@ -32,6 +32,11 @@ export const Company = {
     "website": {
       "type": "string"
     },
+    "business_type": {
+      "type": "string",
+      "description": "Type of business (e.g., Retail, Salon, Restaurant)",
+      "default": "Retail"
+    },
     "vat_number": {
       "type": "string",
       "description": "VAT Registration Number"

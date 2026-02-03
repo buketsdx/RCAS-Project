@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { rcas } from '@/api/rcasClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useCompany } from '@/context/CompanyContext';
 import { formatCurrency } from '@/utils';
 import PageHeader from '@/components/common/PageHeader';
 import DataTable from '@/components/common/DataTable';
@@ -15,6 +16,52 @@ import { toast } from "sonner";
 import { Package, Plus, Pencil, Trash2, Upload } from 'lucide-react';
 
 export default function StockItems() {
+  const { company } = useCompany();
+  const type = company?.type || 'General';
+
+  const getTerminology = () => {
+    switch (type) {
+      case 'Salon':
+        return {
+          title: 'Services & Products',
+          subtitle: 'Manage your services and products',
+          addItem: 'Add Service/Product',
+          item: 'Service/Product',
+          group: 'Category',
+          itemName: 'Service Name',
+          noItems: 'No Services/Products',
+          noItemsDesc: 'Create services to manage your salon',
+          addFirst: 'Add First Service'
+        };
+      case 'Restaurant':
+        return {
+          title: 'Menu Items & Ingredients',
+          subtitle: 'Manage menu items and ingredients',
+          addItem: 'Add Menu Item',
+          item: 'Menu Item',
+          group: 'Menu Category',
+          itemName: 'Item Name',
+          noItems: 'No Menu Items',
+          noItemsDesc: 'Create menu items to manage your restaurant',
+          addFirst: 'Add First Item'
+        };
+      default:
+        return {
+          title: 'Stock Items',
+          subtitle: 'Manage your inventory items',
+          addItem: 'Add Item',
+          item: 'Item',
+          group: 'Group',
+          itemName: 'Item Name',
+          noItems: 'No Stock Items',
+          noItemsDesc: 'Create stock items to manage your inventory',
+          addFirst: 'Add First Item'
+        };
+    }
+  };
+
+  const terms = getTerminology();
+
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
@@ -170,7 +217,7 @@ export default function StockItems() {
 
   const columns = [
     {
-      header: 'Item',
+      header: terms.item,
       accessor: 'name',
       render: (row) => (
         <div className="flex items-center gap-3">
@@ -189,7 +236,7 @@ export default function StockItems() {
       )
     },
     {
-      header: 'Group',
+      header: terms.group,
       accessor: 'group_id',
       render: (row) => {
         const group = groups.find(g => g.id === row.group_id);
@@ -245,17 +292,17 @@ export default function StockItems() {
   return (
     <div>
       <PageHeader 
-        title="Stock Items" 
-        subtitle="Manage your inventory items"
-        primaryAction={{ label: 'Add Item', onClick: () => openDialog() }}
+        title={terms.title}
+        subtitle={terms.subtitle}
+        primaryAction={{ label: terms.addItem, onClick: () => openDialog() }}
       />
 
       {items.length === 0 ? (
         <EmptyState
           icon={Package}
-          title="No Stock Items"
-          description="Create stock items to manage your inventory"
-          action={{ label: 'Add First Item', onClick: () => openDialog() }}
+          title={terms.noItems}
+          description={terms.noItemsDesc}
+          action={{ label: terms.addFirst, onClick: () => openDialog() }}
         />
       ) : (
         <DataTable columns={columns} data={items} />
@@ -264,7 +311,7 @@ export default function StockItems() {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editingItem ? 'Edit Stock Item' : 'Create Stock Item'}</DialogTitle>
+            <DialogTitle>{editingItem ? `Edit ${terms.item}` : `Create ${terms.item}`}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit}>
             <Tabs defaultValue="basic" className="w-full">
@@ -278,14 +325,14 @@ export default function StockItems() {
               <TabsContent value="basic" className="space-y-4 mt-4">
                 <div className="grid grid-cols-2 gap-4">
                   <FormField
-                    label="Item Name (English)"
+                    label={`${terms.itemName} (English)`}
                     name="name"
                     value={formData.name}
                     onChange={handleChange}
                     required
                   />
                   <FormField
-                    label="Item Name (Arabic)"
+                    label={`${terms.itemName} (Arabic)`}
                     name="name_arabic"
                     value={formData.name_arabic}
                     onChange={handleChange}
@@ -313,7 +360,7 @@ export default function StockItems() {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <FormField
-                    label="Stock Group"
+                    label={terms.group}
                     name="group_id"
                     type="select"
                     value={formData.group_id}
@@ -339,7 +386,7 @@ export default function StockItems() {
                   rows={2}
                 />
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-700">Item Image</label>
+                  <label className="text-sm font-medium text-slate-700">{terms.item} Image</label>
                   <div className="flex items-center gap-4">
                     {formData.image_url && (
                       <img 

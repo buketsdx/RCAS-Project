@@ -2,6 +2,7 @@ import React from 'react';
 import { rcas } from '@/api/rcasClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
+import { useCompany } from '@/context/CompanyContext';
 import { createPageUrl, formatCurrency } from "@/utils";
 import PageHeader from '@/components/common/PageHeader';
 import DataTable from '@/components/common/DataTable';
@@ -14,6 +15,40 @@ import { format } from 'date-fns';
 import { ShoppingCart, Eye, Printer, Trash2 } from 'lucide-react';
 
 export default function Purchase() {
+  const { company } = useCompany();
+  const type = company?.type || 'General';
+
+  const getTerminology = () => {
+    switch (type) {
+      case 'Salon':
+        return {
+          title: 'Stock Purchases',
+          subtitle: 'Manage your stock purchases',
+          newInvoice: 'Purchase Stock',
+          noInvoices: 'No Stock Purchases',
+          createFirst: 'Record First Purchase'
+        };
+      case 'Restaurant':
+        return {
+          title: 'Ingredient Purchases',
+          subtitle: 'Manage your ingredient purchases',
+          newInvoice: 'Purchase Ingredients',
+          noInvoices: 'No Ingredient Purchases',
+          createFirst: 'Record First Purchase'
+        };
+      default:
+        return {
+          title: 'Purchase Invoices',
+          subtitle: 'Manage your purchase transactions',
+          newInvoice: 'New Invoice',
+          noInvoices: 'No Purchase Invoices',
+          createFirst: 'Create Invoice'
+        };
+    }
+  };
+
+  const terms = getTerminology();
+
   const queryClient = useQueryClient();
 
   const { data: vouchers = [], isLoading } = useQuery({
@@ -53,9 +88,9 @@ export default function Purchase() {
 
   return (
     <div>
-      <PageHeader title="Purchase Invoices" subtitle="Manage your purchase transactions" primaryAction={{ label: 'New Invoice', onClick: () => window.location.href = createPageUrl('PurchaseInvoice') }} />
+      <PageHeader title={terms.title} subtitle={terms.subtitle} primaryAction={{ label: terms.newInvoice, onClick: () => window.location.href = createPageUrl('PurchaseInvoice') }} />
       {vouchers.length === 0 ? (
-        <EmptyState icon={ShoppingCart} title="No Purchase Invoices" description="Create your first purchase invoice" action={{ label: 'Create Invoice', onClick: () => window.location.href = createPageUrl('PurchaseInvoice') }} />
+        <EmptyState icon={ShoppingCart} title={terms.noInvoices} description={terms.createFirst} action={{ label: terms.newInvoice, onClick: () => window.location.href = createPageUrl('PurchaseInvoice') }} />
       ) : (
         <DataTable columns={columns} data={vouchers} />
       )}

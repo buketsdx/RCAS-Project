@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { rcas } from '@/api/rcasClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useCompany } from '../context/CompanyContext';
 import { formatCurrency, generateVoucherCode } from '@/utils';
 import PageHeader from '@/components/common/PageHeader';
 import DataTable from '@/components/common/DataTable';
@@ -16,7 +17,45 @@ import { format } from 'date-fns';
 import { Users, Plus, Pencil, Trash2 } from 'lucide-react';
 
 export default function Employees() {
+  const { type } = useCompany();
   const queryClient = useQueryClient();
+
+  const getTerminology = () => {
+    switch (type) {
+      case 'Salon':
+        return {
+          title: 'Staff Management',
+          subtitle: 'Manage your stylists and support staff',
+          entity: 'Staff Member',
+          add: 'Add Staff',
+          edit: 'Edit Staff',
+          noItems: 'No staff members found',
+          start: 'Start by adding your first staff member'
+        };
+      case 'Restaurant':
+        return {
+          title: 'Staff Management',
+          subtitle: 'Manage your kitchen and service staff',
+          entity: 'Staff Member',
+          add: 'Add Staff',
+          edit: 'Edit Staff',
+          noItems: 'No staff members found',
+          start: 'Start by adding your first staff member'
+        };
+      default:
+        return {
+          title: 'Employees',
+          subtitle: 'Manage your employee list',
+          entity: 'Employee',
+          add: 'Add Employee',
+          edit: 'Edit Employee',
+          noItems: 'No employees found',
+          start: 'Start by adding your first employee'
+        };
+    }
+  };
+
+  const terms = getTerminology();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState(null);
   const [formData, setFormData] = useState({
@@ -34,17 +73,17 @@ export default function Employees() {
       const employeeCode = await generateVoucherCode('Employee');
       return rcas.entities.Employee.create({ ...data, employee_code: employeeCode });
     },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['employees'] }); toast.success('Employee added'); closeDialog(); }
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['employees'] }); toast.success(`${terms.entity} added`); closeDialog(); }
   });
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => rcas.entities.Employee.update(id, data),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['employees'] }); toast.success('Employee updated'); closeDialog(); }
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['employees'] }); toast.success(`${terms.entity} updated`); closeDialog(); }
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id) => rcas.entities.Employee.delete(id),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['employees'] }); toast.success('Employee deleted'); }
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['employees'] }); toast.success(`${terms.entity} deleted`); }
   });
 
   const openDialog = (employee = null) => {
@@ -107,17 +146,33 @@ export default function Employees() {
   if (isLoading) return <LoadingSpinner text="Loading employees..." />;
 
   return (
-    <div>
-      <PageHeader title="Employees" subtitle="Manage employee records" primaryAction={{ label: 'Add Employee', onClick: () => openDialog() }} />
+    <div className="space-y-6">
+      <PageHeader
+        title={terms.title}
+        subtitle={terms.subtitle}
+        primaryAction={{ label: terms.add, onClick: () => openDialog() }}
+      />
+
       {employees.length === 0 ? (
-        <EmptyState icon={Users} title="No Employees" description="Add employees to manage payroll" action={{ label: 'Add First Employee', onClick: () => openDialog() }} />
+        <EmptyState
+          icon={Users}
+          title={terms.noItems}
+          description={terms.start}
+          action={{ label: terms.add, onClick: () => openDialog() }}
+        />
       ) : (
-        <DataTable columns={columns} data={employees} />
+        <DataTable
+          columns={columns}
+          data={employees}
+          searchPlaceholder={`Search ${terms.entity.toLowerCase()}s...`}
+        />
       )}
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>{editingEmployee ? 'Edit' : 'Add'} Employee</DialogTitle></DialogHeader>
+          <DialogHeader>
+            <DialogTitle>{editingEmployee ? terms.edit : terms.add}</DialogTitle>
+          </DialogHeader>
           <form onSubmit={handleSubmit}>
             <Tabs defaultValue="personal" className="w-full">
               <TabsList className="grid w-full grid-cols-4">

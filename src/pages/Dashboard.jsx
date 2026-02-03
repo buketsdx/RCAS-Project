@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { rcas } from '@/api/rcasClient';
 import { useQuery } from '@tanstack/react-query';
+import { useCompany } from '@/context/CompanyContext';
 import { formatCurrency } from '@/utils';
 import StatCard from '@/components/common/StatCard';
 import QuickAccessCard from '@/components/dashboard/QuickAccessCard';
@@ -30,7 +31,41 @@ import {
 import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 
 export default function Dashboard() {
+  const { company } = useCompany();
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
+
+  const type = company?.type || 'General';
+  
+  const getTerminology = () => {
+    switch (type) {
+      case 'Salon':
+        return {
+          sales: 'Service Sales',
+          stockItems: 'Services & Products',
+          stockSubtitle: 'Active Services',
+          salesInvoice: 'New Service',
+          purchaseInvoice: 'Purchase Stock'
+        };
+      case 'Restaurant':
+        return {
+          sales: 'Order Sales',
+          stockItems: 'Menu Items',
+          stockSubtitle: 'In Menu',
+          salesInvoice: 'New Order',
+          purchaseInvoice: 'Purchase Ingredients'
+        };
+      default:
+        return {
+          sales: 'Monthly Sales',
+          stockItems: 'Stock Items',
+          stockSubtitle: 'In inventory',
+          salesInvoice: 'Sales Invoice',
+          purchaseInvoice: 'Purchase Invoice'
+        };
+    }
+  };
+
+  const terms = getTerminology();
 
   const { data: vouchers = [], isLoading: loadingVouchers } = useQuery({
     queryKey: ['vouchers'],
@@ -100,8 +135,8 @@ export default function Dashboard() {
   const paymentsTrend = calculateTrend(totalPayments, lastPayments);
 
   const quickAccessItems = [
-    { icon: TrendingUp, title: 'Sales Invoice', description: 'Create new sales', href: 'Sales', color: 'emerald' },
-    { icon: ShoppingCart, title: 'Purchase Invoice', description: 'Record purchases', href: 'Purchase', color: 'blue' },
+    { icon: TrendingUp, title: terms.salesInvoice, description: 'Create new sales', href: 'Sales', color: 'emerald' },
+    { icon: ShoppingCart, title: terms.purchaseInvoice, description: 'Record purchases', href: 'Purchase', color: 'blue' },
     { icon: Wallet, title: 'Receipt Voucher', description: 'Receive payments', href: 'Receipt', color: 'purple' },
     { icon: CreditCard, title: 'Payment Voucher', description: 'Make payments', href: 'Payment', color: 'orange' },
     { icon: FileText, title: 'Journal Entry', description: 'Book journal', href: 'Journal', color: 'cyan' },
@@ -139,7 +174,7 @@ export default function Dashboard() {
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
-          title="Monthly Sales"
+          title={terms.sales}
           value={formatCurrency(totalSales, 'SAR')}
           subtitle="This month"
           icon={TrendingUp}
@@ -181,9 +216,9 @@ export default function Dashboard() {
           icon={Users}
         />
         <StatCard
-          title="Stock Items"
+          title={terms.stockItems}
           value={stockItems.length}
-          subtitle="In inventory"
+          subtitle={terms.stockSubtitle}
           icon={Package}
         />
         <StatCard
