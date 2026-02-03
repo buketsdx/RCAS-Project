@@ -27,7 +27,7 @@ export default function ProfessionalFooter() {
       isDark ? "bg-slate-950 border-slate-800" : "bg-slate-50 border-slate-200"
     )}>
       {/* Main Footer Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-8">
           
           {/* Brand Column */}
@@ -118,7 +118,7 @@ export default function ProfessionalFooter() {
       <div className={cn("h-px w-full", isDark ? "bg-slate-800" : "bg-slate-200")} />
 
       {/* Bottom Bar */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
           
           {/* Copyright */}
