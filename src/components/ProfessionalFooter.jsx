@@ -133,8 +133,8 @@ export default function ProfessionalFooter() {
           {/* Theme Toggle & Legal */}
           <div className="flex items-center gap-6">
             <div className="flex items-center gap-4 text-sm">
-              <Link to="#" className={cn("hover:underline", isDark ? "text-slate-400 hover:text-slate-300" : "text-slate-600 hover:text-slate-900")}>Privacy</Link>
-              <Link to="#" className={cn("hover:underline", isDark ? "text-slate-400 hover:text-slate-300" : "text-slate-600 hover:text-slate-900")}>Terms</Link>
+              <Link to="/PrivacyPolicy" className={cn("hover:underline", isDark ? "text-slate-400 hover:text-slate-300" : "text-slate-600 hover:text-slate-900")}>Privacy</Link>
+              <Link to="/TermsAndConditions" className={cn("hover:underline", isDark ? "text-slate-400 hover:text-slate-300" : "text-slate-600 hover:text-slate-900")}>Terms</Link>
             </div>
             
             <div className={cn("h-4 w-px", isDark ? "bg-slate-800" : "bg-slate-300")} />

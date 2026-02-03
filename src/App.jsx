@@ -94,6 +94,8 @@ import PrintInvoice from './pages/PrintInvoice';
 import Help from './pages/Help';
 import FAQ from './pages/FAQ';
 import Deployment from './pages/Deployment';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import TermsAndConditions from './pages/TermsAndConditions';
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: false, refetchOnWindowFocus: false } }
@@ -221,6 +223,8 @@ function App() {
                       {/* --- HELP & SUPPORT --- */}
                       <Route path="Help" element={<Help />} />
                       <Route path="FAQ" element={<FAQ />} />
+                      <Route path="PrivacyPolicy" element={<PrivacyPolicy />} />
+                      <Route path="TermsAndConditions" element={<TermsAndConditions />} />
                     </Route>
                   </Route>
                 </Routes>
