@@ -277,6 +277,18 @@ export default function Layout() {
     return () => window.removeEventListener('keydown', handleKeyPress);
   }, [companies, selectedCompanyId, setSelectedCompanyId]);
 
+  // Prevent body scroll when mobile sidebar is open
+  useEffect(() => {
+    if (sidebarOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [sidebarOpen]);
+
   const toggleMenu = (title) => {
     setOpenMenus(prev => 
       prev.includes(title) 
