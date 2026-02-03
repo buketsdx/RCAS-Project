@@ -15,6 +15,31 @@ export default function Deployment() {
 
   const deploymentOptions = [
     {
+      id: 'xampp',
+      name: 'XAMPP / Apache (Windows/Linux)',
+      description: 'Run locally or on a standard web server.',
+      steps: [
+        'Run build: `npm run build`',
+        'Copy contents of `dist` folder to `C:\\xampp\\htdocs\\rcas`',
+        'We have added an `.htaccess` file for SPA routing support.',
+        'Access at http://localhost/rcas'
+      ],
+      link: 'https://www.apachefriends.org/'
+    },
+    {
+      id: 'cloudflare',
+      name: 'Cloudflare Tunnel (Public Access)',
+      description: 'Securely expose your local server to the internet.',
+      steps: [
+        'Install cloudflared tool',
+        'Run your app (XAMPP or npm run dev)',
+        'Run: `cloudflared tunnel --url http://localhost:80`',
+        'Copy the generated random URL (e.g. https://xyz.trycloudflare.com)',
+        'Share this URL with anyone to access your app'
+      ],
+      link: 'https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/'
+    },
+    {
       id: 'vercel',
       name: 'Vercel (Recommended)',
       description: 'Fastest, easiest deployment. Free tier available.',

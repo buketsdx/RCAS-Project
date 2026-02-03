@@ -57,6 +57,47 @@ export default function Help() {
       ]
     },
     {
+      id: 'stock-adjustment',
+      title: '⚖️ Stock Adjustment',
+      description: 'Manually increasing or decreasing stock',
+      steps: [
+        'Navigate to Inventory > Stock Adjustment.',
+        '**Purpose:** Use this to correct stock levels when they don\'t match physical inventory (e.g., due to theft, damage, or data entry errors).',
+        '**Stock Increase:** Select "Stock Increase" to add quantity to your inventory without a purchase bill (e.g., finding lost stock).',
+        '**Stock Decrease:** Select "Stock Decrease" to remove quantity without a sale (e.g., damage, spoilage).',
+        '**Rate:** The system auto-fills the current rate, but you can adjust it if needed.',
+        '**Narration:** Always add a reason for the adjustment for audit purposes.',
+        '**Effect:** This immediately updates your Stock Summary and Stock Item Reports.'
+      ]
+    },
+    {
+      id: 'database-setup',
+      title: '🗄️ Database Connections',
+      description: 'Connecting to Supabase, Firebase, or SQL',
+      steps: [
+        'RCAS supports multiple database backends for flexibility.',
+        '**1. Local Storage (Default):** Data lives in your browser. Fast and private, but clears if browser cache is deleted.',
+        '**2. Switching Provider:** Go to Settings > Database tab.',
+        '**3. Supabase (PostgreSQL):** Enter your Supabase Project URL and Anon Key. Ideal for robust, relational data storage.',
+        '**4. Firebase (Firestore):** Enter API Key and Project ID. Good for real-time syncing.',
+        '**5. Custom REST API:** Connect to MySQL, MSSQL, or MongoDB via your own backend API.',
+        '**Important:** Switching databases reloads the app. Ensure you have credentials ready.'
+      ]
+    },
+    {
+      id: 'deployment',
+      title: '🌐 Deployment & Online Access',
+      description: 'Running on XAMPP or Cloudflare',
+      steps: [
+        '**XAMPP/Apache:** Build the project (`npm run build`) and copy the `dist` folder to `htdocs`. We have added `.htaccess` support for smooth routing.',
+        '**Cloudflare Tunnel:** Expose your local server to the internet securely.',
+        '1. Install `cloudflared`.',
+        '2. Run `cloudflared tunnel --url http://localhost:80` (or your port).',
+        '3. Share the generated URL to access RCAS from anywhere.',
+        '**Note:** Check `DEPLOYMENT.md` in the project root for detailed commands.'
+      ]
+    },
+    {
       id: 'masters-accounting',
       title: '📒 Accounting Masters (Ledgers)',
       description: 'Setting up Customers, Suppliers, and Expenses',

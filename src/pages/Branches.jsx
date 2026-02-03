@@ -20,7 +20,7 @@ export default function Branches() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingBranch, setEditingBranch] = useState(null);
   const [formData, setFormData] = useState({
-    name: '', name_arabic: '', address: '', city: '', phone: '', email: '', manager_name: '', is_head_office: false
+    name: '', name_arabic: '', address: '', city: '', phone: '', email: '', manager_name: '', is_head_office: false, status: 'Active'
   });
 
   const { data: branches = [], isLoading } = useQuery({ 
@@ -35,13 +35,13 @@ export default function Branches() {
   const createMutation = useMutation({
     mutationFn: async (data) => {
       const branchCode = await generateUniqueID('branch', ID_PREFIXES.BRANCH);
-      return rcas.entities.Branch.create({ ...data, branch_code: branchCode, company_id: selectedCompanyId });
+      return rcas.entities.Branch.create({ ...data, branch_code: branchCode, company_id: selectedCompanyId, is_active: data.status === 'Active' });
     },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['branches', selectedCompanyId] }); toast.success('Branch created'); closeDialog(); }
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => rcas.entities.Branch.update(id, { ...data, company_id: selectedCompanyId }),
+    mutationFn: ({ id, data }) => rcas.entities.Branch.update(id, { ...data, company_id: selectedCompanyId, is_active: data.status === 'Active' }),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['branches', selectedCompanyId] }); toast.success('Branch updated'); closeDialog(); }
   });
 
@@ -53,10 +53,10 @@ export default function Branches() {
   const openDialog = (branch = null) => {
     if (branch) {
       setEditingBranch(branch);
-      setFormData({ ...branch });
+      setFormData({ ...branch, status: branch.status || (branch.is_active !== false ? 'Active' : 'Temporarily Closed') });
     } else {
       setEditingBranch(null);
-      setFormData({ name: '', name_arabic: '', address: '', city: '', phone: '', email: '', manager_name: '', is_head_office: false });
+      setFormData({ name: '', name_arabic: '', address: '', city: '', phone: '', email: '', manager_name: '', is_head_office: false, status: 'Active' });
     }
     setDialogOpen(true);
   };
@@ -85,7 +85,15 @@ export default function Branches() {
     { header: 'City', accessor: 'city' },
     { header: 'Manager', accessor: 'manager_name' },
     { header: 'Phone', accessor: 'phone' },
-    { header: 'Status', render: (row) => <Badge className={row.is_active !== false ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100'}>{row.is_active !== false ? 'Active' : 'Inactive'}</Badge> },
+    { header: 'Status', render: (row) => {
+      const status = row.status || (row.is_active !== false ? 'Active' : 'Temporarily Closed');
+      let variant = 'bg-slate-100 text-slate-700';
+      if (status === 'Active') variant = 'bg-emerald-100 text-emerald-700';
+      if (status === 'Permanently Closed') variant = 'bg-red-100 text-red-700';
+      if (status === 'Temporarily Closed') variant = 'bg-orange-100 text-orange-700';
+      if (status === 'Holiday') variant = 'bg-purple-100 text-purple-700';
+      return <Badge className={variant}>{status}</Badge>;
+    }},
     { header: 'Actions', render: (row) => (
       <div className="flex gap-2">
         <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); openDialog(row); }}><Pencil className="h-4 w-4" /></Button>
@@ -127,9 +135,24 @@ export default function Branches() {
                 <FormField label="Email" name="email" type="email" value={formData.email} onChange={handleChange} />
                 <FormField label="Manager Name" name="manager_name" value={formData.manager_name} onChange={handleChange} />
               </div>
-              <div className="flex items-center gap-2">
-                <input type="checkbox" id="is_head_office" name="is_head_office" checked={formData.is_head_office} onChange={handleChange} className="rounded" />
-                <label htmlFor="is_head_office" className="text-sm">This is the Head Office</label>
+              <div className="grid grid-cols-2 gap-4">
+                <FormField 
+                  label="Status" 
+                  name="status" 
+                  type="select" 
+                  value={formData.status} 
+                  onChange={handleChange}
+                  options={[
+                    { value: 'Active', label: 'Active' },
+                    { value: 'Temporarily Closed', label: 'Temporarily Closed' },
+                    { value: 'Permanently Closed', label: 'Permanently Closed' },
+                    { value: 'Holiday', label: 'Holiday' }
+                  ]}
+                />
+                <div className="flex items-center gap-2 pt-6">
+                  <input type="checkbox" id="is_head_office" name="is_head_office" checked={formData.is_head_office} onChange={handleChange} className="rounded" />
+                  <label htmlFor="is_head_office" className="text-sm">This is the Head Office</label>
+                </div>
               </div>
             </div>
             <DialogFooter>

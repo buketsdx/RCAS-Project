@@ -40,7 +40,7 @@ export default function StockItemReport() {
   let runningQty = parseFloat(stockItem?.opening_qty || 0);
   const transactionsWithBalance = itemTransactions.map(t => {
     const qty = parseFloat(t.quantity) || 0;
-    const isInward = ['Purchase', 'Credit Note', 'Receipt Note'].includes(t.voucher?.voucher_type);
+    const isInward = ['Purchase', 'Credit Note', 'Receipt Note', 'Stock Increase'].includes(t.voucher?.voucher_type);
     if (isInward) runningQty += qty;
     else runningQty -= qty;
     return { ...t, inward: isInward ? qty : 0, outward: !isInward ? qty : 0, balance: runningQty };

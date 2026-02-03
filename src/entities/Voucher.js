@@ -5,6 +5,9 @@ export const Voucher = {
     "company_id": {
       "type": "string"
     },
+    "branch_id": {
+      "type": "string"
+    },
     "voucher_type": {
       "type": "string",
       "enum": [
@@ -19,7 +22,9 @@ export const Voucher = {
         "Sales Order",
         "Purchase Order",
         "Delivery Note",
-        "Receipt Note"
+        "Receipt Note",
+        "Stock Increase",
+        "Stock Decrease"
       ]
     },
     "voucher_number": {

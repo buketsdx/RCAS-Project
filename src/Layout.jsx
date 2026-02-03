@@ -49,7 +49,8 @@ import {
   UsersRound,
   Banknote,
   Recycle,
-  UserCircle
+  UserCircle,
+  Store
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 
@@ -88,6 +89,7 @@ const menuItems = [
     icon: ArrowRightLeft,
     roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.OWNER, ROLES.CASHIER],
     children: [
+      { title: 'Branch Daily Close', icon: Store, href: 'BranchDailyClose' },
       { title: 'Sales', icon: TrendingUp, href: 'Sales' },
       { title: 'Purchase', icon: ShoppingCart, href: 'Purchase' },
       { title: 'Receipt', icon: Wallet, href: 'Receipt' },
@@ -106,6 +108,7 @@ const menuItems = [
     roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.OWNER],
     children: [
       { title: 'Stock Summary', icon: Package, href: 'StockSummary' },
+      { title: 'Stock Adjustment', icon: ArrowRightLeft, href: 'StockAdjustment' },
       { title: 'Stock Item Report', icon: FileSpreadsheet, href: 'StockItemReport' },
       { title: 'Godown Summary', icon: Warehouse, href: 'GodownSummary' },
       { title: 'Reorder Status', icon: ClipboardList, href: 'ReorderStatus' },
@@ -251,6 +254,8 @@ export default function Layout() {
   const [showShortcutsDialog, setShowShortcutsDialog] = useState(false);
   const location = useLocation();
 
+  const selectedCompany = companies.find(c => c.id === selectedCompanyId);
+
   // Keyboard shortcuts for data entry
   useKeyboardShortcuts({
     onHelp: () => setShowShortcutsDialog(true),
@@ -301,7 +306,10 @@ export default function Layout() {
     <div className="min-h-screen transition-colors bg-background">
       {/* Mobile Header */}
       <div className="lg:hidden fixed top-0 left-0 right-0 h-16 border-b flex items-center justify-between px-4 z-50 transition-colors bg-card border-border">
-        <AppLogo size="sm" />
+        <div className="flex items-center gap-3">
+          <AppLogo size="sm" showText={false} />
+          <span className="font-bold text-sm truncate max-w-[200px]">{selectedCompany?.name || 'RCAS'}</span>
+        </div>
         <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(!sidebarOpen)}>
           {sidebarOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
         </Button>
@@ -453,7 +461,17 @@ export default function Layout() {
         "lg:pl-64",
         sidebarCollapsed && "lg:pl-20"
       )}>
-        <main className="min-h-screen pt-16 lg:pt-0 bg-background">
+        {/* Desktop Header */}
+        <header className="hidden lg:flex h-16 items-center justify-between px-8 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-20">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-primary/10 rounded-lg">
+              <Building2 className="h-5 w-5 text-primary" />
+            </div>
+            <span className="font-bold text-lg tracking-tight">{selectedCompany?.name || 'Select Company'}</span>
+          </div>
+        </header>
+
+        <main className="min-h-[calc(100vh-4rem)] pt-16 lg:pt-0 bg-background">
           <div className="p-6 lg:p-8">
             <Outlet />
           </div>

@@ -34,9 +34,20 @@ export const Branch = {
       "type": "boolean",
       "default": false
     },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Active",
+        "Permanently Closed",
+        "Temporarily Closed",
+        "Holiday"
+      ],
+      "default": "Active"
+    },
     "is_active": {
       "type": "boolean",
-      "default": true
+      "default": true,
+      "description": "Deprecated: Use status instead"
     }
   },
   "required": [

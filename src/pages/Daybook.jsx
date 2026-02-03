@@ -31,7 +31,7 @@ export default function DayBook() {
 
   const { data: vouchers = [], isLoading } = useQuery({
     queryKey: ['dayBookVouchers'],
-    queryFn: () => rcas.entities.Voucher.list('-date')
+    queryFn: () => rcas.entities.Voucher.list('date')
   });
 
   const filteredVouchers = vouchers.filter(v => {
@@ -43,13 +43,36 @@ export default function DayBook() {
   const totalDebit = filteredVouchers.filter(v => ['Sales', 'Receipt'].includes(v.voucher_type)).reduce((sum, v) => sum + (parseFloat(v.net_amount) || 0), 0);
   const totalCredit = filteredVouchers.filter(v => ['Purchase', 'Payment'].includes(v.voucher_type)).reduce((sum, v) => sum + (parseFloat(v.net_amount) || 0), 0);
 
+  const getDebitAmount = (voucher) => {
+    if (['Sales', 'Payment', 'Debit Note', 'Journal', 'Contra'].includes(voucher.voucher_type)) {
+      return parseFloat(voucher.net_amount) || 0;
+    }
+    return 0;
+  };
+
+  const getCreditAmount = (voucher) => {
+    if (['Purchase', 'Receipt', 'Credit Note'].includes(voucher.voucher_type)) {
+      return parseFloat(voucher.net_amount) || 0;
+    }
+    return 0;
+  };
+
   const columns = [
-    { header: 'Date', accessor: 'date', render: (row) => row.date ? format(new Date(row.date), 'dd MMM yyyy') : '-' },
+    { header: 'Date', accessor: 'date', render: (row) => row.date ? format(new Date(row.date), 'dd-MM-yyyy') : '-' },
+    { header: 'Voucher Type', accessor: 'voucher_type', render: (row) => <Badge className={voucherColors[row.voucher_type] || 'bg-slate-100'}>{row.voucher_type}</Badge> },
     { header: 'Voucher No', accessor: 'voucher_number', render: (row) => <span className="font-medium">{row.voucher_number || `#${row.id?.slice(-6)}`}</span> },
-    { header: 'Type', accessor: 'voucher_type', render: (row) => <Badge className={voucherColors[row.voucher_type] || 'bg-slate-100'}>{row.voucher_type}</Badge> },
-    { header: 'Party', accessor: 'party_name', render: (row) => row.party_name || '-' },
-    { header: 'Narration', accessor: 'narration', render: (row) => <span className="truncate max-w-xs block text-slate-500">{row.narration || '-'}</span> },
-    { header: 'Amount', accessor: 'net_amount', className: 'text-right', render: (row) => <span className="font-semibold">{parseFloat(row.net_amount || 0).toFixed(2)}</span> }
+    { header: 'Account', accessor: 'party_name', render: (row) => <span className="font-medium text-slate-700">{row.party_name || '-'}</span> },
+    { header: 'Debit Amount', accessor: 'debit', className: 'text-right', render: (row) => {
+        const val = getDebitAmount(row);
+        return val ? <span className="font-semibold text-slate-700">{formatCurrency(val)}</span> : '-';
+      }
+    },
+    { header: 'Credit Amount', accessor: 'credit', className: 'text-right', render: (row) => {
+        const val = getCreditAmount(row);
+        return val ? <span className="font-semibold text-slate-700">{formatCurrency(val)}</span> : '-';
+      }
+    },
+    { header: 'Short Narration', accessor: 'narration', render: (row) => <span className="truncate max-w-xs block text-slate-500 text-sm" title={row.narration}>{row.narration || '-'}</span> },
   ];
 
   if (isLoading) return <LoadingSpinner text="Loading day book..." />;

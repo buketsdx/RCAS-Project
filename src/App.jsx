@@ -55,6 +55,7 @@ import PurchaseInvoice from './pages/PurchaseInvoice';
 
 // Pages - Inventory Section
 import StockSummary from './pages/StockSummary';
+import StockAdjustment from './pages/StockAdjustment';
 import StockItemReport from './pages/StockItemReport';
 import GodownSummary from './pages/GodownSummary';
 import ReorderStatus from './pages/ReorderStatus';
@@ -98,6 +99,7 @@ import FAQ from './pages/FAQ';
 import Deployment from './pages/Deployment';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsAndConditions from './pages/TermsAndConditions';
+import BranchDailyClose from './pages/BranchDailyClose';
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: false, refetchOnWindowFocus: false } }
@@ -122,6 +124,9 @@ function App() {
                     <Route path="/" element={<Layout />}>
                       <Route index element={<Navigate to="/Dashboard" replace />} />
                       <Route path="Dashboard" element={<Dashboard />} />
+
+                      {/* Branch Operations */}
+                      <Route path="BranchDailyClose" element={<BranchDailyClose />} />
 
                       {/* --- COMPANY SECTION --- */}
                       <Route element={<ProtectedRoute allowedRoles={[ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.OWNER]} />}>
@@ -174,6 +179,7 @@ function App() {
                       {/* --- INVENTORY SECTION --- */}
                       <Route element={<ProtectedRoute allowedRoles={[ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.OWNER]} />}>
                         <Route path="StockSummary" element={<StockSummary />} />
+                        <Route path="StockAdjustment" element={<StockAdjustment />} />
                         <Route path="StockItemReport" element={<StockItemReport />} />
                         <Route path="GodownSummary" element={<GodownSummary />} />
                         <Route path="ReorderStatus" element={<ReorderStatus />} />

@@ -14,7 +14,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { 
   Settings, Save, Database, FileText, Calculator, Globe, 
-  Building2, Receipt, ShieldCheck, Printer, Lock, KeyRound
+  Building2, Receipt, ShieldCheck, Printer, Lock, KeyRound,
+  Download, Upload, Cloud, HardDrive
 } from 'lucide-react';
 
 export default function AppSettings() {
@@ -143,6 +144,148 @@ export default function AppSettings() {
     }
   };
 
+  const [dbConfig, setDbConfig] = useState({
+    provider: 'local_storage',
+    supabaseUrl: '',
+    supabaseKey: '',
+    apiKey: '',
+    projectId: '',
+    apiUrl: ''
+  });
+
+  useEffect(() => {
+    const savedConfig = localStorage.getItem('rcas_db_config');
+    if (savedConfig) {
+      setDbConfig(JSON.parse(savedConfig));
+    }
+  }, []);
+
+  const handleDbSave = async (e) => {
+    e.preventDefault();
+    try {
+      await rcas.configure(dbConfig);
+      toast.success("Database configuration updated. App will reload.");
+      setTimeout(() => window.location.reload(), 1500);
+    } catch (error) {
+      toast.error("Failed to update database config");
+    }
+  };
+
+  // --- Data Backup & Restore ---
+  const [isExporting, setIsExporting] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+
+  const handleExportData = async () => {
+    setIsExporting(true);
+    try {
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const backupData = {
+        meta: {
+          version: '1.0',
+          timestamp: new Date().toISOString(),
+          provider: rcas.getProvider()
+        },
+        data: {}
+      };
+
+      // Fetch all entities
+      const entities = Object.keys(rcas.entities);
+      for (const entityName of entities) {
+        // Skip IDCounter or internal tables if needed, but usually safe to backup all
+        const records = await rcas.entities[entityName].list();
+        backupData.data[entityName] = records;
+      }
+
+      // Create and download file
+      const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `rcas_backup_${timestamp}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      toast.success(`Backup created successfully with ${Object.keys(backupData.data).length} entities.`);
+    } catch (error) {
+      console.error("Export failed:", error);
+      toast.error("Failed to export data. See console for details.");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleImportData = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    if (!confirm("⚠️ WARNING: Importing data will merge with existing records. IDs might conflict. \n\nIdeally, do this on a fresh/empty database.\n\nContinue?")) {
+      event.target.value = ''; // Reset input
+      return;
+    }
+
+    setIsImporting(true);
+    try {
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        try {
+          const backup = JSON.parse(e.target.result);
+          if (!backup.data) throw new Error("Invalid backup file format");
+
+          let successCount = 0;
+          let errorCount = 0;
+
+          // Process each entity
+          for (const [entityName, records] of Object.entries(backup.data)) {
+            if (!rcas.entities[entityName]) continue;
+
+            for (const record of records) {
+              try {
+                // Try to create. If ID exists, it might fail depending on adapter.
+                // For LocalStorage, create() usually overwrites if ID is same? 
+                // Let's check adapter logic or just try.
+                // If it fails, we might want to try update() or just skip.
+                // Safest is to try create, catch error.
+                
+                // Remove internal fields if any?
+                // Usually adapters handle ID.
+                await rcas.entities[entityName].create(record);
+                successCount++;
+              } catch (err) {
+                // If create fails, maybe ID exists. Try update?
+                try {
+                  if (record.id) {
+                     await rcas.entities[entityName].update(record.id, record);
+                     successCount++;
+                  } else {
+                    errorCount++;
+                  }
+                } catch (updateErr) {
+                  errorCount++;
+                }
+              }
+            }
+          }
+
+          toast.success(`Import complete. Processed: ${successCount}, Skipped/Failed: ${errorCount}`);
+          queryClient.invalidateQueries(); // Refresh UI
+          
+        } catch (parseError) {
+          console.error(parseError);
+          toast.error("Failed to parse backup file");
+        } finally {
+          setIsImporting(false);
+          event.target.value = ''; // Reset
+        }
+      };
+      reader.readAsText(file);
+    } catch (error) {
+      console.error(error);
+      toast.error("Import failed");
+      setIsImporting(false);
+    }
+  };
+
   if (isLoading) return <LoadingSpinner />;
 
   return (
@@ -154,8 +297,10 @@ export default function AppSettings() {
       />
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-6 h-auto">
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-8 h-auto">
           <TabsTrigger value="security" className="py-3">Security</TabsTrigger>
+          <TabsTrigger value="database" className="py-3">Database</TabsTrigger>
+          <TabsTrigger value="data" className="py-3">Backup & Data</TabsTrigger>
           {hasRole([ROLES.SUPER_ADMIN]) && (
             <>
               <TabsTrigger value="company" className="py-3">Company</TabsTrigger>
@@ -204,6 +349,216 @@ export default function AppSettings() {
               </form>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* Database Settings */}
+        <TabsContent value="database">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Database className="h-5 w-5 text-blue-600" />
+                Database Connection
+              </CardTitle>
+              <CardDescription>Connect your application to a backend database</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleDbSave} className="space-y-6 max-w-xl">
+                <FormField
+                  label="Database Provider"
+                  type="select"
+                  value={dbConfig.provider}
+                  onChange={(e) => setDbConfig({...dbConfig, provider: e.target.value})}
+                  options={[
+                    { value: 'local_storage', label: 'Local Storage (Browser Only)' },
+                    { value: 'supabase', label: 'Supabase (PostgreSQL)' },
+                    { value: 'firebase', label: 'Firebase (Firestore)' },
+                    { value: 'rest_api', label: 'Custom REST API (MySQL/MSSQL/Mongo via Backend)' }
+                  ]}
+                  description="Choose where your data is stored. Changing this will reload the application."
+                />
+
+                {dbConfig.provider === 'supabase' && (
+                  <div className="space-y-4 border p-4 rounded-lg bg-slate-50">
+                    <FormField
+                      label="Supabase URL"
+                      value={dbConfig.supabaseUrl}
+                      onChange={(e) => setDbConfig({...dbConfig, supabaseUrl: e.target.value})}
+                      placeholder="https://your-project.supabase.co"
+                      required
+                    />
+                    <FormField
+                      label="Supabase Anon Key"
+                      value={dbConfig.supabaseKey}
+                      onChange={(e) => setDbConfig({...dbConfig, supabaseKey: e.target.value})}
+                      type="password"
+                      placeholder="your-anon-key"
+                      required
+                    />
+                    <div className="text-sm text-slate-500">
+                      You need to create tables in Supabase matching the entity names (e.g., Company, Voucher, etc.) or use the SQL setup script.
+                    </div>
+                  </div>
+                )}
+
+                {dbConfig.provider === 'firebase' && (
+                  <div className="space-y-4 border p-4 rounded-lg bg-slate-50">
+                    <FormField
+                      label="Firebase API Key"
+                      value={dbConfig.apiKey}
+                      onChange={(e) => setDbConfig({...dbConfig, apiKey: e.target.value})}
+                      type="password"
+                      required
+                    />
+                    <FormField
+                      label="Project ID"
+                      value={dbConfig.projectId}
+                      onChange={(e) => setDbConfig({...dbConfig, projectId: e.target.value})}
+                      required
+                    />
+                    <div className="text-sm text-slate-500">
+                      Ensure Firestore Database is enabled in your Firebase Console.
+                    </div>
+                  </div>
+                )}
+
+                {dbConfig.provider === 'rest_api' && (
+                  <div className="space-y-4 border p-4 rounded-lg bg-slate-50">
+                    <FormField
+                      label="API Base URL"
+                      value={dbConfig.apiUrl}
+                      onChange={(e) => setDbConfig({...dbConfig, apiUrl: e.target.value})}
+                      placeholder="https://api.yourdomain.com/v1"
+                      required
+                    />
+                    <FormField
+                      label="API Key / Token"
+                      value={dbConfig.apiKey}
+                      onChange={(e) => setDbConfig({...dbConfig, apiKey: e.target.value})}
+                      type="password"
+                      placeholder="Optional API Key"
+                    />
+                    <div className="text-sm text-slate-500">
+                      Use this to connect to a backend server running PostgreSQL, MySQL, MSSQL, or MongoDB.
+                    </div>
+                  </div>
+                )}
+
+                <Button type="submit" className="w-full">
+                  <Save className="mr-2 h-4 w-4" />
+                  Save & Reload
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Data Backup & Restore */}
+        <TabsContent value="data">
+          <div className="grid gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <HardDrive className="h-5 w-5 text-orange-600" />
+                  Local Backup (Device)
+                </CardTitle>
+                <CardDescription>Save a copy of your data to your computer or restore from a file.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="border rounded-lg p-4 bg-slate-50 space-y-3">
+                    <div className="flex items-center gap-2 font-semibold text-slate-700">
+                      <Download className="h-4 w-4" />
+                      Export Data
+                    </div>
+                    <p className="text-sm text-slate-500">
+                      Download all your data (Company, Vouchers, Inventory, etc.) as a JSON file. 
+                      Keep this file safe.
+                    </p>
+                    <Button onClick={handleExportData} disabled={isExporting} className="w-full" variant="outline">
+                      {isExporting ? <LoadingSpinner size="sm" /> : <><Download className="mr-2 h-4 w-4" /> Download Backup</>}
+                    </Button>
+                  </div>
+
+                  <div className="border rounded-lg p-4 bg-slate-50 space-y-3">
+                    <div className="flex items-center gap-2 font-semibold text-slate-700">
+                      <Upload className="h-4 w-4" />
+                      Import / Restore
+                    </div>
+                    <p className="text-sm text-slate-500">
+                      Restore data from a backup file. 
+                      <span className="text-red-500 font-bold block mt-1">⚠️ This will merge/overwrite data!</span>
+                    </p>
+                    <div className="relative">
+                      <Button disabled={isImporting} className="w-full" variant="outline">
+                        {isImporting ? <LoadingSpinner size="sm" /> : <><Upload className="mr-2 h-4 w-4" /> Select Backup File</>}
+                      </Button>
+                      <input 
+                        type="file" 
+                        accept=".json" 
+                        onChange={handleImportData}
+                        className="absolute inset-0 opacity-0 cursor-pointer"
+                        disabled={isImporting}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Cloud className="h-5 w-5 text-blue-600" />
+                  Online / Cloud Sync
+                </CardTitle>
+                <CardDescription>Manage your connection to online databases.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between p-4 border rounded-lg">
+                  <div>
+                    <p className="font-semibold">Current Provider</p>
+                    <p className="text-sm text-slate-500">
+                      {dbConfig.provider === 'local_storage' ? 'Local Storage (Offline)' : 
+                       dbConfig.provider === 'supabase' ? 'Supabase (Cloud)' : 
+                       dbConfig.provider === 'firebase' ? 'Firebase (Cloud)' : 'Custom API'}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {dbConfig.provider === 'local_storage' ? (
+                      <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-bold rounded">OFFLINE</span>
+                    ) : (
+                      <span className="px-2 py-1 bg-green-100 text-green-800 text-xs font-bold rounded">ONLINE</span>
+                    )}
+                  </div>
+                </div>
+
+                {dbConfig.provider === 'local_storage' && (
+                  <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 text-sm text-blue-800">
+                    <p className="font-bold mb-2">💡 Want to access your data from multiple devices?</p>
+                    <p className="mb-2">
+                      Switch to an <strong>Online Provider</strong> (Supabase or Firebase) in the <span className="font-mono bg-white px-1 rounded">Database</span> tab.
+                    </p>
+                    <p>
+                      <strong>How to migrate:</strong>
+                      <ol className="list-decimal ml-4 mt-1 space-y-1">
+                        <li>Download a Backup (Export) from above.</li>
+                        <li>Go to <strong>Database</strong> tab and connect to Supabase/Firebase.</li>
+                        <li>The app will reload in "Online Mode".</li>
+                        <li>Come back here and <strong>Import</strong> your backup file.</li>
+                      </ol>
+                    </p>
+                  </div>
+                )}
+
+                {dbConfig.provider !== 'local_storage' && (
+                  <div className="bg-green-50 border border-green-100 rounded-lg p-4 text-sm text-green-800">
+                    <p className="font-bold">✅ You are connected to the Cloud!</p>
+                    <p>Your data is automatically synced to the database. You can log in from any device to access it.</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
 
         {hasRole([ROLES.SUPER_ADMIN]) && (

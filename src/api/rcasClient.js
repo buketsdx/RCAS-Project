@@ -1,76 +1,12 @@
-// RCAS Data Bridge Client with Local Storage Persistence
 
-// In-memory storage for data
-const storage = {
-  Company: [],
-  Branch: [],
-  Currency: [],
-  AccountGroup: [],
-  Ledger: [],
-  StockGroup: [],
-  StockItem: [],
-  Unit: [],
-  Godown: [],
-  CostCenter: [],
-  VoucherType: [],
-  Voucher: [],
-  VoucherItem: [],
-  VoucherLedgerEntry: [],
-  Employee: [],
-  SalaryComponent: [],
-  Payroll: [],
-  CustodyWallet: [],
-  CustodyTransaction: [],
-  FlowerWaste: [],
-  BankReconciliation: [],
-  ZATCAInvoice: [],
-  IDCounter: [],
-  EmployeeSalaryStrucure: [],
-  User: [],
-  Settings: []
-};
+import { localStorageAdapter } from './adapters/localStorageAdapter';
+import { supabaseAdapter } from './adapters/supabaseAdapter';
+import { firebaseAdapter } from './adapters/firebaseAdapter';
+import { restApiAdapter } from './adapters/restApiAdapter';
 
-// Initialize storage from localStorage
-const initializeStorage = () => {
-  try {
-    const saved = localStorage.getItem('rcas_data');
-    if (saved) {
-      const parsedData = JSON.parse(saved);
-      Object.keys(parsedData).forEach(key => {
-        if (storage.hasOwnProperty(key)) {
-          storage[key] = parsedData[key];
-        }
-      });
-    }
-
-    // Seed default admin user if no users exist
-    if (!storage.User || storage.User.length === 0) {
-      storage.User = [{
-        id: 1,
-        username: 'admin',
-        password: '123',
-        full_name: 'System Administrator',
-        role: 'Super Admin',
-        email: 'admin@rcas.com'
-      }];
-      saveStorage();
-    }
-  } catch (e) {
-    console.log('Failed to load from localStorage:', e);
-  }
-};
-
-// Save storage to localStorage
-const saveStorage = () => {
-  try {
-    localStorage.setItem('rcas_data', JSON.stringify(storage));
-  } catch (e) {
-    console.log('Failed to save to localStorage:', e);
-  }
-};
-
-// Initialize on load
-initializeStorage();
+// Current active adapter
+let currentAdapter = localStorageAdapter;
+let isInitialized = false;
 
 // Context for Multi-tenancy
 let currentContext = {
@@ -78,46 +14,68 @@ let currentContext = {
   userId: null
 };
 
-const createEntity = (name) => ({
-  list: async (sort) => {
-    let data = storage[name] || [];
-    
-    // Filter by Company ID if context is set and entity is not global
-    // Global entities: User, Company, Currency (maybe), Settings (maybe)
-    const globalEntities = ['User', 'Company', 'Currency']; 
-    if (currentContext.companyId && !globalEntities.includes(name)) {
-      data = data.filter(item => item.company_id === currentContext.companyId);
-    }
+// Initialize the client based on stored configuration
+const initializeClient = async () => {
+  if (isInitialized) return;
 
-    return Promise.resolve([...data]);
+  try {
+    const savedConfig = localStorage.getItem('rcas_db_config');
+    if (savedConfig) {
+      const config = JSON.parse(savedConfig);
+      
+      switch (config.provider) {
+        case 'supabase':
+          currentAdapter = supabaseAdapter;
+          await supabaseAdapter.initialize(config);
+          break;
+        case 'firebase':
+          currentAdapter = firebaseAdapter;
+          await firebaseAdapter.initialize(config);
+          break;
+        case 'rest_api':
+          currentAdapter = restApiAdapter;
+          await restApiAdapter.initialize(config);
+          break;
+        case 'local_storage':
+        default:
+          currentAdapter = localStorageAdapter;
+          await localStorageAdapter.initialize();
+          break;
+      }
+    } else {
+      // Default to local storage
+      currentAdapter = localStorageAdapter;
+      await localStorageAdapter.initialize();
+    }
+  } catch (error) {
+    console.error("Failed to initialize database adapter:", error);
+    // Fallback to local storage on error
+    currentAdapter = localStorageAdapter;
+    await localStorageAdapter.initialize();
+  }
+  
+  isInitialized = true;
+};
+
+// Auto-initialize
+initializeClient();
+
+const createEntity = (name) => ({
+  list: async (filters) => {
+    if (!isInitialized) await initializeClient();
+    return currentAdapter.list(name, currentContext);
   },
   create: async (data) => {
-    const newRecord = { ...data, id: Date.now() };
-    
-    // Auto-inject Company ID
-    if (currentContext.companyId && !newRecord.company_id) {
-      newRecord.company_id = currentContext.companyId;
-    }
-
-    if (!storage[name]) storage[name] = [];
-    storage[name].push(newRecord);
-    saveStorage();
-    return Promise.resolve(newRecord);
+    if (!isInitialized) await initializeClient();
+    return currentAdapter.create(name, data, currentContext);
   },
   update: async (id, data) => {
-    if (!storage[name]) storage[name] = [];
-    const index = storage[name].findIndex(item => item.id === id);
-    if (index !== -1) {
-      storage[name][index] = { ...storage[name][index], ...data, id };
-    }
-    saveStorage();
-    return Promise.resolve({ ...data, id });
+    if (!isInitialized) await initializeClient();
+    return currentAdapter.update(name, id, data, currentContext);
   },
   delete: async (id) => {
-    if (!storage[name]) storage[name] = [];
-    storage[name] = storage[name].filter(item => item.id !== id);
-    saveStorage();
-    return Promise.resolve({ success: true });
+    if (!isInitialized) await initializeClient();
+    return currentAdapter.delete(name, id, currentContext);
   }
 });
 
@@ -125,147 +83,72 @@ export const rcas = {
   setContext: (context) => {
     currentContext = { ...currentContext, ...context };
   },
+  
+  // Method to switch providers at runtime
+  configure: async (config) => {
+    localStorage.setItem('rcas_db_config', JSON.stringify(config));
+    isInitialized = false; // Force re-init
+    await initializeClient();
+    return true;
+  },
+
+  getProvider: () => currentAdapter.name,
+
   auth: {
     login: async (username, password) => {
-      // Simulate network delay
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      const user = storage.User.find(u => 
-        (u.username.toLowerCase() === username.toLowerCase() || u.email?.toLowerCase() === username.toLowerCase()) && 
-        u.password === password
-      );
-
-      if (user) {
-        const { password, ...userWithoutPassword } = user;
-        return userWithoutPassword;
-      }
-      throw new Error("Invalid username or password");
+      if (!isInitialized) await initializeClient();
+      return currentAdapter.auth.login(username, password);
     },
-    loginWithGoogle: async ({ email, name, picture }) => {
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Find existing user by email
-      let user = storage.User.find(u => u.email?.toLowerCase() === email.toLowerCase());
-      
-      if (!user) {
-        // Create new user if not exists
-        const newId = storage.User.length > 0 ? Math.max(...storage.User.map(u => u.id)) + 1 : 1;
-        user = {
-          id: newId,
-          username: email.split('@')[0], // Generate username from email
-          email: email,
-          full_name: name,
-          password: null, // No password for OAuth users
-          role: 'Employee', // Default role
-          avatar: picture
-        };
-        storage.User.push(user);
-        saveStorage();
+    loginWithGoogle: async (data) => {
+      // If adapter supports it, use it, otherwise mock or error
+      if (currentAdapter.auth.loginWithGoogle) {
+        return currentAdapter.auth.loginWithGoogle(data);
       }
-
-      const { password, ...userWithoutPassword } = user;
-      return userWithoutPassword;
+      // Fallback for local storage (mock behavior from original file)
+      return localStorageAdapter.auth.loginWithGoogle ? localStorageAdapter.auth.loginWithGoogle(data) : null;
     },
-    register: async ({ username, password, email, full_name }) => {
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      // Check if username or email already exists
-      const existingUser = storage.User.find(u => 
-        u.username.toLowerCase() === username.toLowerCase() || 
-        (email && u.email?.toLowerCase() === email.toLowerCase())
-      );
-
-      if (existingUser) {
-        throw new Error("Username or Email already exists");
-      }
-
-      const newId = storage.User.length > 0 ? Math.max(...storage.User.map(u => u.id)) + 1 : 1;
-      const newUser = {
-        id: newId,
-        username,
-        password,
-        email,
-        full_name,
-        role: 'Employee', // Default role for new signups
-        allowed_companies: [], // Initialize with no company access
-        avatar: null
-      };
-
-      storage.User.push(newUser);
-      saveStorage();
-
-      const { password: _, ...userWithoutPassword } = newUser;
-      return userWithoutPassword;
+    register: async (data) => {
+      if (!isInitialized) await initializeClient();
+      return currentAdapter.auth.register(data);
     },
     addUserToCompany: async (companyId, email, role) => {
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      const user = storage.User.find(u => u.email?.toLowerCase() === email.toLowerCase());
-      if (!user) throw new Error("User not found");
-
-      if (!user.allowed_companies) user.allowed_companies = [];
-      if (!user.allowed_companies.includes(companyId)) {
-        user.allowed_companies.push(companyId);
+      // This is logic specific, might need to be in adapter or service layer
+      // For now, delegate if possible or keep logic here? 
+      // Original logic was tightly coupled to storage.User
+      // We'll try to delegate to a custom method if it exists, or fallback to generic update
+      if (currentAdapter.auth.addUserToCompany) {
+        return currentAdapter.auth.addUserToCompany(companyId, email, role);
       }
-      
-      // Update role for this context? 
-      // Simplified: Global role for now, or we need a CompanyUser map.
-      // For this MVP, we'll stick to the user's global role or update it.
-      if (role) user.role = role; 
-
-      saveStorage();
-      return user;
+      return null; 
     },
     getCompanyUsers: async (companyId) => {
-      await new Promise(resolve => setTimeout(resolve, 500));
-      return storage.User.filter(u => 
-        u.allowed_companies?.includes(companyId) || u.role === 'Super Admin'
-      );
-    },
-    // --- Password Reset Flow (Mock) ---
-    requestPasswordReset: async (email) => {
-      await new Promise(resolve => setTimeout(resolve, 500));
-      const user = storage.User.find(u => u.email?.toLowerCase() === email.toLowerCase());
-      
-      if (!user) {
-        // Security best practice: Don't reveal if user exists or not, but for dev we will log it
-        console.warn(`Password reset requested for non-existent email: ${email}`);
-        return { message: "If an account exists, a reset link has been sent." };
+      if (currentAdapter.auth.getCompanyUsers) {
+        return currentAdapter.auth.getCompanyUsers(companyId);
       }
-
-      // Generate a mock OTP
-      const otp = Math.floor(100000 + Math.random() * 900000).toString();
-      user.resetOtp = otp;
-      user.resetOtpExpires = Date.now() + 15 * 60 * 1000; // 15 mins
-      saveStorage();
-
-      // In a real app, send Email here. For now, we Log it and return it for testing.
-      console.log(`[MOCK EMAIL] Password Reset OTP for ${email}: ${otp}`);
-      return { success: true, message: "OTP sent to email (Check Console)", dev_otp: otp };
+      return [];
+    },
+    requestPasswordReset: async (email) => {
+      if (currentAdapter.auth.requestPasswordReset) {
+        return currentAdapter.auth.requestPasswordReset(email);
+      }
+      return { message: "Not supported by this provider" };
     },
     resetPassword: async (email, otp, newPassword) => {
-      await new Promise(resolve => setTimeout(resolve, 500));
-      const user = storage.User.find(u => u.email?.toLowerCase() === email.toLowerCase());
-
-      if (!user || user.resetOtp !== otp || Date.now() > user.resetOtpExpires) {
-        throw new Error("Invalid or expired OTP");
+      if (currentAdapter.auth.resetPassword) {
+        return currentAdapter.auth.resetPassword(email, otp, newPassword);
       }
-
-      user.password = newPassword;
-      user.resetOtp = null;
-      user.resetOtpExpires = null;
-      saveStorage();
-      
-      return { success: true, message: "Password updated successfully" };
+      return { success: false };
     },
     me: async () => {
-      // In a real app, this would validate the token
-      return null;
+      if (!isInitialized) await initializeClient();
+      return currentAdapter.auth.me();
     },
-    logout: () => {
-      return Promise.resolve();
+    logout: async () => {
+      if (!isInitialized) await initializeClient();
+      return currentAdapter.auth.logout();
     }
   },
+
   entities: {
     // Users
     User: createEntity('User'),
@@ -303,12 +186,15 @@ export const rcas = {
     ZATCAInvoice: createEntity('ZATCAInvoice'),
     IDCounter: createEntity('IDCounter'),
     EmployeeSalaryStrucure: createEntity('EmployeeSalaryStrucure'),
-    Settings: createEntity('Settings')
+    Settings: createEntity('Settings'),
+    BranchDailyRecord: createEntity('BranchDailyRecord')
   },
+  
   integrations: {
     Core: {
       UploadFile: async ({ file }) => {
-        // Mock upload - return a local blob URL
+        // This might need an adapter too (Storage Bucket)
+        // For now, keep local mock
         await new Promise(resolve => setTimeout(resolve, 500));
         return { file_url: URL.createObjectURL(file) };
       }

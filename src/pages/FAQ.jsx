@@ -42,27 +42,47 @@ export default function FAQ() {
         {
           id: 'ds1',
           q: 'Where is my data stored?',
-          a: 'Your data is stored locally in your browser\'s storage (localStorage). This means only you can access it. No servers involved unless you choose to backup/export.'
+          a: 'By default, data is stored in your browser (LocalStorage). However, you can now connect to external databases like Supabase (PostgreSQL), Firebase (Firestore), or your own SQL server via the Settings > Database tab.'
         },
         {
           id: 'ds2',
-          q: 'What happens if I clear browser data?',
-          a: 'If you clear your browser data/cache, all data in RCAS will be deleted. That\'s why we recommend regular backups. Go to Settings > Export Data to create backups.'
+          q: 'Can I connect to MySQL, MSSQL, or MongoDB?',
+          a: 'Yes! Use the "Custom REST API" option in Database Settings. You will need a backend API that talks to your database. We provide a standard API structure you can implement.'
         },
         {
           id: 'ds3',
-          q: 'How do I backup my data?',
-          a: 'Go to Settings > Export Data. Choose what to export (all data or specific entities). Download the JSON file to your computer. Keep multiple backups!'
+          q: 'What happens if I clear browser data?',
+          a: 'If using LocalStorage, your data will be deleted (unless backed up). If using Supabase/Firebase/SQL, your data is safe on the server and will reappear when you log in again.'
         },
         {
           id: 'ds4',
-          q: 'How do I restore from backup?',
-          a: 'Go to Settings > Import Data. Select the backup JSON file from your computer. Click Import. Your data will be restored. Be careful - importing overwrites existing data.'
+          q: 'How do I backup my data?',
+          a: 'For LocalStorage: Go to Settings > Export Data. For External Databases: Use the backup tools provided by your database provider (e.g., Supabase dashboard).'
         },
         {
           id: 'ds5',
-          q: 'Can I move data to another computer?',
-          a: 'Yes! Export your data from one computer as JSON. Move the file to another computer. Import it there. Your data moves with you completely.'
+          q: 'How do I restore from backup?',
+          a: 'Go to Settings > Import Data to restore JSON backups to LocalStorage. For external databases, use their respective import tools.'
+        }
+      ]
+    },
+    {
+      category: 'Deployment & Online',
+      questions: [
+        {
+          id: 'dep1',
+          q: 'Can I host this on XAMPP?',
+          a: 'Yes! Build the project (`npm run build`) and copy the `dist` folder to `htdocs`. We include an `.htaccess` file to handle routing automatically.'
+        },
+        {
+          id: 'dep2',
+          q: 'How do I access my local XAMPP site from the internet?',
+          a: 'Use Cloudflare Tunnel. Run `cloudflared tunnel --url http://localhost:80`. It gives you a secure public URL (https://...) to share with others.'
+        },
+        {
+          id: 'dep3',
+          q: 'Can multiple people use it at the same time?',
+          a: 'If you use an external database (Supabase/Firebase/SQL), yes! Multiple users can connect to the same database and see live updates.'
         }
       ]
     },
