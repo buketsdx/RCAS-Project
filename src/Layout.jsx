@@ -13,8 +13,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import FormField from '@/components/forms/FormField';
 import { toast } from 'sonner';
 import {
   LayoutDashboard,
@@ -51,8 +49,7 @@ import {
   UsersRound,
   Banknote,
   Recycle,
-  UserCircle,
-  KeyRound
+  UserCircle
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 
@@ -164,7 +161,7 @@ const menuItems = [
   { title: 'ZATCA e-Invoice', icon: FileCheck, href: 'ZATCAIntegration', roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.OWNER] },
   { title: 'Advanced Reports', icon: BarChart3, href: 'AdvancedReports', roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.OWNER] },
   { title: 'User Management', icon: Users, href: 'UserManagement', roles: [ROLES.SUPER_ADMIN] },
-  { title: 'Settings', icon: Settings, href: 'AppSettings', roles: [ROLES.SUPER_ADMIN] },
+  { title: 'Settings', icon: Settings, href: 'AppSettings' },
   {
     title: 'Help & Support',
     icon: BookOpen,
@@ -252,8 +249,6 @@ export default function Layout() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [openMenus, setOpenMenus] = useState(['Transactions']);
   const [showShortcutsDialog, setShowShortcutsDialog] = useState(false);
-  const [changePasswordOpen, setChangePasswordOpen] = useState(false);
-  const [passwordData, setPasswordData] = useState({ current: '', new: '', confirm: '' });
   const location = useLocation();
 
   // Keyboard shortcuts for data entry
@@ -300,35 +295,6 @@ export default function Layout() {
   const handleLogout = () => {
     logout();
     navigate('/Login');
-  };
-
-  const handleChangePassword = async (e) => {
-    e.preventDefault();
-    if (passwordData.new !== passwordData.confirm) {
-      toast.error("New passwords do not match");
-      return;
-    }
-    
-    // In a real app, you would verify current password and update here
-    // For this demo/mock, we'll just simulate success
-    try {
-      // We can use the rcas client to update the user
-      // But first we need to verify current password (mock check)
-      if (user.password !== passwordData.current && user.password) {
-         // Note: user.password might not be available in context for security, 
-         // but since we are using a mock client where we stored it...
-         // Actually, let's just assume success for the demo or use a client method if available
-      }
-      
-      // Update user password via API
-      await rcas.entities.User.update(user.id, { password: passwordData.new });
-      
-      toast.success("Password updated successfully");
-      setChangePasswordOpen(false);
-      setPasswordData({ current: '', new: '', confirm: '' });
-    } catch (error) {
-      toast.error("Failed to update password");
-    }
   };
 
   return (
@@ -393,14 +359,6 @@ export default function Layout() {
           </div>
           <Button 
             variant="ghost" 
-            className="w-full justify-start text-muted-foreground hover:text-primary hover:bg-primary/10 mb-1"
-            onClick={() => setChangePasswordOpen(true)}
-          >
-            <KeyRound className="mr-2 h-4 w-4" />
-            Change Password
-          </Button>
-          <Button 
-            variant="ghost" 
             className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10"
             onClick={handleLogout}
           >
@@ -463,14 +421,6 @@ export default function Layout() {
               </div>
               <Button 
                 variant="ghost" 
-                className="w-full justify-start text-muted-foreground hover:text-primary hover:bg-primary/10 mb-1"
-                onClick={() => setChangePasswordOpen(true)}
-              >
-                <KeyRound className="mr-2 h-4 w-4" />
-                Change Password
-              </Button>
-              <Button 
-                variant="ghost" 
                 className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10"
                 onClick={handleLogout}
               >
@@ -483,15 +433,6 @@ export default function Layout() {
               <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary" title={user?.full_name}>
                 <UserCircle className="h-5 w-5" />
               </div>
-              <Button 
-                variant="ghost" 
-                size="icon"
-                className="text-muted-foreground hover:text-primary hover:bg-primary/10"
-                onClick={() => setChangePasswordOpen(true)}
-                title="Change Password"
-              >
-                <KeyRound className="h-5 w-5" />
-              </Button>
               <Button 
                 variant="ghost" 
                 size="icon"
@@ -526,41 +467,6 @@ export default function Layout() {
         open={showShortcutsDialog} 
         onOpenChange={setShowShortcutsDialog} 
       />
-
-      <Dialog open={changePasswordOpen} onOpenChange={setChangePasswordOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Change Password</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleChangePassword} className="space-y-4">
-            <FormField 
-              label="Current Password" 
-              type="password" 
-              value={passwordData.current} 
-              onChange={(e) => setPasswordData({...passwordData, current: e.target.value})} 
-              required 
-            />
-            <FormField 
-              label="New Password" 
-              type="password" 
-              value={passwordData.new} 
-              onChange={(e) => setPasswordData({...passwordData, new: e.target.value})} 
-              required 
-            />
-            <FormField 
-              label="Confirm New Password" 
-              type="password" 
-              value={passwordData.confirm} 
-              onChange={(e) => setPasswordData({...passwordData, confirm: e.target.value})} 
-              required 
-            />
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setChangePasswordOpen(false)}>Cancel</Button>
-              <Button type="submit">Update Password</Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

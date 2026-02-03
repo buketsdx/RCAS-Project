@@ -6,6 +6,7 @@ import { CurrencyProvider } from '@/context/CurrencyContext';
 import { CompanyProvider } from '@/context/CompanyContext';
 import { AuthProvider, ROLES } from '@/context/AuthContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import { Toaster } from "@/components/ui/sonner";
 import '@emran-alhaddad/saudi-riyal-font/index.css';
 import Layout from './Layout';
 
@@ -80,6 +81,7 @@ import PayrollReprts from './pages/PayrollReprts';
 import CustodyWallets from './pages/CustodyWallets';
 import CustodyWalletEntry from './pages/CustodyWalletEntry';
 import WasteTracker from './pages/WasteTracker';
+import ZakatCalc from './pages/ZakatCalc';
 import ZATCAIntegration from './pages/ZATCAIntegration';
 import AdvancedReports from './pages/AdvancedReports';
 import UserManagement from './pages/UserManagement';
@@ -210,13 +212,16 @@ function App() {
                       
                       <Route element={<ProtectedRoute allowedRoles={[ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.OWNER]} />}>
                         <Route path="ZATCAIntegration" element={<ZATCAIntegration />} />
+                        <Route path="ZakatCalc" element={<ZakatCalc />} />
                         <Route path="AdvancedReports" element={<AdvancedReports />} />
                       </Route>
+
+                      {/* --- SETTINGS & CONFIGURATION --- */}
+                      <Route path="AppSettings" element={<AppSettings />} />
 
                       {/* Super Admin Only */}
                       <Route element={<ProtectedRoute allowedRoles={[ROLES.SUPER_ADMIN]} />}>
                         <Route path="UserManagement" element={<UserManagement />} />
-                        <Route path="AppSettings" element={<AppSettings />} />
                         <Route path="Deployment" element={<Deployment />} />
                       </Route>
 
@@ -231,6 +236,7 @@ function App() {
               </Router>
             </CompanyProvider>
           </AuthProvider>
+          <Toaster />
         </ThemeProvider>
     </CurrencyProvider>
     </QueryClientProvider>

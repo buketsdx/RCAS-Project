@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { rcas } from '@/api/rcasClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCurrency } from '@/context/CurrencyContext';
+import { useAuth, ROLES } from '@/context/AuthContext';
 import PageHeader from '@/components/common/PageHeader';
 import FormField from '@/components/forms/FormField';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
@@ -13,14 +14,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { 
   Settings, Save, Database, FileText, Calculator, Globe, 
-  Building2, Receipt, ShieldCheck, Printer
+  Building2, Receipt, ShieldCheck, Printer, Lock, KeyRound
 } from 'lucide-react';
 
 export default function AppSettings() {
   const queryClient = useQueryClient();
+  const { user, hasRole } = useAuth();
   const { baseCurrency, baseCurrencySymbol, setSelectedCurrency, CURRENCY_SYMBOLS } = useCurrency();
-  const [activeTab, setActiveTab] = useState('company');
+  const [activeTab, setActiveTab] = useState('security');
   
+  // Change Password State
+  const [passwordData, setPasswordData] = useState({ current: '', new: '', confirm: '' });
+
   const defaultSettings = {
     // Company Info
     company_name: '',
@@ -115,7 +120,27 @@ export default function AppSettings() {
   };
 
   const handleSave = () => {
+    console.log("Saving settings...", settings);
     saveMutation.mutate(settings);
+  };
+
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    if (passwordData.new !== passwordData.confirm) {
+      toast.error("New passwords do not match");
+      return;
+    }
+    
+    try {
+      // Update user password via API
+      await rcas.entities.User.update(user.id, { password: passwordData.new });
+      
+      toast.success("Password updated successfully");
+      setPasswordData({ current: '', new: '', confirm: '' });
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to update password");
+    }
   };
 
   if (isLoading) return <LoadingSpinner />;
@@ -129,14 +154,60 @@ export default function AppSettings() {
       />
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 h-auto">
-          <TabsTrigger value="company" className="py-3">Company</TabsTrigger>
-          <TabsTrigger value="accounting" className="py-3">Accounting</TabsTrigger>
-          <TabsTrigger value="inventory" className="py-3">Inventory</TabsTrigger>
-          <TabsTrigger value="vouchers" className="py-3">Vouchers</TabsTrigger>
-          <TabsTrigger value="system" className="py-3">System</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-6 h-auto">
+          <TabsTrigger value="security" className="py-3">Security</TabsTrigger>
+          {hasRole([ROLES.SUPER_ADMIN]) && (
+            <>
+              <TabsTrigger value="company" className="py-3">Company</TabsTrigger>
+              <TabsTrigger value="accounting" className="py-3">Accounting</TabsTrigger>
+              <TabsTrigger value="inventory" className="py-3">Inventory</TabsTrigger>
+              <TabsTrigger value="vouchers" className="py-3">Vouchers</TabsTrigger>
+              <TabsTrigger value="system" className="py-3">System</TabsTrigger>
+            </>
+          )}
         </TabsList>
 
+        {/* Security Settings */}
+        <TabsContent value="security">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Lock className="h-5 w-5 text-emerald-600" />
+                Account Security
+              </CardTitle>
+              <CardDescription>Manage your password and account security settings</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleChangePassword} className="space-y-4 max-w-md">
+                <FormField 
+                  label="Current Password" 
+                  type="password" 
+                  value={passwordData.current} 
+                  onChange={(e) => setPasswordData({...passwordData, current: e.target.value})} 
+                  required 
+                />
+                <FormField 
+                  label="New Password" 
+                  type="password" 
+                  value={passwordData.new} 
+                  onChange={(e) => setPasswordData({...passwordData, new: e.target.value})} 
+                  required 
+                />
+                <FormField 
+                  label="Confirm New Password" 
+                  type="password" 
+                  value={passwordData.confirm} 
+                  onChange={(e) => setPasswordData({...passwordData, confirm: e.target.value})} 
+                  required 
+                />
+                <Button type="submit">Update Password</Button>
+              </form>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {hasRole([ROLES.SUPER_ADMIN]) && (
+          <>
         {/* Company Settings */}
         <TabsContent value="company">
           <Card>
@@ -419,11 +490,14 @@ export default function AppSettings() {
             </CardContent>
           </Card>
         </TabsContent>
+        </>
+      )}
       </Tabs>
 
+      {activeTab !== 'security' && hasRole([ROLES.SUPER_ADMIN]) && (
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-white dark:bg-slate-900 border-t flex justify-end gap-4 shadow-lg z-50 md:pl-64">
         <Button variant="outline" onClick={() => window.history.back()}>Cancel</Button>
-        <Button onClick={handleSave} className="bg-emerald-600 hover:bg-emerald-700 w-32">
+        <Button type="button" onClick={handleSave} className="bg-emerald-600 hover:bg-emerald-700 w-32">
           {saveMutation.isPending ? <LoadingSpinner size="sm" /> : (
             <>
               <Save className="h-4 w-4 mr-2" />
@@ -432,6 +506,7 @@ export default function AppSettings() {
           )}
         </Button>
       </div>
+      )}
     </div>
   );
 }

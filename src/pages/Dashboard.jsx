@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { rcas } from '@/api/rcasClient';
 import { useQuery } from '@tanstack/react-query';
 import { formatCurrency } from '@/utils';
@@ -6,6 +6,13 @@ import StatCard from '@/components/common/StatCard';
 import QuickAccessCard from '@/components/dashboard/QuickAccessCard';
 import RecentVouchers from '@/components/dashboard/RecentVouchers';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -23,6 +30,8 @@ import {
 import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 
 export default function Dashboard() {
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
+
   const { data: vouchers = [], isLoading: loadingVouchers } = useQuery({
     queryKey: ['vouchers'],
     queryFn: () => rcas.entities.Voucher.list('-created_date', 1000) // Increase limit to ensure we get enough data for past months
@@ -40,6 +49,8 @@ export default function Dashboard() {
 
   // Current Month
   const currentMonth = new Date();
+  currentMonth.setFullYear(parseInt(selectedYear));
+  
   const monthStart = format(startOfMonth(currentMonth), 'yyyy-MM-dd');
   const monthEnd = format(endOfMonth(currentMonth), 'yyyy-MM-dd');
 
@@ -107,11 +118,21 @@ export default function Dashboard() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
-          <p className="text-muted-foreground">{format(new Date(), 'EEEE, dd MMMM yyyy')}</p>
+          <p className="text-muted-foreground">{format(currentMonth, 'EEEE, dd MMMM yyyy')}</p>
         </div>
-        <div className="flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-xl">
-          <Calculator className="h-5 w-5 text-primary" />
-          <span className="text-sm font-medium text-primary">Financial Year: {format(new Date(), 'yyyy')}</span>
+        <div className="flex items-center gap-2 px-3 py-1 bg-primary/10 rounded-xl">
+          <Calculator className="h-4 w-4 text-primary" />
+          <span className="text-sm font-medium text-primary whitespace-nowrap">Financial Year:</span>
+          <Select value={selectedYear} onValueChange={setSelectedYear}>
+            <SelectTrigger className="w-[80px] h-8 bg-transparent border-none focus:ring-0 text-primary font-bold shadow-none p-0">
+              <SelectValue placeholder="Year" />
+            </SelectTrigger>
+            <SelectContent>
+              {[2023, 2024, 2025, 2026, 2027].map(year => (
+                <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
