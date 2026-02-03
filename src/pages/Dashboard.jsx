@@ -20,12 +20,12 @@ import {
   Calculator,
   BarChart3
 } from 'lucide-react';
-import { format, startOfMonth, endOfMonth } from 'date-fns';
+import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 
 export default function Dashboard() {
   const { data: vouchers = [], isLoading: loadingVouchers } = useQuery({
     queryKey: ['vouchers'],
-    queryFn: () => rcas.entities.Voucher.list('-created_date', 100)
+    queryFn: () => rcas.entities.Voucher.list('-created_date', 1000) // Increase limit to ensure we get enough data for past months
   });
 
   const { data: ledgers = [] } = useQuery({
@@ -38,27 +38,55 @@ export default function Dashboard() {
     queryFn: () => rcas.entities.StockItem.list()
   });
 
+  // Current Month
   const currentMonth = new Date();
   const monthStart = format(startOfMonth(currentMonth), 'yyyy-MM-dd');
   const monthEnd = format(endOfMonth(currentMonth), 'yyyy-MM-dd');
 
+  // Last Month
+  const lastMonth = subMonths(currentMonth, 1);
+  const lastMonthStart = format(startOfMonth(lastMonth), 'yyyy-MM-dd');
+  const lastMonthEnd = format(endOfMonth(lastMonth), 'yyyy-MM-dd');
+
+  // Helper to calculate totals
+  const calculateTotal = (voucherList, type) => {
+    return voucherList
+      .filter(v => v.voucher_type === type)
+      .reduce((sum, v) => sum + (parseFloat(v.net_amount) || 0), 0);
+  };
+
   const monthlyVouchers = vouchers.filter(v => v.date >= monthStart && v.date <= monthEnd);
+  const lastMonthVouchers = vouchers.filter(v => v.date >= lastMonthStart && v.date <= lastMonthEnd);
   
-  const totalSales = monthlyVouchers
-    .filter(v => v.voucher_type === 'Sales')
-    .reduce((sum, v) => sum + (parseFloat(v.net_amount) || 0), 0);
+  // Current Month Totals
+  const totalSales = calculateTotal(monthlyVouchers, 'Sales');
+  const totalPurchases = calculateTotal(monthlyVouchers, 'Purchase');
+  const totalReceipts = calculateTotal(monthlyVouchers, 'Receipt');
+  const totalPayments = calculateTotal(monthlyVouchers, 'Payment');
 
-  const totalPurchases = monthlyVouchers
-    .filter(v => v.voucher_type === 'Purchase')
-    .reduce((sum, v) => sum + (parseFloat(v.net_amount) || 0), 0);
+  // Last Month Totals
+  const lastSales = calculateTotal(lastMonthVouchers, 'Sales');
+  const lastPurchases = calculateTotal(lastMonthVouchers, 'Purchase');
+  const lastReceipts = calculateTotal(lastMonthVouchers, 'Receipt');
+  const lastPayments = calculateTotal(lastMonthVouchers, 'Payment');
 
-  const totalReceipts = monthlyVouchers
-    .filter(v => v.voucher_type === 'Receipt')
-    .reduce((sum, v) => sum + (parseFloat(v.net_amount) || 0), 0);
+  // Calculate Trends
+  const calculateTrend = (current, previous) => {
+    if (previous === 0) {
+      return current > 0 ? { label: "+100%", isUp: true } : { label: "0%", isUp: true };
+    }
+    const diff = current - previous;
+    const percentage = (diff / previous) * 100;
+    return {
+      label: `${percentage > 0 ? '+' : ''}${percentage.toFixed(1)}%`,
+      isUp: percentage >= 0
+    };
+  };
 
-  const totalPayments = monthlyVouchers
-    .filter(v => v.voucher_type === 'Payment')
-    .reduce((sum, v) => sum + (parseFloat(v.net_amount) || 0), 0);
+  const salesTrend = calculateTrend(totalSales, lastSales);
+  const purchasesTrend = calculateTrend(totalPurchases, lastPurchases);
+  const receiptsTrend = calculateTrend(totalReceipts, lastReceipts);
+  const paymentsTrend = calculateTrend(totalPayments, lastPayments);
 
   const quickAccessItems = [
     { icon: TrendingUp, title: 'Sales Invoice', description: 'Create new sales', href: 'Sales', color: 'emerald' },
@@ -94,28 +122,32 @@ export default function Dashboard() {
           value={formatCurrency(totalSales, 'SAR')}
           subtitle="This month"
           icon={TrendingUp}
-          trend="+12.5%"
-          trendUp={true}
+          trend={salesTrend.label}
+          trendUp={salesTrend.isUp}
         />
         <StatCard
           title="Monthly Purchases"
           value={formatCurrency(totalPurchases, 'SAR')}
           subtitle="This month"
           icon={ShoppingCart}
+          trend={purchasesTrend.label}
+          trendUp={purchasesTrend.isUp}
         />
         <StatCard
           title="Cash Received"
           value={formatCurrency(totalReceipts, 'SAR')}
           subtitle="This month"
           icon={Wallet}
-          trend="+8.2%"
-          trendUp={true}
+          trend={receiptsTrend.label}
+          trendUp={receiptsTrend.isUp}
         />
         <StatCard
           title="Cash Paid"
           value={formatCurrency(totalPayments, 'SAR')}
           subtitle="This month"
           icon={CreditCard}
+          trend={paymentsTrend.label}
+          trendUp={paymentsTrend.isUp}
         />
       </div>
 
