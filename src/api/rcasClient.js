@@ -72,12 +72,33 @@ const saveStorage = () => {
 // Initialize on load
 initializeStorage();
 
+// Context for Multi-tenancy
+let currentContext = {
+  companyId: null,
+  userId: null
+};
+
 const createEntity = (name) => ({
   list: async (sort) => {
-    return Promise.resolve([...(storage[name] || [])]);
+    let data = storage[name] || [];
+    
+    // Filter by Company ID if context is set and entity is not global
+    // Global entities: User, Company, Currency (maybe), Settings (maybe)
+    const globalEntities = ['User', 'Company', 'Currency']; 
+    if (currentContext.companyId && !globalEntities.includes(name)) {
+      data = data.filter(item => item.company_id === currentContext.companyId);
+    }
+
+    return Promise.resolve([...data]);
   },
   create: async (data) => {
     const newRecord = { ...data, id: Date.now() };
+    
+    // Auto-inject Company ID
+    if (currentContext.companyId && !newRecord.company_id) {
+      newRecord.company_id = currentContext.companyId;
+    }
+
     if (!storage[name]) storage[name] = [];
     storage[name].push(newRecord);
     saveStorage();
@@ -101,6 +122,9 @@ const createEntity = (name) => ({
 });
 
 export const rcas = {
+  setContext: (context) => {
+    currentContext = { ...currentContext, ...context };
+  },
   auth: {
     login: async (username, password) => {
       // Simulate network delay
@@ -116,6 +140,87 @@ export const rcas = {
         return userWithoutPassword;
       }
       throw new Error("Invalid username or password");
+    },
+    loginWithGoogle: async ({ email, name, picture }) => {
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Find existing user by email
+      let user = storage.User.find(u => u.email?.toLowerCase() === email.toLowerCase());
+      
+      if (!user) {
+        // Create new user if not exists
+        const newId = storage.User.length > 0 ? Math.max(...storage.User.map(u => u.id)) + 1 : 1;
+        user = {
+          id: newId,
+          username: email.split('@')[0], // Generate username from email
+          email: email,
+          full_name: name,
+          password: null, // No password for OAuth users
+          role: 'Employee', // Default role
+          avatar: picture
+        };
+        storage.User.push(user);
+        saveStorage();
+      }
+
+      const { password, ...userWithoutPassword } = user;
+      return userWithoutPassword;
+    },
+    register: async ({ username, password, email, full_name }) => {
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Check if username or email already exists
+      const existingUser = storage.User.find(u => 
+        u.username.toLowerCase() === username.toLowerCase() || 
+        (email && u.email?.toLowerCase() === email.toLowerCase())
+      );
+
+      if (existingUser) {
+        throw new Error("Username or Email already exists");
+      }
+
+      const newId = storage.User.length > 0 ? Math.max(...storage.User.map(u => u.id)) + 1 : 1;
+      const newUser = {
+        id: newId,
+        username,
+        password,
+        email,
+        full_name,
+        role: 'Employee', // Default role for new signups
+        allowed_companies: [], // Initialize with no company access
+        avatar: null
+      };
+
+      storage.User.push(newUser);
+      saveStorage();
+
+      const { password: _, ...userWithoutPassword } = newUser;
+      return userWithoutPassword;
+    },
+    addUserToCompany: async (companyId, email, role) => {
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      const user = storage.User.find(u => u.email?.toLowerCase() === email.toLowerCase());
+      if (!user) throw new Error("User not found");
+
+      if (!user.allowed_companies) user.allowed_companies = [];
+      if (!user.allowed_companies.includes(companyId)) {
+        user.allowed_companies.push(companyId);
+      }
+      
+      // Update role for this context? 
+      // Simplified: Global role for now, or we need a CompanyUser map.
+      // For this MVP, we'll stick to the user's global role or update it.
+      if (role) user.role = role; 
+
+      saveStorage();
+      return user;
+    },
+    getCompanyUsers: async (companyId) => {
+      await new Promise(resolve => setTimeout(resolve, 500));
+      return storage.User.filter(u => 
+        u.allowed_companies?.includes(companyId) || u.role === 'Super Admin'
+      );
     },
     me: async () => {
       // In a real app, this would validate the token

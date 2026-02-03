@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,14 +7,31 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Label } from "@/components/ui/label";
 import { Lock, User } from 'lucide-react';
 import AppLogo from '@/components/ui/AppLogo';
+import { GoogleLogin } from '@react-oauth/google';
+import { jwtDecode } from "jwt-decode";
+import { toast } from "sonner";
 
 export default function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const { login, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   const from = location.state?.from?.pathname || '/Dashboard';
 
@@ -26,11 +43,37 @@ export default function Login() {
     try {
       await login(username, password);
       navigate(from, { replace: true });
-    } catch (error) {
+    } catch {
       // Error is handled by AuthContext toast
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleGoogleSuccess = async (credentialResponse) => {
+    try {
+      setLoading(true);
+      const decoded = jwtDecode(credentialResponse.credential);
+      console.log("Google User:", decoded);
+      
+      await loginWithGoogle({
+        email: decoded.email,
+        name: decoded.name,
+        picture: decoded.picture
+      });
+      
+      navigate(from, { replace: true });
+    } catch (error) {
+      console.error("Google Login Error:", error);
+      toast.error("Failed to login with Google");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleError = () => {
+    console.error('Google Login Failed');
+    toast.error("Google Login was unsuccessful");
   };
 
   return (
@@ -84,10 +127,44 @@ export default function Login() {
                 </div>
               </div>
             </CardContent>
-            <CardFooter>
+            <CardFooter className="flex flex-col gap-4">
               <Button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-700" disabled={loading}>
                 {loading ? "Signing in..." : "Sign In"}
               </Button>
+              
+              <div className="text-center text-sm text-slate-500">
+                Don't have an account?{' '}
+                <Link to="/signup" className="text-emerald-600 hover:text-emerald-500 font-medium">
+                  Sign up
+                </Link>
+              </div>
+
+              <div className="relative w-full">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t border-slate-200 dark:border-slate-700" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-white dark:bg-slate-950 px-2 text-slate-500">
+                    Or continue with
+                  </span>
+                </div>
+              </div>
+
+              <div className="w-full flex justify-center">
+                {isOnline ? (
+                  <GoogleLogin
+                    onSuccess={handleGoogleSuccess}
+                    onError={handleGoogleError}
+                    theme="filled_blue"
+                    shape="pill"
+                    width="100%"
+                  />
+                ) : (
+                  <div className="text-sm text-center text-muted-foreground bg-muted p-2 rounded-md w-full">
+                    Google Login unavailable (Offline)
+                  </div>
+                )}
+              </div>
             </CardFooter>
           </form>
         </Card>

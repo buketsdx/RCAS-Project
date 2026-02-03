@@ -46,6 +46,32 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const loginWithGoogle = async (googleData) => {
+    try {
+      const userData = await rcas.auth.loginWithGoogle(googleData);
+      setUser(userData);
+      localStorage.setItem('rcas_user_session', JSON.stringify(userData));
+      toast.success(`Welcome back, ${userData.full_name}!`);
+      return userData;
+    } catch (error) {
+      toast.error(error.message || "Google Login failed");
+      throw error;
+    }
+  };
+
+  const register = async (userData) => {
+    try {
+      const newUser = await rcas.auth.register(userData);
+      setUser(newUser);
+      localStorage.setItem('rcas_user_session', JSON.stringify(newUser));
+      toast.success(`Welcome, ${newUser.full_name}!`);
+      return newUser;
+    } catch (error) {
+      toast.error(error.message || "Registration failed");
+      throw error;
+    }
+  };
+
   const logout = () => {
     rcas.auth.logout();
     setUser(null);
@@ -64,7 +90,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading, hasRole }}>
+    <AuthContext.Provider value={{ user, login, loginWithGoogle, register, logout, loading, hasRole }}>
       {children}
     </AuthContext.Provider>
   );

@@ -60,12 +60,6 @@ export default function CompanyInfo() {
     : companies[0];
 
   useEffect(() => {
-    if (companies.length > 0 && !selectedCompanyId) {
-      setSelectedCompanyId(companies[0].id);
-    }
-  }, [companies, selectedCompanyId]);
-
-  useEffect(() => {
     if (company) {
       setFormData({
         name: company.name || '',

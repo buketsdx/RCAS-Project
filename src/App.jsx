@@ -12,6 +12,7 @@ import Layout from './Layout';
 // Pages - Dashboard
 import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
+import Signup from './pages/Signup';
 
 // Pages - Company Section
 import CompanyInfo from './pages/CompanyInfo';
@@ -102,12 +103,13 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <CurrencyProvider>
         <ThemeProvider>
-          <CompanyProvider>
-            <AuthProvider>
+          <AuthProvider>
+            <CompanyProvider>
               <Router>
                 <Routes>
                   {/* Public Routes */}
                   <Route path="/Login" element={<Login />} />
+                  <Route path="/Signup" element={<Signup />} />
 
                   {/* Protected Routes */}
                   <Route element={<ProtectedRoute />}>
@@ -221,8 +223,8 @@ function App() {
                   </Route>
                 </Routes>
               </Router>
-            </AuthProvider>
-          </CompanyProvider>
+            </CompanyProvider>
+          </AuthProvider>
         </ThemeProvider>
     </CurrencyProvider>
     </QueryClientProvider>

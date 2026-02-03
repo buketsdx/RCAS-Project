@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Building2, Plus, Pencil, Trash2, Eye, EyeOff } from 'lucide-react';
+import { Building2, Plus, Pencil, Trash2, Eye, EyeOff, UserPlus, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export default function CompanyManagement() {
@@ -21,6 +21,15 @@ export default function CompanyManagement() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingCompany, setEditingCompany] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
+  
+  // User Management State
+  const [usersDialogOpen, setUsersDialogOpen] = useState(false);
+  const [selectedCompanyForUsers, setSelectedCompanyForUsers] = useState(null);
+  const [companyUsers, setCompanyUsers] = useState([]);
+  const [newUserEmail, setNewUserEmail] = useState('');
+  const [newUserRole, setNewUserRole] = useState('Employee');
+  const [userLoading, setUserLoading] = useState(false);
+
   const [formData, setFormData] = useState({
     name: '',
     name_arabic: '',
@@ -80,6 +89,39 @@ export default function CompanyManagement() {
       toast.error(`Failed to delete company: ${error.message}`);
     }
   });
+
+  const handleManageUsers = async (company) => {
+    setSelectedCompanyForUsers(company);
+    setUsersDialogOpen(true);
+    setUserLoading(true);
+    try {
+      const users = await rcas.auth.getCompanyUsers(company.id);
+      setCompanyUsers(users);
+    } catch (error) {
+      toast.error("Failed to load users");
+    } finally {
+      setUserLoading(false);
+    }
+  };
+
+  const handleAddUser = async (e) => {
+    e.preventDefault();
+    if (!newUserEmail) return;
+    
+    setUserLoading(true);
+    try {
+      await rcas.auth.addUserToCompany(selectedCompanyForUsers.id, newUserEmail, newUserRole);
+      toast.success("User added successfully");
+      setNewUserEmail('');
+      // Refresh list
+      const users = await rcas.auth.getCompanyUsers(selectedCompanyForUsers.id);
+      setCompanyUsers(users);
+    } catch (error) {
+      toast.error(error.message || "Failed to add user");
+    } finally {
+      setUserLoading(false);
+    }
+  };
 
   const openDialog = (company = null) => {
     if (company) {
@@ -192,6 +234,18 @@ export default function CompanyManagement() {
             className={selectedCompanyId === row.id ? "bg-emerald-100 text-emerald-700" : ""}
           >
             <Eye className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleManageUsers(row);
+            }}
+            title="Manage Users"
+            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+          >
+            <Users className="h-4 w-4" />
           </Button>
           <Button
             variant="ghost"
@@ -426,6 +480,82 @@ export default function CompanyManagement() {
               </Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={usersDialogOpen} onOpenChange={setUsersDialogOpen}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Manage Users - {selectedCompanyForUsers?.name}</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-6">
+            <div className="flex gap-4 items-end bg-slate-50 p-4 rounded-lg border">
+              <div className="flex-1">
+                <label className="text-sm font-medium mb-1 block">Add User by Email</label>
+                <div className="flex gap-2">
+                  <input
+                    type="email"
+                    placeholder="user@example.com"
+                    className="flex-1 h-10 px-3 rounded-md border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    value={newUserEmail}
+                    onChange={(e) => setNewUserEmail(e.target.value)}
+                  />
+                  <select 
+                    className="h-10 px-3 rounded-md border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    value={newUserRole}
+                    onChange={(e) => setNewUserRole(e.target.value)}
+                  >
+                    <option value="Employee">Employee</option>
+                    <option value="Manager">Manager</option>
+                    <option value="Admin">Admin</option>
+                  </select>
+                </div>
+              </div>
+              <Button onClick={handleAddUser} disabled={userLoading || !newUserEmail}>
+                {userLoading ? <LoadingSpinner size="sm" /> : <UserPlus className="h-4 w-4 mr-2" />}
+                Add User
+              </Button>
+            </div>
+
+            <div className="border rounded-md">
+              <table className="w-full text-sm">
+                <thead className="bg-slate-50 border-b">
+                  <tr>
+                    <th className="text-left py-3 px-4 font-medium text-slate-500">Name</th>
+                    <th className="text-left py-3 px-4 font-medium text-slate-500">Email</th>
+                    <th className="text-left py-3 px-4 font-medium text-slate-500">Role</th>
+                    <th className="text-right py-3 px-4 font-medium text-slate-500">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {companyUsers.length === 0 ? (
+                    <tr>
+                      <td colSpan="4" className="py-8 text-center text-slate-500">
+                        No users assigned to this company yet.
+                      </td>
+                    </tr>
+                  ) : (
+                    companyUsers.map(user => (
+                      <tr key={user.id}>
+                        <td className="py-3 px-4 font-medium">{user.full_name || user.username}</td>
+                        <td className="py-3 px-4 text-slate-500">{user.email}</td>
+                        <td className="py-3 px-4">
+                          <Badge variant="outline" className="bg-slate-100">{user.role}</Badge>
+                        </td>
+                        <td className="py-3 px-4 text-right">
+                          <Badge className="bg-emerald-100 text-emerald-700">Active</Badge>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setUsersDialogOpen(false)}>Close</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
