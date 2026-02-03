@@ -27,11 +27,11 @@ export default function ProfessionalFooter() {
       isDark ? "bg-slate-950 border-slate-800" : "bg-slate-50 border-slate-200"
     )}>
       {/* Main Footer Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 lg:py-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           
           {/* Brand Column */}
-          <div className="space-y-6">
+          <div className="space-y-3">
             <AppLogo />
             <p className={cn("text-sm leading-relaxed max-w-xs", isDark ? "text-slate-400" : "text-slate-600")}>
               Empowering businesses with professional accounting and inventory management solutions. Open source, secure, and reliable.
@@ -46,10 +46,10 @@ export default function ProfessionalFooter() {
 
           {/* Product Links */}
           <div>
-            <h3 className={cn("text-sm font-semibold tracking-wider uppercase mb-4", isDark ? "text-slate-100" : "text-slate-900")}>
+            <h3 className={cn("text-sm font-semibold tracking-wider uppercase mb-2", isDark ? "text-slate-100" : "text-slate-900")}>
               Product
             </h3>
-            <ul className="space-y-3">
+            <ul className="space-y-1">
               <FooterLink to="/Dashboard" label="Dashboard" isDark={isDark} />
               <FooterLink to="/Sales" label="Sales" isDark={isDark} />
               <FooterLink to="/Purchase" label="Purchase" isDark={isDark} />
@@ -60,10 +60,10 @@ export default function ProfessionalFooter() {
 
           {/* Support Links */}
           <div>
-            <h3 className={cn("text-sm font-semibold tracking-wider uppercase mb-4", isDark ? "text-slate-100" : "text-slate-900")}>
+            <h3 className={cn("text-sm font-semibold tracking-wider uppercase mb-2", isDark ? "text-slate-100" : "text-slate-900")}>
               Support
             </h3>
-            <ul className="space-y-3">
+            <ul className="space-y-1">
               <FooterLink to="/Help" label="Documentation" isDark={isDark} />
               <FooterLink to="/FAQ" label="FAQ" isDark={isDark} />
               <FooterLink to="/Deployment" label="Deployment Guide" isDark={isDark} />
@@ -85,10 +85,10 @@ export default function ProfessionalFooter() {
 
           {/* Newsletter / CTA */}
           <div>
-            <h3 className={cn("text-sm font-semibold tracking-wider uppercase mb-4", isDark ? "text-slate-100" : "text-slate-900")}>
+            <h3 className={cn("text-sm font-semibold tracking-wider uppercase mb-2", isDark ? "text-slate-100" : "text-slate-900")}>
               Stay Updated
             </h3>
-            <p className={cn("text-sm mb-4", isDark ? "text-slate-400" : "text-slate-600")}>
+            <p className={cn("text-sm mb-2", isDark ? "text-slate-400" : "text-slate-600")}>
               Subscribe to our newsletter for the latest updates and features.
             </p>
             <div className="space-y-2">
