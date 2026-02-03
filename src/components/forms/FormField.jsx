@@ -31,7 +31,7 @@ export default function FormField({
   return (
     <div className={cn("space-y-1.5", className)}>
       {label && (
-        <Label htmlFor={name} className="text-slate-700 font-medium">
+        <Label htmlFor={name} className="text-slate-700 dark:text-slate-300 font-medium">
           {label}
           {required && <span className="text-red-500 ml-1">*</span>}
         </Label>
@@ -47,19 +47,19 @@ export default function FormField({
           disabled={disabled}
           rows={rows}
           className={cn(
-            "bg-slate-50 border-slate-200 focus:border-emerald-500 focus:ring-emerald-500",
+            "bg-slate-50 dark:bg-slate-900 dark:text-slate-100 border-slate-200 dark:border-slate-700 focus:border-emerald-500 focus:ring-emerald-500",
             error && "border-red-500"
           )}
         />
       ) : type === 'select' ? (
         <Select value={value || 'default'} onValueChange={handleChange} disabled={disabled}>
           <SelectTrigger className={cn(
-            "bg-white text-slate-900 border-slate-300 focus:border-emerald-500 focus:ring-emerald-500 relative z-50",
+            "bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 border-slate-300 dark:border-slate-700 focus:border-emerald-500 focus:ring-emerald-500 relative z-50",
             error && "border-red-500"
           )}>
             <SelectValue placeholder={placeholder || `Select ${label}`} />
           </SelectTrigger>
-          <SelectContent className="z-50 bg-white text-slate-900 border border-slate-300">
+          <SelectContent className="z-50 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 border border-slate-300 dark:border-slate-700">
             {options && options.length > 0 ? (
               options.map((opt, index) => {
                 const optValue = opt?.value || opt?.id || opt?.name || opt;
@@ -67,7 +67,7 @@ export default function FormField({
                 const key = optValue || `opt-${index}`;
                 
                 return (
-                  <SelectItem key={key} value={String(optValue)} className="hover:bg-emerald-50">
+                  <SelectItem key={key} value={String(optValue)} className="hover:bg-emerald-50 dark:hover:bg-emerald-900/20 focus:bg-emerald-50 dark:focus:bg-emerald-900/20 cursor-pointer">
                     {optLabel}
                   </SelectItem>
                 );
@@ -89,13 +89,13 @@ export default function FormField({
           placeholder={placeholder}
           disabled={disabled}
           className={cn(
-            "bg-slate-50 border-slate-200 focus:border-emerald-500 focus:ring-emerald-500",
+            "bg-slate-50 dark:bg-slate-900 dark:text-slate-100 border-slate-200 dark:border-slate-700 focus:border-emerald-500 focus:ring-emerald-500",
             error && "border-red-500"
           )}
         />
       )}
       
-      {hint && <p className="text-xs text-slate-400">{hint}</p>}
+      {hint && <p className="text-xs text-slate-400 dark:text-slate-500">{hint}</p>}
       {error && <p className="text-xs text-red-500">{error}</p>}
     </div>
   );

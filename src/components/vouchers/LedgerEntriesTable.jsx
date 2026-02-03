@@ -29,31 +29,31 @@ export default function LedgerEntriesTable({
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full">
-          <thead className="bg-slate-50">
+          <thead className="bg-slate-50 dark:bg-slate-900/50">
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Ledger Account</th>
-              <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600 uppercase tracking-wider">Debit (SAR)</th>
-              <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600 uppercase tracking-wider">Credit (SAR)</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Ledger Account</th>
+              <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Debit (SAR)</th>
+              <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Credit (SAR)</th>
               <th className="px-4 py-3 w-12"></th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
             {entries.map((entry, index) => (
-              <tr key={index} className="hover:bg-slate-50">
+              <tr key={index} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
                 <td className="px-4 py-2">
                   <Select 
                     value={entry.ledger_id || ''} 
                     onValueChange={(v) => handleEntryChange(index, 'ledger_id', v)}
                   >
-                    <SelectTrigger className="min-w-[200px] bg-white">
+                    <SelectTrigger className="min-w-[200px] bg-white dark:bg-slate-900 dark:border-slate-700 dark:text-slate-100">
                       <SelectValue placeholder="Select ledger" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700">
                       {ledgers.map(l => (
-                        <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>
+                        <SelectItem key={l.id} value={l.id} className="dark:text-slate-100 dark:focus:bg-slate-800">{l.name}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -63,7 +63,7 @@ export default function LedgerEntriesTable({
                     type="number"
                     value={entry.debit_amount || ''}
                     onChange={(e) => handleEntryChange(index, 'debit_amount', e.target.value)}
-                    className="w-32 text-right bg-white"
+                    className="w-32 text-right bg-white dark:bg-slate-900 dark:border-slate-700 dark:text-slate-100"
                     placeholder="0.00"
                   />
                 </td>
@@ -72,7 +72,7 @@ export default function LedgerEntriesTable({
                     type="number"
                     value={entry.credit_amount || ''}
                     onChange={(e) => handleEntryChange(index, 'credit_amount', e.target.value)}
-                    className="w-32 text-right bg-white"
+                    className="w-32 text-right bg-white dark:bg-slate-900 dark:border-slate-700 dark:text-slate-100"
                     placeholder="0.00"
                   />
                 </td>
@@ -89,11 +89,11 @@ export default function LedgerEntriesTable({
               </tr>
             ))}
           </tbody>
-          <tfoot className="bg-slate-50">
+          <tfoot className="bg-slate-50 dark:bg-slate-900/50">
             <tr>
-              <td className="px-4 py-3 font-semibold text-slate-700">Total</td>
-              <td className="px-4 py-3 text-right font-semibold text-slate-700">{totalDebit.toFixed(2)}</td>
-              <td className="px-4 py-3 text-right font-semibold text-slate-700">{totalCredit.toFixed(2)}</td>
+              <td className="px-4 py-3 font-semibold text-slate-700 dark:text-slate-300">Total</td>
+              <td className="px-4 py-3 text-right font-semibold text-slate-700 dark:text-slate-300">{totalDebit.toFixed(2)}</td>
+              <td className="px-4 py-3 text-right font-semibold text-slate-700 dark:text-slate-300">{totalCredit.toFixed(2)}</td>
               <td></td>
             </tr>
             {difference > 0 && (
