@@ -222,6 +222,42 @@ export const rcas = {
         u.allowed_companies?.includes(companyId) || u.role === 'Super Admin'
       );
     },
+    // --- Password Reset Flow (Mock) ---
+    requestPasswordReset: async (email) => {
+      await new Promise(resolve => setTimeout(resolve, 500));
+      const user = storage.User.find(u => u.email?.toLowerCase() === email.toLowerCase());
+      
+      if (!user) {
+        // Security best practice: Don't reveal if user exists or not, but for dev we will log it
+        console.warn(`Password reset requested for non-existent email: ${email}`);
+        return { message: "If an account exists, a reset link has been sent." };
+      }
+
+      // Generate a mock OTP
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      user.resetOtp = otp;
+      user.resetOtpExpires = Date.now() + 15 * 60 * 1000; // 15 mins
+      saveStorage();
+
+      // In a real app, send Email here. For now, we Log it and return it for testing.
+      console.log(`[MOCK EMAIL] Password Reset OTP for ${email}: ${otp}`);
+      return { success: true, message: "OTP sent to email (Check Console)", dev_otp: otp };
+    },
+    resetPassword: async (email, otp, newPassword) => {
+      await new Promise(resolve => setTimeout(resolve, 500));
+      const user = storage.User.find(u => u.email?.toLowerCase() === email.toLowerCase());
+
+      if (!user || user.resetOtp !== otp || Date.now() > user.resetOtpExpires) {
+        throw new Error("Invalid or expired OTP");
+      }
+
+      user.password = newPassword;
+      user.resetOtp = null;
+      user.resetOtpExpires = null;
+      saveStorage();
+      
+      return { success: true, message: "Password updated successfully" };
+    },
     me: async () => {
       // In a real app, this would validate the token
       return null;

@@ -126,6 +126,11 @@ export default function Login() {
                   />
                 </div>
               </div>
+              <div className="flex justify-end">
+                 <Link to="/ForgotPassword" className="text-xs text-emerald-600 hover:text-emerald-500 font-medium">
+                   Forgot Password?
+                 </Link>
+              </div>
             </CardContent>
             <CardFooter className="flex flex-col gap-4">
               <Button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-700" disabled={loading}>

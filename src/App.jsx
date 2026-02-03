@@ -13,6 +13,7 @@ import Layout from './Layout';
 import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
+import ForgotPassword from './pages/ForgotPassword';
 
 // Pages - Company Section
 import CompanyInfo from './pages/CompanyInfo';
@@ -110,6 +111,7 @@ function App() {
                   {/* Public Routes */}
                   <Route path="/Login" element={<Login />} />
                   <Route path="/Signup" element={<Signup />} />
+                  <Route path="/ForgotPassword" element={<ForgotPassword />} />
 
                   {/* Protected Routes */}
                   <Route element={<ProtectedRoute />}>

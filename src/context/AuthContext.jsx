@@ -79,6 +79,37 @@ export const AuthProvider = ({ children }) => {
     toast.info("Logged out successfully");
   };
 
+  // --- Password Recovery ---
+  // Requests an OTP to be sent to the user's email
+  const requestPasswordReset = async (email) => {
+    try {
+      const result = await rcas.auth.requestPasswordReset(email);
+      if (result.success) {
+        toast.success(result.message);
+        // For development convenience, show OTP in toast too
+        if (result.dev_otp) toast.info(`DEV: OTP is ${result.dev_otp}`);
+      } else {
+        toast.info(result.message);
+      }
+      return result;
+    } catch (error) {
+      toast.error("Failed to request reset");
+      throw error;
+    }
+  };
+
+  // Resets the password using the OTP
+  const resetPassword = async (email, otp, newPassword) => {
+    try {
+      const result = await rcas.auth.resetPassword(email, otp, newPassword);
+      toast.success(result.message);
+      return result;
+    } catch (error) {
+      toast.error(error.message || "Failed to reset password");
+      throw error;
+    }
+  };
+
   const hasRole = (roles) => {
     if (!user) return false;
     if (user.role === ROLES.SUPER_ADMIN) return true; // Super Admin has access to everything
@@ -90,7 +121,17 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, loginWithGoogle, register, logout, loading, hasRole }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      loading,
+      login, 
+      loginWithGoogle, 
+      register, 
+      logout, 
+      requestPasswordReset, 
+      resetPassword,
+      hasRole 
+    }}>
       {children}
     </AuthContext.Provider>
   );
