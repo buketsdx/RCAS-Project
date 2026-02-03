@@ -351,7 +351,7 @@ export default function Layout() {
 
       {/* Mobile Sidebar */}
       <div className={cn(
-        "lg:hidden fixed inset-y-0 left-0 w-64 border-r z-50 transform transition-transform duration-300 bg-card border-border",
+        "lg:hidden fixed inset-y-0 left-0 w-64 border-r z-50 transform transition-transform duration-300 bg-card border-border flex flex-col",
         sidebarOpen ? "translate-x-0" : "-translate-x-full"
       )}>
         <div className="h-16 flex items-center justify-between px-4 border-b border-border">
