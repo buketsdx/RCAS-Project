@@ -13,7 +13,7 @@ import { toast } from "sonner";
 import { Package, Plus, Pencil, Trash2 } from 'lucide-react';
 
 export default function StockGroups() {
-  const { company } = useCompany();
+  const { company, selectedCompanyId } = useCompany();
   const type = company?.type || 'General';
 
   const getTerminology = () => {
@@ -72,14 +72,18 @@ export default function StockGroups() {
   });
 
   const { data: groups = [], isLoading } = useQuery({
-    queryKey: ['stockGroups'],
-    queryFn: () => rcas.entities.StockGroup.list()
+    queryKey: ['stockGroups', selectedCompanyId],
+    queryFn: async () => {
+      const list = await rcas.entities.StockGroup.list();
+      return list.filter(g => String(g.company_id) === String(selectedCompanyId));
+    },
+    enabled: !!selectedCompanyId
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => rcas.entities.StockGroup.create(data),
+    mutationFn: (data) => rcas.entities.StockGroup.create({ ...data, company_id: selectedCompanyId }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['stockGroups'] });
+      queryClient.invalidateQueries({ queryKey: ['stockGroups', selectedCompanyId] });
       toast.success('Stock group created successfully');
       closeDialog();
     }
@@ -88,7 +92,7 @@ export default function StockGroups() {
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => rcas.entities.StockGroup.update(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['stockGroups'] });
+      queryClient.invalidateQueries({ queryKey: ['stockGroups', selectedCompanyId] });
       toast.success('Stock group updated successfully');
       closeDialog();
     }
@@ -97,7 +101,7 @@ export default function StockGroups() {
   const deleteMutation = useMutation({
     mutationFn: (id) => rcas.entities.StockGroup.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['stockGroups'] });
+      queryClient.invalidateQueries({ queryKey: ['stockGroups', selectedCompanyId] });
       toast.success('Stock group deleted successfully');
     }
   });

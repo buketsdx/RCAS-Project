@@ -2,6 +2,9 @@ export const CustiodyWallet = {
   "name": "CustodyWallet",
   "type": "object",
   "properties": {
+    "company_id": {
+      "type": "string"
+    },
     "wallet_id": {
       "type": "string",
       "description": "Auto-generated unique wallet ID"

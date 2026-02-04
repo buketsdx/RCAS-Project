@@ -31,7 +31,7 @@ import {
 import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 
 export default function Dashboard() {
-  const { company } = useCompany();
+  const { selectedCompanyId, currentCompany: company } = useCompany();
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
 
   const type = company?.type || 'General';
@@ -44,7 +44,8 @@ export default function Dashboard() {
           stockItems: 'Services & Products',
           stockSubtitle: 'Active Services',
           salesInvoice: 'New Service',
-          purchaseInvoice: 'Purchase Stock'
+          purchaseInvoice: 'Purchase Stock',
+          purchases: 'Stock Purchases'
         };
       case 'Restaurant':
         return {
@@ -52,7 +53,8 @@ export default function Dashboard() {
           stockItems: 'Menu Items',
           stockSubtitle: 'In Menu',
           salesInvoice: 'New Order',
-          purchaseInvoice: 'Purchase Ingredients'
+          purchaseInvoice: 'Purchase Ingredients',
+          purchases: 'Ingredient Purchases'
         };
       default:
         return {
@@ -60,7 +62,8 @@ export default function Dashboard() {
           stockItems: 'Stock Items',
           stockSubtitle: 'In inventory',
           salesInvoice: 'Sales Invoice',
-          purchaseInvoice: 'Purchase Invoice'
+          purchaseInvoice: 'Purchase Invoice',
+          purchases: 'Monthly Purchases'
         };
     }
   };
@@ -68,18 +71,30 @@ export default function Dashboard() {
   const terms = getTerminology();
 
   const { data: vouchers = [], isLoading: loadingVouchers } = useQuery({
-    queryKey: ['vouchers'],
-    queryFn: () => rcas.entities.Voucher.list('-created_date', 1000) // Increase limit to ensure we get enough data for past months
+    queryKey: ['vouchers', selectedCompanyId],
+    queryFn: async () => {
+      const list = await rcas.entities.Voucher.list('-created_date', 1000);
+      return list.filter(v => String(v.company_id) === String(selectedCompanyId));
+    },
+    enabled: !!selectedCompanyId
   });
 
   const { data: ledgers = [] } = useQuery({
-    queryKey: ['ledgers'],
-    queryFn: () => rcas.entities.Ledger.list()
+    queryKey: ['ledgers', selectedCompanyId],
+    queryFn: async () => {
+      const list = await rcas.entities.Ledger.list();
+      return list.filter(l => String(l.company_id) === String(selectedCompanyId));
+    },
+    enabled: !!selectedCompanyId
   });
 
   const { data: stockItems = [] } = useQuery({
-    queryKey: ['stockItems'],
-    queryFn: () => rcas.entities.StockItem.list()
+    queryKey: ['stockItems', selectedCompanyId],
+    queryFn: async () => {
+      const list = await rcas.entities.StockItem.list();
+      return list.filter(s => String(s.company_id) === String(selectedCompanyId));
+    },
+    enabled: !!selectedCompanyId
   });
 
   // Current Month
@@ -182,7 +197,7 @@ export default function Dashboard() {
           trendUp={salesTrend.isUp}
         />
         <StatCard
-          title="Monthly Purchases"
+          title={terms.purchases}
           value={formatCurrency(totalPurchases, 'SAR')}
           subtitle="This month"
           icon={ShoppingCart}

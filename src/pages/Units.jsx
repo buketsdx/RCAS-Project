@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { rcas } from '@/api/rcasClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useCompany } from '@/context/CompanyContext';
 import PageHeader from '@/components/common/PageHeader';
 import DataTable from '@/components/common/DataTable';
 import FormField from '@/components/forms/FormField';
@@ -13,6 +14,37 @@ import { Ruler, Plus, Pencil, Trash2 } from 'lucide-react';
 
 export default function Units() {
   const queryClient = useQueryClient();
+  const { company, selectedCompanyId } = useCompany();
+  const type = company?.type || 'General';
+
+  const getTerminology = () => {
+    switch (type) {
+      case 'Salon':
+        return {
+          title: 'Measurement Units',
+          subtitle: 'Manage units for products and services',
+          entity: 'Unit',
+          create: 'Add Unit'
+        };
+      case 'Restaurant':
+        return {
+          title: 'Measurement Units',
+          subtitle: 'Manage units for ingredients and menu items',
+          entity: 'Unit',
+          create: 'Add Unit'
+        };
+      default:
+        return {
+          title: 'Units of Measurement',
+          subtitle: 'Manage units for inventory items',
+          entity: 'Unit',
+          create: 'Add Unit'
+        };
+    }
+  };
+
+  const terms = getTerminology();
+
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingUnit, setEditingUnit] = useState(null);
   const [formData, setFormData] = useState({
@@ -24,14 +56,18 @@ export default function Units() {
   });
 
   const { data: units = [], isLoading } = useQuery({
-    queryKey: ['units'],
-    queryFn: () => rcas.entities.Unit.list()
+    queryKey: ['units', selectedCompanyId],
+    queryFn: async () => {
+      const list = await rcas.entities.Unit.list();
+      return list.filter(u => String(u.company_id) === String(selectedCompanyId));
+    },
+    enabled: !!selectedCompanyId
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => rcas.entities.Unit.create(data),
+    mutationFn: (data) => rcas.entities.Unit.create({ ...data, company_id: selectedCompanyId }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['units'] });
+      queryClient.invalidateQueries({ queryKey: ['units', selectedCompanyId] });
       toast.success('Unit created successfully');
       closeDialog();
     }
@@ -40,7 +76,7 @@ export default function Units() {
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => rcas.entities.Unit.update(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['units'] });
+      queryClient.invalidateQueries({ queryKey: ['units', selectedCompanyId] });
       toast.success('Unit updated successfully');
       closeDialog();
     }
@@ -49,7 +85,7 @@ export default function Units() {
   const deleteMutation = useMutation({
     mutationFn: (id) => rcas.entities.Unit.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['units'] });
+      queryClient.invalidateQueries({ queryKey: ['units', selectedCompanyId] });
       toast.success('Unit deleted successfully');
     }
   });
@@ -160,17 +196,17 @@ export default function Units() {
   return (
     <div>
       <PageHeader 
-        title="Units of Measurement" 
-        subtitle="Manage units for inventory items"
-        primaryAction={{ label: 'Add Unit', onClick: () => openDialog() }}
+        title={terms.title} 
+        subtitle={terms.subtitle}
+        primaryAction={{ label: terms.create, onClick: () => openDialog() }}
       />
 
       {units.length === 0 ? (
         <EmptyState
           icon={Ruler}
-          title="No Units"
-          description="Create units of measurement for your inventory"
-          action={{ label: 'Add First Unit', onClick: () => openDialog() }}
+          title={`No ${terms.entity}s`}
+          description={`Create ${terms.entity.toLowerCase()}s of measurement`}
+          action={{ label: `Add First ${terms.entity}`, onClick: () => openDialog() }}
         />
       ) : (
         <DataTable columns={columns} data={units} />
@@ -179,7 +215,7 @@ export default function Units() {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>{editingUnit ? 'Edit Unit' : 'Create Unit'}</DialogTitle>
+            <DialogTitle>{editingUnit ? `Edit ${terms.entity}` : `Create ${terms.entity}`}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit}>
             <div className="space-y-4 py-4">

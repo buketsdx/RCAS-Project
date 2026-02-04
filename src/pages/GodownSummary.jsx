@@ -6,19 +6,57 @@ import PageHeader from '@/components/common/PageHeader';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Warehouse, Package } from 'lucide-react';
+import { useCompany } from '@/context/CompanyContext';
 
 export default function GodownSummary() {
-  const { data: godowns = [], isLoading } = useQuery({ queryKey: ['godowns'], queryFn: () => rcas.entities.Godown.list() });
-  const { data: items = [] } = useQuery({ queryKey: ['stockItems'], queryFn: () => rcas.entities.StockItem.list() });
+  const { type, selectedCompanyId } = useCompany();
+  const { data: godowns = [], isLoading } = useQuery({ 
+    queryKey: ['godowns', selectedCompanyId], 
+    queryFn: async () => {
+      const all = await rcas.entities.Godown.list();
+      return all.filter(g => String(g.company_id) === String(selectedCompanyId));
+    },
+    enabled: !!selectedCompanyId
+  });
+  const { data: items = [] } = useQuery({ 
+    queryKey: ['stockItems', selectedCompanyId], 
+    queryFn: async () => {
+      const all = await rcas.entities.StockItem.list();
+      return all.filter(i => String(i.company_id) === String(selectedCompanyId));
+    },
+    enabled: !!selectedCompanyId
+  });
+
+  const getTerminology = () => {
+    switch (type) {
+      case 'Salon':
+      case 'Restaurant':
+        return {
+          title: 'Store Summary',
+          subtitle: 'Location-wise stock overview',
+          entity: 'Store',
+          plural: 'Stores'
+        };
+      default:
+        return {
+          title: 'Godown Summary',
+          subtitle: 'Warehouse-wise stock overview',
+          entity: 'Godown',
+          plural: 'Godowns'
+        };
+    }
+  };
+
+  const t = getTerminology();
 
   const totalItems = items.length;
   const totalValue = items.reduce((sum, item) => sum + (parseFloat(item.current_qty || 0) * parseFloat(item.cost_price || 0)), 0);
 
-  if (isLoading) return <LoadingSpinner text="Loading godown summary..." />;
+  if (isLoading) return <LoadingSpinner text={`Loading ${t.entity.toLowerCase()} summary...`} />;
 
   return (
     <div>
-      <PageHeader title="Godown Summary" subtitle="Warehouse-wise stock overview" />
+      <PageHeader title={t.title} subtitle={t.subtitle} />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <Card>
@@ -28,7 +66,7 @@ export default function GodownSummary() {
                 <Warehouse className="h-6 w-6 text-blue-600" />
               </div>
               <div>
-                <p className="text-sm text-slate-500">Total Godowns</p>
+                <p className="text-sm text-slate-500">Total {t.plural}</p>
                 <p className="text-2xl font-bold">{godowns.length}</p>
               </div>
             </div>
@@ -67,7 +105,7 @@ export default function GodownSummary() {
           <Card className="col-span-full">
             <CardContent className="py-12 text-center">
               <Warehouse className="h-12 w-12 mx-auto text-slate-300 mb-4" />
-              <p className="text-slate-500">No godowns created yet</p>
+              <p className="text-slate-500">No {t.plural.toLowerCase()} created yet</p>
             </CardContent>
           </Card>
         ) : (

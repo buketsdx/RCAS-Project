@@ -2,6 +2,7 @@ import React from 'react';
 import { rcas } from '@/api/rcasClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
+import { useCompany } from '@/context/CompanyContext';
 import { createPageUrl, formatCurrency } from "@/utils";
 import PageHeader from '@/components/common/PageHeader';
 import DataTable from '@/components/common/DataTable';
@@ -15,19 +16,21 @@ import { Wallet, Eye, Trash2 } from 'lucide-react';
 
 export default function Receipt() {
   const queryClient = useQueryClient();
+  const { selectedCompanyId } = useCompany();
 
   const { data: vouchers = [], isLoading } = useQuery({
-    queryKey: ['receiptVouchers'],
+    queryKey: ['receiptVouchers', selectedCompanyId],
     queryFn: async () => {
       const all = await rcas.entities.Voucher.list('-created_date');
-      return all.filter(v => v.voucher_type === 'Receipt');
-    }
+      return all.filter(v => v.voucher_type === 'Receipt' && String(v.company_id) === String(selectedCompanyId));
+    },
+    enabled: !!selectedCompanyId
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id) => rcas.entities.Voucher.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['receiptVouchers'] });
+      queryClient.invalidateQueries({ queryKey: ['receiptVouchers', selectedCompanyId] });
       toast.success('Receipt deleted');
     }
   });

@@ -17,7 +17,7 @@ import { format } from 'date-fns';
 import { Users, Plus, Pencil, Trash2 } from 'lucide-react';
 
 export default function Employees() {
-  const { type } = useCompany();
+  const { type, selectedCompanyId } = useCompany();
   const queryClient = useQueryClient();
 
   const getTerminology = () => {
@@ -63,27 +63,35 @@ export default function Employees() {
     date_of_joining: '', date_of_birth: '', gender: '', nationality: '',
     iqama_number: '', passport_number: '', phone: '', email: '', address: '',
     basic_salary: '', housing_allowance: '', transport_allowance: '', other_allowances: '',
-    gosi_number: '', bank_name: '', bank_account: '', iban: ''
+    gosi_number: '', bank_name: '', bank_account: '', iban: '',
+    is_dual_commission_eligible: false
   });
 
-  const { data: employees = [], isLoading } = useQuery({ queryKey: ['employees'], queryFn: () => rcas.entities.Employee.list() });
+  const { data: employees = [], isLoading } = useQuery({ 
+    queryKey: ['employees', selectedCompanyId], 
+    queryFn: async () => {
+      const list = await rcas.entities.Employee.list();
+      return list.filter(e => String(e.company_id) === String(selectedCompanyId));
+    },
+    enabled: !!selectedCompanyId
+  });
 
   const createMutation = useMutation({
     mutationFn: async (data) => {
       const employeeCode = await generateVoucherCode('Employee');
-      return rcas.entities.Employee.create({ ...data, employee_code: employeeCode });
+      return rcas.entities.Employee.create({ ...data, employee_code: employeeCode, company_id: selectedCompanyId });
     },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['employees'] }); toast.success(`${terms.entity} added`); closeDialog(); }
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['employees', selectedCompanyId] }); toast.success(`${terms.entity} added`); closeDialog(); }
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => rcas.entities.Employee.update(id, data),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['employees'] }); toast.success(`${terms.entity} updated`); closeDialog(); }
+    mutationFn: ({ id, data }) => rcas.entities.Employee.update(id, { ...data, company_id: selectedCompanyId }),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['employees', selectedCompanyId] }); toast.success(`${terms.entity} updated`); closeDialog(); }
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id) => rcas.entities.Employee.delete(id),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['employees'] }); toast.success(`${terms.entity} deleted`); }
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['employees', selectedCompanyId] }); toast.success(`${terms.entity} deleted`); }
   });
 
   const openDialog = (employee = null) => {
@@ -99,7 +107,8 @@ export default function Employees() {
           date_of_joining: '', date_of_birth: '', gender: '', nationality: '',
           iqama_number: '', passport_number: '', phone: '', email: '', address: '',
           basic_salary: '', housing_allowance: '', transport_allowance: '', other_allowances: '',
-          gosi_number: '', bank_name: '', bank_account: '', iban: ''
+          gosi_number: '', bank_name: '', bank_account: '', iban: '',
+          is_dual_commission_eligible: false
         });
       });
     }
@@ -120,7 +129,8 @@ export default function Employees() {
       basic_salary: parseFloat(formData.basic_salary) || 0,
       housing_allowance: parseFloat(formData.housing_allowance) || 0,
       transport_allowance: parseFloat(formData.transport_allowance) || 0,
-      other_allowances: parseFloat(formData.other_allowances) || 0
+      other_allowances: parseFloat(formData.other_allowances) || 0,
+      is_dual_commission_eligible: formData.is_dual_commission_eligible === true || formData.is_dual_commission_eligible === 'true'
     };
     if (editingEmployee) updateMutation.mutate({ id: editingEmployee.id, data });
     else createMutation.mutate(data);
@@ -132,6 +142,10 @@ export default function Employees() {
       <div><p className="font-medium">{row.name}</p>{row.name_arabic && <p className="text-xs text-slate-500">{row.name_arabic}</p>}</div>
     )},
     { header: 'Designation', accessor: 'designation' },
+    { header: 'Type', accessor: 'is_dual_commission_eligible', render: (row) => {
+      const isEligible = row.is_dual_commission_eligible === true || row.is_dual_commission_eligible === 'true';
+      return <Badge variant={isEligible ? "default" : "secondary"}>{isEligible ? 'Pro' : 'Normal'}</Badge>;
+    }},
     { header: 'Department', accessor: 'department' },
     { header: 'Joining Date', accessor: 'date_of_joining', render: (row) => row.date_of_joining ? format(new Date(row.date_of_joining), 'dd MMM yyyy') : '-' },
     { header: 'Status', accessor: 'is_active', render: (row) => <Badge className={row.is_active !== false ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100'}>{row.is_active !== false ? 'Active' : 'Inactive'}</Badge> },
@@ -222,7 +236,20 @@ export default function Employees() {
                   <FormField label="Transport Allowance (SAR)" name="transport_allowance" type="number" value={formData.transport_allowance} onChange={handleChange} />
                   <FormField label="Other Allowances (SAR)" name="other_allowances" type="number" value={formData.other_allowances} onChange={handleChange} />
                 </div>
-                <div className="p-4 bg-emerald-50 rounded-lg">
+                
+                <FormField 
+                  label="Staff Type" 
+                  name="is_dual_commission_eligible" 
+                  type="select" 
+                  value={formData.is_dual_commission_eligible ? 'true' : 'false'} 
+                  onChange={(e) => setFormData(prev => ({ ...prev, is_dual_commission_eligible: e.target.value === 'true' }))}
+                  options={[
+                    { value: 'false', label: 'Normal (Standard Commission)' },
+                    { value: 'true', label: 'Pro (Dual Commission Eligible)' }
+                  ]} 
+                />
+
+                <div className="p-4 bg-emerald-50 rounded-lg mt-4">
                   <p className="text-sm text-slate-600">Total Salary:</p>
                   <p className="text-2xl font-bold text-emerald-600">
                     {formatCurrency(((parseFloat(formData.basic_salary) || 0) + (parseFloat(formData.housing_allowance) || 0) + (parseFloat(formData.transport_allowance) || 0) + (parseFloat(formData.other_allowances) || 0)), 'SAR')}

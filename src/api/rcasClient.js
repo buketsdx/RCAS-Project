@@ -187,7 +187,9 @@ export const rcas = {
     IDCounter: createEntity('IDCounter'),
     EmployeeSalaryStrucure: createEntity('EmployeeSalaryStrucure'),
     Settings: createEntity('Settings'),
-    BranchDailyRecord: createEntity('BranchDailyRecord')
+    BranchDailyRecord: createEntity('BranchDailyRecord'),
+    StylistServiceEntry: createEntity('StylistServiceEntry'),
+    Booking: createEntity('Booking')
   },
   
   integrations: {

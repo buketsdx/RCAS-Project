@@ -19,7 +19,7 @@ export default function LedgerEntriesTable({
     const updatedEntry = { ...entries[index], [field]: value };
     
     if (field === 'ledger_id') {
-      const ledger = ledgers.find(l => l.id === value);
+      const ledger = filteredLedgers.find(l => l.id === value);
       if (ledger) {
         updatedEntry.ledger_name = ledger.name;
       }

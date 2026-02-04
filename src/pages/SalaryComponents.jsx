@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { rcas } from '@/api/rcasClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useCompany } from '@/context/CompanyContext';
 import { formatCurrency } from '@/utils';
 import PageHeader from '@/components/common/PageHeader';
 import DataTable from '@/components/common/DataTable';
@@ -24,6 +25,7 @@ const calculationTypes = [
 
 export default function SalaryComponents() {
   const queryClient = useQueryClient();
+  const { selectedCompanyId } = useCompany();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingComponent, setEditingComponent] = useState(null);
   const [formData, setFormData] = useState({
@@ -31,24 +33,31 @@ export default function SalaryComponents() {
     default_value: '', percentage: '', formula: '', is_taxable: false, affects_gosi: false, is_mandatory: false
   });
 
-  const { data: components = [], isLoading } = useQuery({ queryKey: ['salaryComponents'], queryFn: () => rcas.entities.SalaryComponent.list() });
+  const { data: components = [], isLoading } = useQuery({ 
+    queryKey: ['salaryComponents', selectedCompanyId], 
+    queryFn: async () => {
+      const list = await rcas.entities.SalaryComponent.list();
+      return list.filter(c => String(c.company_id) === String(selectedCompanyId));
+    },
+    enabled: !!selectedCompanyId
+  });
 
   const createMutation = useMutation({
     mutationFn: async (data) => {
       const componentId = await generateUniqueID('salary_component', ID_PREFIXES.SALARY_COMP);
-      return rcas.entities.SalaryComponent.create({ ...data, component_id: componentId });
+      return rcas.entities.SalaryComponent.create({ ...data, component_id: componentId, company_id: selectedCompanyId });
     },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['salaryComponents'] }); toast.success('Component created'); closeDialog(); }
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['salaryComponents', selectedCompanyId] }); toast.success('Component created'); closeDialog(); }
   });
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => rcas.entities.SalaryComponent.update(id, data),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['salaryComponents'] }); toast.success('Component updated'); closeDialog(); }
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['salaryComponents', selectedCompanyId] }); toast.success('Component updated'); closeDialog(); }
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id) => rcas.entities.SalaryComponent.delete(id),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['salaryComponents'] }); toast.success('Component deleted'); }
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['salaryComponents', selectedCompanyId] }); toast.success('Component deleted'); }
   });
 
   const openDialog = (component = null) => {

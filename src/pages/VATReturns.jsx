@@ -12,15 +12,14 @@ import { BadgePercent, FileText, Download } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 
 export default function VATReturns() {
+  const { company, selectedCompanyId } = useCompany();
   const { data: vouchers = [], isLoading } = useQuery({
-    queryKey: ['vouchers'],
-    queryFn: () => rcas.entities.Voucher.list()
-  });
-
-  const { data: company } = useQuery({
-    queryKey: ['companies'],
-    queryFn: () => rcas.entities.Company.list(),
-    select: (data) => data[0]
+    queryKey: ['vouchers', selectedCompanyId],
+    queryFn: async () => {
+      const all = await rcas.entities.Voucher.list();
+      return all.filter(v => String(v.company_id) === String(selectedCompanyId));
+    },
+    enabled: !!selectedCompanyId
   });
 
   // Generate quarterly data for last 4 quarters

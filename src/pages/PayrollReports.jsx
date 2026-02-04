@@ -14,10 +14,26 @@ import { FileSpreadsheet, Printer, Download } from 'lucide-react';
 const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
 export default function PayrollReports() {
+  const { selectedCompanyId } = useCompany();
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
-  const { data: payrolls = [], isLoading } = useQuery({ queryKey: ['payrolls'], queryFn: () => rcas.entities.Payroll.list() });
-  const { data: employees = [] } = useQuery({ queryKey: ['employees'], queryFn: () => rcas.entities.Employee.list() });
+  const { data: payrolls = [], isLoading } = useQuery({ 
+    queryKey: ['payrolls', selectedCompanyId], 
+    queryFn: async () => {
+      const list = await rcas.entities.Payroll.list();
+      return list.filter(p => String(p.company_id) === String(selectedCompanyId));
+    },
+    enabled: !!selectedCompanyId
+  });
+
+  const { data: employees = [] } = useQuery({ 
+    queryKey: ['employees', selectedCompanyId], 
+    queryFn: async () => {
+      const list = await rcas.entities.Employee.list();
+      return list.filter(e => String(e.company_id) === String(selectedCompanyId));
+    },
+    enabled: !!selectedCompanyId
+  });
 
   const yearPayrolls = payrolls.filter(p => p.year === selectedYear);
 

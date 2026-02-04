@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { rcas } from '@/api/rcasClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { createPageUrl } from "@/utils";
+import { useCompany } from '@/context/CompanyContext';
 import PageHeader from '@/components/common/PageHeader';
 import FormField from '@/components/forms/FormField';
 import LedgerEntriesTable from '@/components/vouchers/LedgerEntriesTable';
@@ -14,6 +15,7 @@ import { Save } from 'lucide-react';
 
 export default function JournalVoucher() {
   const queryClient = useQueryClient();
+  const { selectedCompanyId } = useCompany();
   const urlParams = new URLSearchParams(window.location.search);
   const voucherId = urlParams.get('id');
 
@@ -30,13 +32,22 @@ export default function JournalVoucher() {
     { ledger_id: '', debit_amount: 0, credit_amount: 0 }
   ]);
 
-  const { data: ledgers = [] } = useQuery({ queryKey: ['ledgers'], queryFn: () => rcas.entities.Ledger.list() });
+  const { data: ledgers = [] } = useQuery({
+    queryKey: ['ledgers', selectedCompanyId],
+    queryFn: async () => {
+      const all = await rcas.entities.Ledger.list();
+      return all.filter(l => String(l.company_id) === String(selectedCompanyId));
+    },
+    enabled: !!selectedCompanyId
+  });
 
   const { data: existingVoucher, isLoading } = useQuery({
-    queryKey: ['voucher', voucherId],
-    queryFn: () => rcas.entities.Voucher.list(),
-    enabled: !!voucherId,
-    select: (data) => data.find(v => v.id === voucherId)
+    queryKey: ['voucher', voucherId, selectedCompanyId],
+    queryFn: async () => {
+      const list = await rcas.entities.Voucher.list();
+      return list.find(v => v.id === voucherId && String(v.company_id) === String(selectedCompanyId));
+    },
+    enabled: !!voucherId && !!selectedCompanyId
   });
 
   const { data: existingEntries = [] } = useQuery({
@@ -45,7 +56,7 @@ export default function JournalVoucher() {
       const all = await rcas.entities.VoucherLedgerEntry.list();
       return all.filter(e => e.voucher_id === voucherId);
     },
-    enabled: !!voucherId
+    enabled: !!voucherId && !!existingVoucher
   });
 
   useEffect(() => {
@@ -76,7 +87,7 @@ export default function JournalVoucher() {
       
       if (Math.abs(totalDebit - totalCredit) > 0.01) throw new Error('Voucher is not balanced. Dr/Cr must be equal.');
 
-      const voucherData = { ...formData, net_amount: totalDebit };
+      const voucherData = { ...formData, net_amount: totalDebit, company_id: selectedCompanyId };
 
       let voucher;
       if (voucherId) {
@@ -97,9 +108,13 @@ export default function JournalVoucher() {
       return voucher;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['journalVouchers'] });
-      toast.success('Journal saved');
-      window.location.href = createPageUrl('Journal');
+      queryClient.invalidateQueries({ queryKey: ['journalVouchers', selectedCompanyId] });
+      queryClient.invalidateQueries({ queryKey: ['vouchers', selectedCompanyId] });
+      queryClient.invalidateQueries({ queryKey: ['ledgers', selectedCompanyId] });
+      toast.success('Journal Voucher saved successfully');
+      setTimeout(() => {
+        window.location.href = createPageUrl('Journal');
+      }, 1000);
     },
     onError: (error) => toast.error(error.message)
   });

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { rcas } from '@/api/rcasClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useCompany } from '@/context/CompanyContext';
 import { initializeSystemLedgers } from '@/utils';
 import PageHeader from '@/components/common/PageHeader';
 import DataTable from '@/components/common/DataTable';
@@ -16,6 +17,7 @@ import { BookOpen, Plus, Pencil, Trash2 } from 'lucide-react';
 
 export default function Ledgers() {
   const queryClient = useQueryClient();
+  const { selectedCompanyId } = useCompany();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingLedger, setEditingLedger] = useState(null);
   const [formData, setFormData] = useState({
@@ -38,13 +40,21 @@ export default function Ledgers() {
   });
 
   const { data: ledgers = [], isLoading } = useQuery({
-    queryKey: ['ledgers'],
-    queryFn: () => rcas.entities.Ledger.list()
+    queryKey: ['ledgers', selectedCompanyId],
+    queryFn: async () => {
+      const list = await rcas.entities.Ledger.list();
+      return list.filter(l => String(l.company_id) === String(selectedCompanyId));
+    },
+    enabled: !!selectedCompanyId
   });
 
   const { data: groups = [] } = useQuery({
-    queryKey: ['accountGroups'],
-    queryFn: () => rcas.entities.AccountGroup.list()
+    queryKey: ['accountGroups', selectedCompanyId],
+    queryFn: async () => {
+      const list = await rcas.entities.AccountGroup.list();
+      return list.filter(g => String(g.company_id) === String(selectedCompanyId));
+    },
+    enabled: !!selectedCompanyId
   });
 
   // Initialize system ledgers on component mount
@@ -55,18 +65,18 @@ export default function Ledgers() {
   }, [groups]);
 
   const createMutation = useMutation({
-    mutationFn: (data) => rcas.entities.Ledger.create(data),
+    mutationFn: (data) => rcas.entities.Ledger.create({ ...data, company_id: selectedCompanyId }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['ledgers'] });
+      queryClient.invalidateQueries({ queryKey: ['ledgers', selectedCompanyId] });
       toast.success('Ledger created successfully');
       closeDialog();
     }
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => rcas.entities.Ledger.update(id, data),
+    mutationFn: ({ id, data }) => rcas.entities.Ledger.update(id, { ...data, company_id: selectedCompanyId }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['ledgers'] });
+      queryClient.invalidateQueries({ queryKey: ['ledgers', selectedCompanyId] });
       toast.success('Ledger updated successfully');
       closeDialog();
     }
@@ -82,7 +92,7 @@ export default function Ledgers() {
       return rcas.entities.Ledger.delete(id);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['ledgers'] });
+      queryClient.invalidateQueries({ queryKey: ['ledgers', selectedCompanyId] });
       toast.success('Ledger deleted successfully');
     },
     onError: (error) => {

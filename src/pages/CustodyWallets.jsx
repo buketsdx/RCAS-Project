@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { rcas } from '@/api/rcasClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useCompany } from '@/context/CompanyContext';
 import { formatCurrency } from '@/lib/utils';
 import PageHeader from '@/components/common/PageHeader';
 import DataTable from '@/components/common/DataTable';
@@ -33,13 +34,38 @@ export default function CustodyWallets() {
     type: 'Deposit', amount: '', description: '', reference: '', transfer_to_wallet_id: ''
   });
 
-  const { data: wallets = [], isLoading } = useQuery({ queryKey: ['custodyWallets'], queryFn: () => rcas.entities.CustodyWallet.list() });
-  const { data: transactions = [] } = useQuery({ queryKey: ['custodyTransactions'], queryFn: () => rcas.entities.CustodyTransaction.list('-date') });
+  const { data: wallets = [], isLoading } = useQuery({
+    queryKey: ['custodyWallets', selectedCompanyId],
+    queryFn: async () => {
+      const list = await rcas.entities.CustodyWallet.list();
+      return list.filter(w => String(w.company_id) === String(selectedCompanyId));
+    },
+    enabled: !!selectedCompanyId
+  });
+
+  const { data: transactions = [] } = useQuery({
+    queryKey: ['custodyTransactions', selectedCompanyId],
+    queryFn: async () => {
+      // Transactions are linked to wallets, so we filter by wallet's company if transaction doesn't have company_id
+      // Or if transaction has company_id, use that. CustodyTransaction usually should have company_id.
+      // Let's assume we filter by filtering wallets first.
+      const allTransactions = await rcas.entities.CustodyTransaction.list('-date');
+      // To be safe, we should filter transactions where wallet belongs to company.
+      // But we can also rely on the fact that we only see wallets of this company.
+      // However, showing all transactions might leak if we don't filter.
+      // Better to filter.
+      // Optimization: Get wallet IDs of this company first.
+      const companyWallets = await rcas.entities.CustodyWallet.list();
+      const companyWalletIds = companyWallets.filter(w => String(w.company_id) === String(selectedCompanyId)).map(w => w.id);
+      return allTransactions.filter(t => companyWalletIds.includes(t.wallet_id));
+    },
+    enabled: !!selectedCompanyId
+  });
 
   const createWalletMutation = useMutation({
     mutationFn: async (data) => {
       const walletId = await generateUniqueID('wallet', ID_PREFIXES.WALLET);
-      return rcas.entities.CustodyWallet.create({ ...data, wallet_id: walletId, balance: 0 });
+      return rcas.entities.CustodyWallet.create({ ...data, wallet_id: walletId, balance: 0, company_id: selectedCompanyId });
     },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['custodyWallets'] }); toast.success('Wallet created'); closeDialog(); }
   });

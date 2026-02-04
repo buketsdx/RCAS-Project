@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { rcas } from '@/api/rcasClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useCompany } from '@/context/CompanyContext';
 import { formatCurrency } from '@/utils';
 import PageHeader from '@/components/common/PageHeader';
 import DataTable from '@/components/common/DataTable';
@@ -15,6 +16,7 @@ import { format, startOfMonth, endOfMonth } from 'date-fns';
 import { FileCheck, Send, CheckCircle, XCircle, Clock, AlertTriangle, QrCode, RefreshCw, Settings } from 'lucide-react';
 
 export default function ZATCAIntegration() {
+  const { company, selectedCompanyId } = useCompany();
   const queryClient = useQueryClient();
   const [filters, setFilters] = useState({
     fromDate: format(startOfMonth(new Date()), 'yyyy-MM-dd'),
@@ -22,19 +24,29 @@ export default function ZATCAIntegration() {
   });
 
   const { data: vouchers = [], isLoading: loadingVouchers } = useQuery({
-    queryKey: ['vouchers'],
-    queryFn: () => rcas.entities.Voucher.list('-date')
+    queryKey: ['vouchers', selectedCompanyId],
+    queryFn: async () => {
+      const all = await rcas.entities.Voucher.list('-date');
+      return all.filter(v => String(v.company_id) === String(selectedCompanyId));
+    },
+    enabled: !!selectedCompanyId
   });
 
   const { data: zatcaInvoices = [] } = useQuery({
-    queryKey: ['zatcaInvoices'],
-    queryFn: () => rcas.entities.ZATCAInvoice.list()
-  });
-
-  const { data: company } = useQuery({
-    queryKey: ['companies'],
-    queryFn: () => rcas.entities.Company.list(),
-    select: (data) => data[0]
+    queryKey: ['zatcaInvoices', selectedCompanyId],
+    queryFn: async () => {
+      const all = await rcas.entities.ZATCAInvoice.list();
+      // Filter by company_id if available, or fallback to matching voucher IDs
+      // Since we might not have migrated data, filtering by voucher IDs is safer for now if company_id isn't guaranteed
+      // But let's try to filter by company_id if we start saving it.
+      // For now, let's filter by checking if the voucher exists in our filtered vouchers list.
+      // However, vouchers list might be paginated or limited. 
+      // Safest is to rely on company_id if we add it, or filter by matching voucher_id with the fetched vouchers.
+      // But fetching all vouchers just to filter zatca invoices is heavy.
+      // Let's assume we will add company_id to ZATCAInvoice.
+      return all.filter(z => String(z.company_id) === String(selectedCompanyId));
+    },
+    enabled: !!selectedCompanyId
   });
 
   const salesInvoices = vouchers.filter(v => 
@@ -66,14 +78,16 @@ export default function ZATCAIntegration() {
         return rcas.entities.ZATCAInvoice.update(existingZatca.id, {
           invoice_uuid: uuid,
           qr_code: JSON.stringify(qrData),
-          submission_status: 'Pending'
+          submission_status: 'Pending',
+          company_id: selectedCompanyId
         });
       } else {
         return rcas.entities.ZATCAInvoice.create({
           voucher_id: voucher.id,
           invoice_uuid: uuid,
           qr_code: JSON.stringify(qrData),
-          submission_status: 'Pending'
+          submission_status: 'Pending',
+          company_id: selectedCompanyId
         });
       }
     },

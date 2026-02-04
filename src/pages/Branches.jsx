@@ -24,10 +24,10 @@ export default function Branches() {
   });
 
   const { data: branches = [], isLoading } = useQuery({ 
-    queryKey: ['branches', selectedCompanyId],
+    queryKey: ['branches', selectedCompanyId], 
     queryFn: async () => {
       const allBranches = await rcas.entities.Branch.list();
-      return allBranches.filter(b => b.company_id === selectedCompanyId);
+      return allBranches.filter(b => String(b.company_id) === String(selectedCompanyId));
     },
     enabled: !!selectedCompanyId
   });

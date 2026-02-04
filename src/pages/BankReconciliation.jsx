@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { rcas } from '@/api/rcasClient';
 import { useQuery } from '@tanstack/react-query';
+import { useCompany } from '@/context/CompanyContext';
 import { formatCurrency } from '@/utils';
 import PageHeader from '@/components/common/PageHeader';
 import DataTable from '@/components/common/DataTable';
@@ -12,13 +13,53 @@ import { format, endOfMonth } from 'date-fns';
 import { Landmark } from 'lucide-react';
 
 export default function BankReconciliation() {
+  const { selectedCompanyId } = useCompany();
   const [selectedBank, setSelectedBank] = useState('');
   const [asOnDate, setAsOnDate] = useState(format(endOfMonth(new Date()), 'yyyy-MM-dd'));
 
-  const { data: ledgers = [] } = useQuery({ queryKey: ['ledgers'], queryFn: () => rcas.entities.Ledger.list() });
-  const { data: entries = [], isLoading } = useQuery({ queryKey: ['ledgerEntries'], queryFn: () => rcas.entities.VoucherLedgerEntry.list() });
-  const { data: vouchers = [] } = useQuery({ queryKey: ['vouchers'], queryFn: () => rcas.entities.Voucher.list() });
-  const { data: reconciliations = [] } = useQuery({ queryKey: ['reconciliations'], queryFn: () => rcas.entities.BankReconciliation.list() });
+  const { data: ledgers = [] } = useQuery({
+    queryKey: ['ledgers', selectedCompanyId],
+    queryFn: async () => {
+      const list = await rcas.entities.Ledger.list();
+      return list.filter(l => String(l.company_id) === String(selectedCompanyId));
+    },
+    enabled: !!selectedCompanyId
+  });
+
+  const { data: entries = [], isLoading } = useQuery({
+    queryKey: ['ledgerEntries', selectedCompanyId],
+    queryFn: async () => {
+      const allEntries = await rcas.entities.VoucherLedgerEntry.list();
+      // Filter entries by current company's vouchers
+      const companyVouchers = (await rcas.entities.Voucher.list())
+        .filter(v => String(v.company_id) === String(selectedCompanyId));
+      const voucherIds = companyVouchers.map(v => v.id);
+      return allEntries.filter(e => voucherIds.includes(e.voucher_id));
+    },
+    enabled: !!selectedCompanyId
+  });
+
+  const { data: vouchers = [] } = useQuery({
+    queryKey: ['vouchers', selectedCompanyId],
+    queryFn: async () => {
+      const list = await rcas.entities.Voucher.list();
+      return list.filter(v => String(v.company_id) === String(selectedCompanyId));
+    },
+    enabled: !!selectedCompanyId
+  });
+
+  const { data: reconciliations = [] } = useQuery({
+    queryKey: ['reconciliations', selectedCompanyId],
+    queryFn: async () => {
+      const list = await rcas.entities.BankReconciliation.list();
+      // Filter reconciliations by current company's vouchers
+      const companyVouchers = (await rcas.entities.Voucher.list())
+        .filter(v => String(v.company_id) === String(selectedCompanyId));
+      const voucherIds = companyVouchers.map(v => v.id);
+      return list.filter(r => voucherIds.includes(r.voucher_id));
+    },
+    enabled: !!selectedCompanyId
+  });
 
   // Filter bank ledgers (ideally by group)
   const bankLedgers = ledgers.filter(l => l.bank_name || l.iban);

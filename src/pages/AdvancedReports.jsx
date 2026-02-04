@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { rcas } from '@/api/rcasClient';
 import { useQuery } from '@tanstack/react-query';
+import { useCompany } from '@/context/CompanyContext';
 import PageHeader from '@/components/common/PageHeader';
 import FormField from '@/components/forms/FormField';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
@@ -19,12 +20,65 @@ export default function AdvancedReports() {
     toDate: format(endOfYear(new Date()), 'yyyy-MM-dd')
   });
 
-  const { data: vouchers = [], isLoading: loadingVouchers } = useQuery({ queryKey: ['vouchers'], queryFn: () => rcas.entities.Voucher.list() });
-  const { data: ledgers = [] } = useQuery({ queryKey: ['ledgers'], queryFn: () => rcas.entities.Ledger.list() });
-  const { data: stockItems = [] } = useQuery({ queryKey: ['stockItems'], queryFn: () => rcas.entities.StockItem.list() });
-  const { data: employees = [] } = useQuery({ queryKey: ['employees'], queryFn: () => rcas.entities.Employee.list() });
-  const { data: branches = [] } = useQuery({ queryKey: ['branches'], queryFn: () => rcas.entities.Branch.list() });
-  const { data: voucherItems = [] } = useQuery({ queryKey: ['voucherItems'], queryFn: () => rcas.entities.VoucherItem.list() });
+  const { selectedCompanyId } = useCompany();
+
+  const { data: vouchers = [], isLoading: loadingVouchers } = useQuery({ 
+    queryKey: ['vouchers', selectedCompanyId], 
+    queryFn: async () => {
+      const all = await rcas.entities.Voucher.list();
+      return all.filter(v => String(v.company_id) === String(selectedCompanyId));
+    },
+    enabled: !!selectedCompanyId
+  });
+
+  const { data: ledgers = [] } = useQuery({ 
+    queryKey: ['ledgers', selectedCompanyId], 
+    queryFn: async () => {
+      const all = await rcas.entities.Ledger.list();
+      return all.filter(l => String(l.company_id) === String(selectedCompanyId));
+    },
+    enabled: !!selectedCompanyId
+  });
+
+  const { data: stockItems = [] } = useQuery({ 
+    queryKey: ['stockItems', selectedCompanyId], 
+    queryFn: async () => {
+      const all = await rcas.entities.StockItem.list();
+      return all.filter(i => String(i.company_id) === String(selectedCompanyId));
+    },
+    enabled: !!selectedCompanyId
+  });
+
+  const { data: employees = [] } = useQuery({ 
+    queryKey: ['employees', selectedCompanyId], 
+    queryFn: async () => {
+      const all = await rcas.entities.Employee.list();
+      return all.filter(e => String(e.company_id) === String(selectedCompanyId));
+    },
+    enabled: !!selectedCompanyId
+  });
+
+  const { data: branches = [] } = useQuery({ 
+    queryKey: ['branches', selectedCompanyId], 
+    queryFn: async () => {
+      const all = await rcas.entities.Branch.list();
+      return all.filter(b => String(b.company_id) === String(selectedCompanyId));
+    },
+    enabled: !!selectedCompanyId
+  });
+
+  const { data: voucherItems = [] } = useQuery({ 
+    queryKey: ['voucherItems', selectedCompanyId], 
+    queryFn: async () => {
+      const allItems = await rcas.entities.VoucherItem.list();
+      const companyVouchers = await rcas.entities.Voucher.list();
+      const companyVoucherIds = companyVouchers
+        .filter(v => String(v.company_id) === String(selectedCompanyId))
+        .map(v => v.id);
+      return allItems.filter(item => companyVoucherIds.includes(item.voucher_id));
+    },
+    enabled: !!selectedCompanyId
+  });
 
   const filteredVouchers = vouchers.filter(v => v.date >= dateRange.fromDate && v.date <= dateRange.toDate);
 

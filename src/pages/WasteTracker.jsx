@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { rcas } from '@/api/rcasClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useCompany } from '@/context/CompanyContext';
 import { formatCurrency } from '@/utils';
 import PageHeader from '@/components/common/PageHeader';
 import DataTable from '@/components/common/DataTable';
@@ -23,6 +24,7 @@ const disposalMethods = ['Composting', 'Disposal', 'Donation', 'Recycling'];
 const reasonColors = { 'Expired': '#ef4444', 'Damaged': '#f97316', 'Wilted': '#eab308', 'Pest Infestation': '#84cc16', 'Storage Issue': '#22c55e', 'Transportation Damage': '#06b6d4', 'Customer Return': '#3b82f6', 'Other': '#8b5cf6' };
 
 export default function FlowerWasteTracker() {
+  const { selectedCompanyId } = useCompany();
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingWaste, setEditingWaste] = useState(null);
@@ -35,9 +37,30 @@ export default function FlowerWasteTracker() {
     waste_reason: 'Wilted', cost_value: '', disposal_method: 'Composting', notes: '', image_url: ''
   });
 
-  const { data: wasteRecords = [], isLoading } = useQuery({ queryKey: ['flowerWaste'], queryFn: () => rcas.entities.FlowerWaste.list('-date') });
-  const { data: stockItems = [] } = useQuery({ queryKey: ['stockItems'], queryFn: () => rcas.entities.StockItem.list() });
-  const { data: branches = [] } = useQuery({ queryKey: ['branches'], queryFn: () => rcas.entities.Branch.list() });
+  const { data: wasteRecords = [], isLoading } = useQuery({ 
+    queryKey: ['flowerWaste', selectedCompanyId], 
+    queryFn: async () => {
+      const all = await rcas.entities.FlowerWaste.list('-date');
+      return all.filter(w => String(w.company_id) === String(selectedCompanyId));
+    },
+    enabled: !!selectedCompanyId
+  });
+  const { data: stockItems = [] } = useQuery({ 
+    queryKey: ['stockItems', selectedCompanyId], 
+    queryFn: async () => {
+      const all = await rcas.entities.StockItem.list();
+      return all.filter(i => String(i.company_id) === String(selectedCompanyId));
+    },
+    enabled: !!selectedCompanyId
+  });
+  const { data: branches = [] } = useQuery({ 
+    queryKey: ['branches', selectedCompanyId], 
+    queryFn: async () => {
+      const all = await rcas.entities.Branch.list();
+      return all.filter(b => String(b.company_id) === String(selectedCompanyId));
+    },
+    enabled: !!selectedCompanyId
+  });
 
   const filteredRecords = wasteRecords.filter(w => w.date >= filters.fromDate && w.date <= filters.toDate);
   const totalWasteQty = filteredRecords.reduce((sum, w) => sum + (parseFloat(w.quantity) || 0), 0);
@@ -51,7 +74,7 @@ export default function FlowerWasteTracker() {
   const createMutation = useMutation({
     mutationFn: async (data) => {
       const wasteId = await generateUniqueID('waste', ID_PREFIXES.WASTE);
-      return rcas.entities.FlowerWaste.create({ ...data, waste_id: wasteId });
+      return rcas.entities.FlowerWaste.create({ ...data, waste_id: wasteId, company_id: selectedCompanyId });
     },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['flowerWaste'] }); toast.success('Waste record added'); closeDialog(); }
   });

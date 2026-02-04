@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { rcas } from '@/api/rcasClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useCompany } from '../context/CompanyContext';
 import PageHeader from '@/components/common/PageHeader';
 import FormField from '@/components/forms/FormField';
 import { Button } from "@/components/ui/button";
@@ -11,7 +12,39 @@ import { Save, RefreshCw } from 'lucide-react';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 
 export default function StockAdjustment() {
+  const { type, selectedCompanyId } = useCompany();
   const queryClient = useQueryClient();
+
+  const getTerminology = () => {
+    switch (type) {
+      case 'Salon':
+        return {
+          title: 'Inventory Adjustment',
+          subtitle: 'Adjust product and consumable quantities',
+          item: 'Product',
+          increase: 'Stock Increase',
+          decrease: 'Stock Decrease'
+        };
+      case 'Restaurant':
+        return {
+          title: 'Inventory Adjustment',
+          subtitle: 'Adjust ingredient and item quantities',
+          item: 'Item',
+          increase: 'Stock Increase',
+          decrease: 'Stock Decrease'
+        };
+      default:
+        return {
+          title: 'Stock Adjustment',
+          subtitle: 'Adjust stock quantities manually',
+          item: 'Stock Item',
+          increase: 'Stock Increase',
+          decrease: 'Stock Decrease'
+        };
+    }
+  };
+
+  const terms = getTerminology();
   const [formData, setFormData] = useState({
     type: 'Stock Increase',
     date: format(new Date(), 'yyyy-MM-dd'),
@@ -23,8 +56,12 @@ export default function StockAdjustment() {
   });
 
   const { data: items = [], isLoading } = useQuery({ 
-    queryKey: ['stockItems'], 
-    queryFn: () => rcas.entities.StockItem.list() 
+    queryKey: ['stockItems', selectedCompanyId], 
+    queryFn: async () => {
+      const list = await rcas.entities.StockItem.list();
+      return list.filter(i => String(i.company_id) === String(selectedCompanyId));
+    },
+    enabled: !!selectedCompanyId
   });
 
   const selectedItem = items.find(i => i.id === formData.item_id);
@@ -50,7 +87,8 @@ export default function StockAdjustment() {
         narration: data.narration,
         status: 'Confirmed',
         party_name: 'Stock Adjustment',
-        net_amount: (parseFloat(data.quantity) || 0) * (parseFloat(data.rate) || 0)
+        net_amount: (parseFloat(data.quantity) || 0) * (parseFloat(data.rate) || 0),
+        company_id: selectedCompanyId
       });
 
       // 2. Create Voucher Item
@@ -78,7 +116,7 @@ export default function StockAdjustment() {
       queryClient.invalidateQueries({ queryKey: ['stockItems'] });
       queryClient.invalidateQueries({ queryKey: ['vouchers'] });
       queryClient.invalidateQueries({ queryKey: ['voucherItems'] });
-      toast.success('Stock adjustment saved successfully');
+      toast.success(`${terms.title} saved successfully`);
       // Reset form but keep date and type
       setFormData(prev => ({ 
         ...prev, 
@@ -97,7 +135,7 @@ export default function StockAdjustment() {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!formData.item_id || !formData.quantity) {
-      toast.error('Please select an item and enter quantity');
+      toast.error(`Please select an ${terms.item.toLowerCase()} and enter quantity`);
       return;
     }
     createMutation.mutate(formData);
@@ -108,13 +146,13 @@ export default function StockAdjustment() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  if (isLoading) return <LoadingSpinner />;
+  if (isLoading) return <LoadingSpinner text={`Loading ${terms.item.toLowerCase()}s...`} />;
 
   return (
     <div>
       <PageHeader 
-        title="Stock Adjustment" 
-        subtitle="Manually increase or decrease stock levels"
+        title={terms.title} 
+        subtitle={terms.subtitle}
       />
 
       <div className="max-w-2xl mx-auto">
@@ -135,8 +173,8 @@ export default function StockAdjustment() {
                   value={formData.type}
                   onChange={handleChange}
                   options={[
-                    { value: 'Stock Increase', label: 'Stock Increase (Inward)' },
-                    { value: 'Stock Decrease', label: 'Stock Decrease (Outward)' }
+                    { value: 'Stock Increase', label: terms.increase },
+                    { value: 'Stock Decrease', label: terms.decrease }
                   ]}
                   required
                 />
@@ -152,13 +190,13 @@ export default function StockAdjustment() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
-                  label="Stock Item"
+                  label={`Select ${terms.item}`}
                   name="item_id"
                   type="select"
                   value={formData.item_id}
                   onChange={handleChange}
                   options={[
-                    { value: '', label: 'Select Item' },
+                    { value: '', label: `Select ${terms.item}...` },
                     ...items.map(i => ({ value: i.id, label: i.name }))
                   ]}
                   required

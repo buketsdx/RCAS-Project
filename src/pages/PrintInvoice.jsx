@@ -7,16 +7,22 @@ import { Button } from "@/components/ui/button";
 import { format } from 'date-fns';
 import { Printer, ArrowLeft } from 'lucide-react';
 import { createPageUrl } from "@/utils";
+import { useCompany } from '@/context/CompanyContext';
 
 export default function PrintInvoice() {
   const printRef = useRef();
+  const { selectedCompanyId } = useCompany();
   const urlParams = new URLSearchParams(window.location.search);
   const voucherId = urlParams.get('id');
   const type = urlParams.get('type') || 'sales';
 
-  const { data: vouchers = [], isLoading: loadingVoucher } = useQuery({
-    queryKey: ['voucher', voucherId],
-    queryFn: () => rcas.entities.Voucher.list()
+  const { data: voucher, isLoading: loadingVoucher } = useQuery({
+    queryKey: ['voucher', voucherId, selectedCompanyId],
+    queryFn: async () => {
+      const list = await rcas.entities.Voucher.list();
+      return list.find(v => v.id === voucherId && String(v.company_id) === String(selectedCompanyId));
+    },
+    enabled: !!voucherId && !!selectedCompanyId
   });
 
   const { data: voucherItems = [], isLoading: loadingItems } = useQuery({
@@ -24,21 +30,28 @@ export default function PrintInvoice() {
     queryFn: async () => {
       const all = await rcas.entities.VoucherItem.list();
       return all.filter(item => item.voucher_id === voucherId);
-    }
+    },
+    enabled: !!voucherId && !!voucher
   });
 
-  const { data: companies = [] } = useQuery({
-    queryKey: ['companies'],
-    queryFn: () => rcas.entities.Company.list()
+  const { data: company } = useQuery({
+    queryKey: ['company', selectedCompanyId],
+    queryFn: async () => {
+      const list = await rcas.entities.Company.list();
+      return list.find(c => String(c.id) === String(selectedCompanyId));
+    },
+    enabled: !!selectedCompanyId
   });
 
   const { data: ledgers = [] } = useQuery({
-    queryKey: ['ledgers'],
-    queryFn: () => rcas.entities.Ledger.list()
+    queryKey: ['ledgers', selectedCompanyId],
+    queryFn: async () => {
+      const list = await rcas.entities.Ledger.list();
+      return list.filter(l => String(l.company_id) === String(selectedCompanyId));
+    },
+    enabled: !!selectedCompanyId
   });
 
-  const voucher = vouchers.find(v => v.id === voucherId);
-  const company = companies[0];
   const partyLedger = ledgers.find(l => l.id === voucher?.party_ledger_id);
 
   const handlePrint = () => {

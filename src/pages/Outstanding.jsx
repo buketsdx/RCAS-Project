@@ -10,12 +10,54 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { format } from 'date-fns';
 import { Receipt, Users } from 'lucide-react';
+import { useCompany } from '@/context/CompanyContext';
+import { Button } from "@/components/ui/button";
 
 export default function Outstanding() {
-  const { data: ledgers = [], isLoading } = useQuery({ queryKey: ['ledgers'], queryFn: () => rcas.entities.Ledger.list() });
-  const { data: entries = [] } = useQuery({ queryKey: ['ledgerEntries'], queryFn: () => rcas.entities.VoucherLedgerEntry.list() });
-  const { data: vouchers = [] } = useQuery({ queryKey: ['vouchers'], queryFn: () => rcas.entities.Voucher.list() });
-  const { data: groups = [] } = useQuery({ queryKey: ['accountGroups'], queryFn: () => rcas.entities.AccountGroup.list() });
+  const { selectedCompanyId } = useCompany();
+  
+  const { data: ledgers = [], isLoading } = useQuery({ 
+    queryKey: ['ledgers', selectedCompanyId], 
+    queryFn: async () => {
+      const list = await rcas.entities.Ledger.list();
+      return list.filter(l => String(l.company_id) === String(selectedCompanyId));
+    },
+    enabled: !!selectedCompanyId
+  });
+
+  const { data: entries = [] } = useQuery({ 
+    queryKey: ['ledgerEntries', selectedCompanyId], 
+    queryFn: async () => {
+      const list = await rcas.entities.VoucherLedgerEntry.list();
+      // Filter entries based on vouchers belonging to the selected company
+      const allVouchers = await rcas.entities.Voucher.list();
+      const companyVoucherIds = new Set(
+        allVouchers
+          .filter(v => String(v.company_id) === String(selectedCompanyId))
+          .map(v => v.id)
+      );
+      return list.filter(e => companyVoucherIds.has(e.voucher_id));
+    },
+    enabled: !!selectedCompanyId
+  });
+
+  const { data: vouchers = [] } = useQuery({ 
+    queryKey: ['vouchers', selectedCompanyId], 
+    queryFn: async () => {
+      const list = await rcas.entities.Voucher.list();
+      return list.filter(v => String(v.company_id) === String(selectedCompanyId));
+    },
+    enabled: !!selectedCompanyId
+  });
+
+  const { data: groups = [] } = useQuery({ 
+    queryKey: ['accountGroups', selectedCompanyId], 
+    queryFn: async () => {
+      const list = await rcas.entities.AccountGroup.list();
+      return list.filter(g => String(g.company_id) === String(selectedCompanyId));
+    },
+    enabled: !!selectedCompanyId
+  });
 
   const calculateBalance = (ledgerId) => {
     const ledger = ledgers.find(l => l.id === ledgerId);

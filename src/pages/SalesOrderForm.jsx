@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { rcas } from '@/api/rcasClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { createPageUrl, formatCurrency, generateVoucherCode } from "@/utils";
+import { useCompany } from '@/context/CompanyContext';
 import PageHeader from '@/components/common/PageHeader';
 import FormField from '@/components/forms/FormField';
 import VoucherItemsTable from '@/components/vouchers/VoucherItemsTable';
@@ -14,6 +15,7 @@ import { Save } from 'lucide-react';
 
 export default function SalesOrderForm() {
   const queryClient = useQueryClient();
+  const { selectedCompanyId } = useCompany();
   const urlParams = new URLSearchParams(window.location.search);
   const voucherId = urlParams.get('id');
 
@@ -30,14 +32,31 @@ export default function SalesOrderForm() {
 
   const [items, setItems] = useState([{ stock_item_id: '', quantity: 1, rate: 0, discount_percent: 0, vat_rate: 15 }]);
 
-  const { data: ledgers = [] } = useQuery({ queryKey: ['ledgers'], queryFn: () => rcas.entities.Ledger.list() });
-  const { data: stockItems = [] } = useQuery({ queryKey: ['stockItems'], queryFn: () => rcas.entities.StockItem.list() });
+  const { data: ledgers = [] } = useQuery({
+    queryKey: ['ledgers', selectedCompanyId],
+    queryFn: async () => {
+      const all = await rcas.entities.Ledger.list();
+      return all.filter(l => String(l.company_id) === String(selectedCompanyId));
+    },
+    enabled: !!selectedCompanyId
+  });
+
+  const { data: stockItems = [] } = useQuery({
+    queryKey: ['stockItems', selectedCompanyId],
+    queryFn: async () => {
+      const all = await rcas.entities.StockItem.list();
+      return all.filter(i => String(i.company_id) === String(selectedCompanyId));
+    },
+    enabled: !!selectedCompanyId
+  });
 
   const { data: existingVoucher, isLoading } = useQuery({
-    queryKey: ['voucher', voucherId],
-    queryFn: () => rcas.entities.Voucher.list(),
-    enabled: !!voucherId,
-    select: (data) => data.find(v => v.id === voucherId)
+    queryKey: ['voucher', voucherId, selectedCompanyId],
+    queryFn: async () => {
+      const list = await rcas.entities.Voucher.list();
+      return list.find(v => v.id === voucherId && String(v.company_id) === String(selectedCompanyId));
+    },
+    enabled: !!voucherId && !!selectedCompanyId
   });
 
   const { data: existingItems = [] } = useQuery({
@@ -46,7 +65,7 @@ export default function SalesOrderForm() {
       const all = await rcas.entities.VoucherItem.list();
       return all.filter(item => item.voucher_id === voucherId);
     },
-    enabled: !!voucherId
+    enabled: !!voucherId && !!existingVoucher
   });
 
   useEffect(() => {
@@ -93,7 +112,7 @@ export default function SalesOrderForm() {
       const vatAmount = items.reduce((sum, item) => sum + (parseFloat(item.vat_amount) || 0), 0);
       const netAmount = items.reduce((sum, item) => sum + (parseFloat(item.total_amount) || 0), 0);
 
-      const voucherData = { ...formData, gross_amount: grossAmount, vat_amount: vatAmount, net_amount: netAmount };
+      const voucherData = { ...formData, company_id: selectedCompanyId, gross_amount: grossAmount, vat_amount: vatAmount, net_amount: netAmount };
 
       let voucher;
       if (voucherId) {

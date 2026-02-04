@@ -15,19 +15,21 @@ import { CreditCard, Eye, Trash2 } from 'lucide-react';
 
 export default function Payment() {
   const queryClient = useQueryClient();
+  const { selectedCompanyId } = useCompany();
 
   const { data: vouchers = [], isLoading } = useQuery({
-    queryKey: ['paymentVouchers'],
+    queryKey: ['paymentVouchers', selectedCompanyId],
     queryFn: async () => {
       const all = await rcas.entities.Voucher.list('-created_date');
-      return all.filter(v => v.voucher_type === 'Payment');
-    }
+      return all.filter(v => v.voucher_type === 'Payment' && String(v.company_id) === String(selectedCompanyId));
+    },
+    enabled: !!selectedCompanyId
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id) => rcas.entities.Voucher.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['paymentVouchers'] });
+      queryClient.invalidateQueries({ queryKey: ['paymentVouchers', selectedCompanyId] });
       toast.success('Payment deleted');
     }
   });

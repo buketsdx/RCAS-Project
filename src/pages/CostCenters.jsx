@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { rcas } from '@/api/rcasClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useCompany } from '@/context/CompanyContext';
 import PageHeader from '@/components/common/PageHeader';
 import DataTable from '@/components/common/DataTable';
 import FormField from '@/components/forms/FormField';
@@ -13,6 +14,31 @@ import { Calculator, Plus, Pencil, Trash2 } from 'lucide-react';
 
 export default function CostCenters() {
   const queryClient = useQueryClient();
+  const { company, selectedCompanyId } = useCompany();
+  const type = company?.type || 'General';
+
+  const getTerminology = () => {
+    switch (type) {
+      case 'Salon':
+      case 'Restaurant':
+        return {
+          title: 'Departments / Sections',
+          subtitle: 'Manage departments for cost allocation',
+          entity: 'Department',
+          create: 'Add Department'
+        };
+      default:
+        return {
+          title: 'Cost Centers',
+          subtitle: 'Manage cost centers for allocation',
+          entity: 'Cost Center',
+          create: 'Add Cost Center'
+        };
+    }
+  };
+
+  const terms = getTerminology();
+
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingCenter, setEditingCenter] = useState(null);
   const [formData, setFormData] = useState({
@@ -23,15 +49,19 @@ export default function CostCenters() {
   });
 
   const { data: centers = [], isLoading } = useQuery({
-    queryKey: ['costCenters'],
-    queryFn: () => rcas.entities.CostCenter.list()
+    queryKey: ['costCenters', selectedCompanyId],
+    queryFn: async () => {
+      const list = await rcas.entities.CostCenter.list();
+      return list.filter(c => String(c.company_id) === String(selectedCompanyId));
+    },
+    enabled: !!selectedCompanyId
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => rcas.entities.CostCenter.create(data),
+    mutationFn: (data) => rcas.entities.CostCenter.create({ ...data, company_id: selectedCompanyId }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['costCenters'] });
-      toast.success('Cost center created successfully');
+      queryClient.invalidateQueries({ queryKey: ['costCenters', selectedCompanyId] });
+      toast.success(`${terms.entity} created successfully`);
       closeDialog();
     }
   });
@@ -39,8 +69,8 @@ export default function CostCenters() {
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => rcas.entities.CostCenter.update(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['costCenters'] });
-      toast.success('Cost center updated successfully');
+      queryClient.invalidateQueries({ queryKey: ['costCenters', selectedCompanyId] });
+      toast.success(`${terms.entity} updated successfully`);
       closeDialog();
     }
   });
@@ -48,8 +78,8 @@ export default function CostCenters() {
   const deleteMutation = useMutation({
     mutationFn: (id) => rcas.entities.CostCenter.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['costCenters'] });
-      toast.success('Cost center deleted successfully');
+      queryClient.invalidateQueries({ queryKey: ['costCenters', selectedCompanyId] });
+      toast.success(`${terms.entity} deleted successfully`);
     }
   });
 
@@ -126,19 +156,19 @@ export default function CostCenters() {
     }
   ];
 
-  if (isLoading) return <LoadingSpinner text="Loading cost centers..." />;
+  if (isLoading) return <LoadingSpinner text={`Loading ${terms.entity.toLowerCase()}s...`} />;
 
   return (
     <div>
-      <PageHeader title="Cost Centers" subtitle="Manage cost centers for allocation" primaryAction={{ label: 'Add Cost Center', onClick: () => openDialog() }} />
+      <PageHeader title={terms.title} subtitle={terms.subtitle} primaryAction={{ label: terms.create, onClick: () => openDialog() }} />
       {centers.length === 0 ? (
-        <EmptyState icon={Calculator} title="No Cost Centers" description="Create cost centers for cost allocation" action={{ label: 'Add First', onClick: () => openDialog() }} />
+        <EmptyState icon={Calculator} title={`No ${terms.entity}s`} description={`Create ${terms.entity.toLowerCase()}s for cost allocation`} action={{ label: 'Add First', onClick: () => openDialog() }} />
       ) : (
         <DataTable columns={columns} data={centers} />
       )}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-md">
-          <DialogHeader><DialogTitle>{editingCenter ? 'Edit' : 'Create'} Cost Center</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{editingCenter ? 'Edit' : 'Create'} {terms.entity}</DialogTitle></DialogHeader>
           <form onSubmit={handleSubmit}>
             <div className="space-y-4 py-4">
               <FormField label="Name (English)" name="name" value={formData.name} onChange={handleChange} required />

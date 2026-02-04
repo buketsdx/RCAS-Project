@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { rcas } from '@/api/rcasClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { createPageUrl, formatCurrency, generateVoucherCode } from "@/utils";
+import { useCompany } from '@/context/CompanyContext';
 import PageHeader from '@/components/common/PageHeader';
 import FormField from '@/components/forms/FormField';
 import VoucherItemsTable from '@/components/vouchers/VoucherItemsTable';
@@ -14,6 +15,7 @@ import { Save, Printer, ArrowLeft, Plus, X } from 'lucide-react';
 
 export default function SalesInvoice() {
   const queryClient = useQueryClient();
+  const { selectedCompanyId } = useCompany();
   const urlParams = new URLSearchParams(window.location.search);
   const voucherId = urlParams.get('id');
 
@@ -53,20 +55,39 @@ export default function SalesInvoice() {
   const [items, setItems] = useState([{ stock_item_id: '', quantity: 1, rate: 0, discount_percent: 0, vat_rate: 15 }]);
 
   const { data: ledgers = [] } = useQuery({
-    queryKey: ['ledgers'],
-    queryFn: () => rcas.entities.Ledger.list()
+    queryKey: ['ledgers', selectedCompanyId],
+    queryFn: async () => {
+      const all = await rcas.entities.Ledger.list();
+      return all.filter(l => String(l.company_id) === String(selectedCompanyId));
+    },
+    enabled: !!selectedCompanyId
   });
 
   const { data: stockItems = [] } = useQuery({
-    queryKey: ['stockItems'],
-    queryFn: () => rcas.entities.StockItem.list()
+    queryKey: ['stockItems', selectedCompanyId],
+    queryFn: async () => {
+      const all = await rcas.entities.StockItem.list();
+      return all.filter(i => String(i.company_id) === String(selectedCompanyId));
+    },
+    enabled: !!selectedCompanyId
+  });
+
+  const { data: employees = [] } = useQuery({
+    queryKey: ['employees', selectedCompanyId],
+    queryFn: async () => {
+      const all = await rcas.entities.Employee.list();
+      return all.filter(e => String(e.company_id) === String(selectedCompanyId));
+    },
+    enabled: !!selectedCompanyId
   });
 
   const { data: existingVoucher, isLoading } = useQuery({
-    queryKey: ['voucher', voucherId],
-    queryFn: () => rcas.entities.Voucher.list(),
-    enabled: !!voucherId,
-    select: (data) => data.find(v => v.id === voucherId)
+    queryKey: ['voucher', voucherId, selectedCompanyId],
+    queryFn: async () => {
+      const list = await rcas.entities.Voucher.list();
+      return list.find(v => v.id === voucherId && String(v.company_id) === String(selectedCompanyId));
+    },
+    enabled: !!voucherId && !!selectedCompanyId
   });
 
   const { data: existingItems = [] } = useQuery({
@@ -75,7 +96,7 @@ export default function SalesInvoice() {
       const allItems = await rcas.entities.VoucherItem.list();
       return allItems.filter(item => item.voucher_id === voucherId);
     },
-    enabled: !!voucherId
+    enabled: !!voucherId && !!existingVoucher // Only fetch items if voucher is valid and belongs to company
   });
 
   useEffect(() => {
@@ -148,12 +169,13 @@ export default function SalesInvoice() {
         city: customerData.city || '',
         phone: customerData.phone || '',
         email: customerData.email || '',
-        is_active: true
+        is_active: true,
+        company_id: selectedCompanyId
       };
       return rcas.entities.Ledger.create(ledgerData);
     },
     onSuccess: (newLedger) => {
-      queryClient.invalidateQueries({ queryKey: ['ledgers'] });
+      queryClient.invalidateQueries({ queryKey: ['ledgers', selectedCompanyId] });
       toast.success('Customer created successfully');
       setFormData(prev => ({
         ...prev,
@@ -197,7 +219,8 @@ export default function SalesInvoice() {
           ...formData,
           gross_amount: grossAmount,
           vat_amount: vatAmount,
-          net_amount: netAmount
+          net_amount: netAmount,
+          company_id: selectedCompanyId
         };
 
         let voucher;
@@ -230,7 +253,8 @@ export default function SalesInvoice() {
                 vat_rate: parseFloat(item.vat_rate) || 15,
                 vat_amount: parseFloat(item.vat_amount) || 0,
                 amount: parseFloat(item.amount) || 0,
-                total_amount: parseFloat(item.total_amount) || 0
+                total_amount: parseFloat(item.total_amount) || 0,
+                salesman_id: item.salesman_id || null
               });
             } catch (error) {
               console.warn('Failed to create item:', error);
@@ -244,8 +268,8 @@ export default function SalesInvoice() {
       }
     },
     onSuccess: (voucher) => {
-      queryClient.invalidateQueries({ queryKey: ['salesVouchers'] });
-      queryClient.invalidateQueries({ queryKey: ['vouchers'] });
+      queryClient.invalidateQueries({ queryKey: ['salesVouchers', selectedCompanyId] });
+      queryClient.invalidateQueries({ queryKey: ['vouchers', selectedCompanyId] });
       toast.success('Invoice saved successfully');
       setTimeout(() => {
         window.location.href = createPageUrl('Sales');
@@ -484,6 +508,7 @@ export default function SalesInvoice() {
                 onItemChange={handleItemChange}
                 onAddItem={handleAddItem}
                 onRemoveItem={handleRemoveItem}
+                employees={employees}
               />
             </CardContent>
           </Card>

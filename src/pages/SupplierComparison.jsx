@@ -12,30 +12,51 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 
 export default function SupplierComparison() {
+  const { selectedCompanyId } = useCompany();
   const [activeTab, setActiveTab] = useState('overview');
   const [selectedItem, setSelectedItem] = useState(null);
   const [dialogOpen, setDialogOpen] = useState(false);
 
   // Fetch Suppliers
   const { data: ledgers = [], isLoading: isLoadingLedgers } = useQuery({
-    queryKey: ['ledgers'],
-    queryFn: () => rcas.entities.Ledger.list()
+    queryKey: ['ledgers', selectedCompanyId],
+    queryFn: async () => {
+      const list = await rcas.entities.Ledger.list();
+      return list.filter(l => String(l.company_id) === String(selectedCompanyId));
+    },
+    enabled: !!selectedCompanyId
   });
 
   // Fetch Transactions and Vouchers
   const { data: vouchers = [], isLoading: isLoadingVouchers } = useQuery({
-    queryKey: ['vouchers'],
-    queryFn: () => rcas.entities.Voucher.list()
+    queryKey: ['vouchers', selectedCompanyId],
+    queryFn: async () => {
+      const list = await rcas.entities.Voucher.list();
+      return list.filter(v => String(v.company_id) === String(selectedCompanyId));
+    },
+    enabled: !!selectedCompanyId
   });
 
   const { data: voucherItems = [], isLoading: isLoadingVoucherItems } = useQuery({
-    queryKey: ['voucherItems'],
-    queryFn: () => rcas.entities.VoucherItem.list()
+    queryKey: ['voucherItems', selectedCompanyId],
+    queryFn: async () => {
+      const allItems = await rcas.entities.VoucherItem.list();
+      const companyVouchers = await rcas.entities.Voucher.list();
+      const companyVoucherIds = companyVouchers
+        .filter(v => String(v.company_id) === String(selectedCompanyId))
+        .map(v => v.id);
+      return allItems.filter(item => companyVoucherIds.includes(item.voucher_id));
+    },
+    enabled: !!selectedCompanyId
   });
 
   const { data: stockItems = [], isLoading: isLoadingStockItems } = useQuery({
-    queryKey: ['stockItems'],
-    queryFn: () => rcas.entities.StockItem.list()
+    queryKey: ['stockItems', selectedCompanyId],
+    queryFn: async () => {
+      const list = await rcas.entities.StockItem.list();
+      return list.filter(s => String(s.company_id) === String(selectedCompanyId));
+    },
+    enabled: !!selectedCompanyId
   });
 
   // Filter for Suppliers

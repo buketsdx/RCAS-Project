@@ -15,7 +15,7 @@ import { format } from 'date-fns';
 import { TrendingUp, Plus, Eye, Printer, Trash2 } from 'lucide-react';
 
 export default function Sales() {
-  const { company } = useCompany();
+  const { company, selectedCompanyId } = useCompany();
   const type = company?.type || 'General';
 
   const getTerminology = () => {
@@ -52,17 +52,18 @@ export default function Sales() {
   const queryClient = useQueryClient();
 
   const { data: vouchers = [], isLoading } = useQuery({
-    queryKey: ['salesVouchers'],
+    queryKey: ['salesVouchers', selectedCompanyId],
     queryFn: async () => {
       const all = await rcas.entities.Voucher.list('-created_date');
-      return all.filter(v => v.voucher_type === 'Sales');
-    }
+      return all.filter(v => v.voucher_type === 'Sales' && String(v.company_id) === String(selectedCompanyId));
+    },
+    enabled: !!selectedCompanyId
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id) => rcas.entities.Voucher.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['salesVouchers'] });
+      queryClient.invalidateQueries({ queryKey: ['salesVouchers', selectedCompanyId] });
       toast.success('Invoice deleted');
     }
   });

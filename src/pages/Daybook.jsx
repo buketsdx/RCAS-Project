@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { rcas } from '@/api/rcasClient';
 import { useQuery } from '@tanstack/react-query';
+import { useCompany } from '@/context/CompanyContext';
 import { formatCurrency } from '@/utils';
 import PageHeader from '@/components/common/PageHeader';
 import DataTable from '@/components/common/DataTable';
@@ -23,6 +24,7 @@ const voucherColors = {
 };
 
 export default function DayBook() {
+  const { selectedCompanyId } = useCompany();
   const [filters, setFilters] = useState({
     fromDate: format(startOfMonth(new Date()), 'yyyy-MM-dd'),
     toDate: format(endOfMonth(new Date()), 'yyyy-MM-dd'),
@@ -30,8 +32,12 @@ export default function DayBook() {
   });
 
   const { data: vouchers = [], isLoading } = useQuery({
-    queryKey: ['dayBookVouchers'],
-    queryFn: () => rcas.entities.Voucher.list('date')
+    queryKey: ['dayBookVouchers', selectedCompanyId],
+    queryFn: async () => {
+      const list = await rcas.entities.Voucher.list('date');
+      return list.filter(v => String(v.company_id) === String(selectedCompanyId));
+    },
+    enabled: !!selectedCompanyId
   });
 
   const filteredVouchers = vouchers.filter(v => {

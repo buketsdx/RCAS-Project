@@ -1,16 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { rcas } from '@/api/rcasClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import PageHeader from '@/components/common/PageHeader';
 import FormField from '@/components/forms/FormField';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { format, subDays } from 'date-fns';
 import { Store, Lock, Unlock, History, AlertTriangle, Calculator, Plus, Save, FileSpreadsheet, Printer } from 'lucide-react';
 import { formatCurrency } from "@/utils";
 import { toast } from "sonner";
 import { useAuth } from '@/context/AuthContext';
+import { useCompany } from '@/context/CompanyContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
@@ -25,8 +27,43 @@ import * as XLSX from 'xlsx';
 export default function BranchDailyClose() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const { type, selectedCompanyId } = useCompany();
   const [selectedBranchId, setSelectedBranchId] = useState('');
   const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+
+  const getTerminology = () => {
+    switch (type) {
+      case 'Salon':
+        return {
+          title: 'Daily Close Entry',
+          subtitle: 'Daily cash flow and service revenue tracking',
+          branch: 'Outlet',
+          purchases: 'Stock Purchases (Cash)',
+          online: 'Online Booking Revenue',
+          sales: 'Service Revenue'
+        };
+      case 'Restaurant':
+        return {
+          title: 'Daily Close Entry',
+          subtitle: 'Daily cash flow and sales tracking',
+          branch: 'Outlet',
+          purchases: 'Ingredient Purchases (Cash)',
+          online: 'Online Order Sales',
+          sales: 'Sales'
+        };
+      default:
+        return {
+          title: 'Branch Daily Entry Table',
+          subtitle: 'Daily cash flow and sales tracking per branch',
+          branch: 'Branch',
+          purchases: 'Purchases (Cash)',
+          online: 'Online Order Sales',
+          sales: 'Sales'
+        };
+    }
+  };
+
+  const t = getTerminology();
   const [activeTab, setActiveTab] = useState("entry");
   const [historyStartDate, setHistoryStartDate] = useState(format(subDays(new Date(), 30), 'yyyy-MM-dd'));
   const [historyEndDate, setHistoryEndDate] = useState(format(new Date(), 'yyyy-MM-dd'));
@@ -50,23 +87,190 @@ export default function BranchDailyClose() {
 
   // Fetch Branches
   const { data: branches = [], isLoading: isLoadingBranches } = useQuery({
-    queryKey: ['branches'],
-    queryFn: () => rcas.entities.Branch.list()
+    queryKey: ['branches', selectedCompanyId],
+    queryFn: async () => {
+      const list = await rcas.entities.Branch.list();
+      return list.filter(b => String(b.company_id) === String(selectedCompanyId));
+    },
+    enabled: !!selectedCompanyId
   });
 
-  const activeBranches = branches.filter(b => b.status !== 'Permanently Closed');
+  // Reset selected branch when company changes
+  useEffect(() => {
+    setSelectedBranchId('');
+  }, [selectedCompanyId]);
+
+  const activeBranches = useMemo(() => 
+    branches.filter(b => b.status !== 'Permanently Closed'),
+    [branches]
+  );
 
   // Fetch Today's Record
-  const { data: dailyRecords = [], isLoading: isLoadingRecords } = useQuery({
-    queryKey: ['branchDailyRecords'],
-    queryFn: () => rcas.entities.BranchDailyRecord.list()
+  const { data: rawDailyRecords = [], isLoading: isLoadingRecords } = useQuery({
+    queryKey: ['branchDailyRecords', selectedCompanyId],
+    queryFn: async () => {
+      const list = await rcas.entities.BranchDailyRecord.list();
+      // Filter records by branches that belong to the selected company
+      const companyBranches = await rcas.entities.Branch.list();
+      const companyBranchIds = new Set(
+        companyBranches
+          .filter(b => String(b.company_id) === String(selectedCompanyId))
+          .map(b => b.id)
+      );
+      return list.filter(r => companyBranchIds.has(r.branch_id));
+    },
+    enabled: !!selectedCompanyId
   });
+
+  const dailyRecords = useMemo(() => {
+    if (!branches.length) return [];
+    const branchIds = branches.map(b => String(b.id));
+    return rawDailyRecords.filter(r => branchIds.includes(String(r.branch_id)));
+  }, [rawDailyRecords, branches]);
 
   // Fetch Vouchers for calculation (Mock logic for now as we need backend filter)
   const { data: vouchers = [] } = useQuery({
-    queryKey: ['vouchers'],
-    queryFn: () => rcas.entities.Voucher.list()
+    queryKey: ['vouchers', selectedCompanyId],
+    queryFn: async () => {
+       const list = await rcas.entities.Voucher.list();
+       // Filter vouchers by company branches
+       return list.filter(v => v.company_id === selectedCompanyId || String(v.company_id) === String(selectedCompanyId));
+    },
+    enabled: !!selectedCompanyId
   });
+
+  // Fetch Employees & Voucher Items for Commission Calculation
+  const { data: employees = [] } = useQuery({
+    queryKey: ['employees', selectedCompanyId],
+    queryFn: async () => {
+      const list = await rcas.entities.Employee.list();
+      return list.filter(e => String(e.company_id) === String(selectedCompanyId));
+    },
+    enabled: !!selectedCompanyId
+  });
+  
+  const { data: voucherItems = [] } = useQuery({
+    queryKey: ['voucherItems', selectedCompanyId],
+    queryFn: () => rcas.entities.VoucherItem.list()
+  });
+
+  const activeEmployees = employees.filter(e => e.is_active !== false);
+
+  // Fetch Stylist Entries (New - for Salon)
+  const { data: savedStylistEntries = [] } = useQuery({
+    queryKey: ['stylistEntries', selectedCompanyId, selectedBranchId, selectedDate],
+    queryFn: async () => {
+      if (!selectedBranchId) return [];
+      const list = await rcas.entities.StylistServiceEntry.list();
+      return list.filter(e => 
+        e.branch_id === selectedBranchId && 
+        e.date === selectedDate
+      );
+    },
+    enabled: !!selectedBranchId && !!selectedDate && type === 'Salon'
+  });
+
+  // Local state for stylist services
+  const [stylistServices, setStylistServices] = useState([]);
+
+  // Sync state with fetched data
+  useEffect(() => {
+    if (savedStylistEntries.length > 0) {
+      setStylistServices(prev => {
+        // Prevent infinite loop by checking deep equality
+        const isSame = prev.length === savedStylistEntries.length && 
+          prev.every((p, i) => 
+            p.stylist_id === savedStylistEntries[i].stylist_id && 
+            p.service_count === savedStylistEntries[i].service_count
+          );
+        return isSame ? prev : savedStylistEntries;
+      });
+    } else {
+      setStylistServices(prev => prev.length === 0 ? prev : []);
+    }
+  }, [savedStylistEntries, selectedDate, selectedBranchId]);
+
+  // Stylist Entry Handlers
+  const [newStylistEntry, setNewStylistEntry] = useState({ stylist_id: '', service_count: '' });
+  const [deletedStylistEntryIds, setDeletedStylistEntryIds] = useState([]);
+
+  const handleAddStylistEntry = () => {
+    if (!newStylistEntry.stylist_id || !newStylistEntry.service_count) return;
+    setStylistServices(prev => [...prev, { ...newStylistEntry, id: `temp-${Date.now()}` }]);
+    setNewStylistEntry({ stylist_id: '', service_count: '' });
+  };
+
+  const handleRemoveStylistEntry = (index) => {
+    const entry = stylistServices[index];
+    if (entry.id && !entry.id.toString().startsWith('temp')) {
+       setDeletedStylistEntryIds(prev => [...prev, entry.id]);
+    }
+    setStylistServices(prev => prev.filter((_, i) => i !== index));
+  };
+
+  // Calculate Daily Commissions
+  const dailyCommissions = useMemo(() => {
+    if (!selectedBranchId) return [];
+
+    // For Salon: Use Manual Entry Table
+    if (type === 'Salon') {
+       return stylistServices.map(entry => {
+         const emp = activeEmployees.find(e => String(e.id) === String(entry.stylist_id));
+         if (!emp) return null;
+         
+         const count = parseFloat(entry.service_count) || 0;
+         const isPro = emp.is_dual_commission_eligible === true || String(emp.is_dual_commission_eligible) === 'true';
+         const amount = count * 1; // 1 SAR per service rule
+
+         return {
+           id: emp.id,
+           name: emp.name,
+           type: isPro ? 'Pro' : 'Normal',
+           serviceCount: count,
+           commissionAmount: amount,
+           isPayableToday: !isPro
+         };
+       }).filter(Boolean);
+    }
+
+    if (!vouchers.length) return [];
+
+    const daySalesVouchers = vouchers.filter(v => 
+      v.branch_id === selectedBranchId && 
+      v.date === selectedDate && 
+      v.voucher_type === 'Sales' &&
+      v.status !== 'Cancelled'
+    );
+    
+    const dayVoucherIds = daySalesVouchers.map(v => v.id);
+    
+    return activeEmployees.map(emp => {
+      // Filter items for this employee (check both string and number ID match)
+      const empItems = voucherItems.filter(item => 
+        dayVoucherIds.includes(item.voucher_id) && 
+        (String(item.salesman_id) === String(emp.id))
+      );
+      
+      const count = empItems.reduce((sum, item) => sum + (parseFloat(item.quantity) || 0), 0);
+      const isPro = emp.is_dual_commission_eligible === true || String(emp.is_dual_commission_eligible) === 'true';
+      
+      // Commission rule: 1 SAR per service for Normal staff
+      const amount = count * 1;
+
+      return {
+        id: emp.id,
+        name: emp.name,
+        type: isPro ? 'Pro' : 'Normal',
+        serviceCount: count,
+        commissionAmount: amount,
+        isPayableToday: !isPro // Only Normal staff get daily payment
+      };
+    }).filter(item => item.serviceCount > 0);
+  }, [vouchers, voucherItems, activeEmployees, selectedBranchId, selectedDate, stylistServices, type]);
+
+  const totalPayableCommission = dailyCommissions
+    .filter(c => c.isPayableToday)
+    .reduce((sum, c) => sum + c.commissionAmount, 0);
 
   // Derived State
   const currentRecord = dailyRecords.find(
@@ -89,12 +293,17 @@ export default function BranchDailyClose() {
     return branchMatch && rDate >= start && rDate <= end;
   }).sort((a, b) => new Date(b.date) - new Date(a.date));
 
-  // Auto-select first active branch
+  // Auto-select first active branch or validate current selection
   useEffect(() => {
-    if (activeBranches.length > 0 && !selectedBranchId) {
-      setSelectedBranchId(activeBranches[0].id);
+    if (activeBranches.length > 0) {
+      const isValid = activeBranches.find(b => b.id === selectedBranchId);
+      if (!selectedBranchId || !isValid) {
+        setSelectedBranchId(activeBranches[0].id);
+      }
+    } else {
+      setSelectedBranchId('');
     }
-  }, [activeBranches]);
+  }, [activeBranches, selectedBranchId]);
 
   // Load data into form
   useEffect(() => {
@@ -216,9 +425,39 @@ export default function BranchDailyClose() {
     }
   });
 
-  const handleSave = (status = 'Open') => {
+  const handleSave = async (status = 'Open') => {
     if (!selectedBranchId) return toast.error("Select a branch");
     
+    // Save Stylist Entries if Salon
+    if (type === 'Salon') {
+       // Delete removed entries
+       for (const id of deletedStylistEntryIds) {
+          await rcas.entities.StylistServiceEntry.delete(id);
+       }
+       setDeletedStylistEntryIds([]);
+
+       // Update/Create entries
+       if (stylistServices.length > 0) {
+         for (const entry of stylistServices) {
+           const payload = { 
+              service_count: entry.service_count,
+              branch_id: selectedBranchId, 
+              date: selectedDate, 
+              company_id: selectedCompanyId,
+              stylist_id: entry.stylist_id
+           };
+
+           if (entry.id && !entry.id.toString().startsWith('temp')) {
+              await rcas.entities.StylistServiceEntry.update(entry.id, payload);
+           } else {
+              await rcas.entities.StylistServiceEntry.create(payload);
+           }
+         }
+         // Refresh query
+         queryClient.invalidateQueries(['stylistEntries']);
+       }
+    }
+
     saveMutation.mutate({
       opening_cash: parseFloat(formData.opening_cash) || 0,
       deposited_by: formData.deposited_by,
@@ -279,8 +518,8 @@ export default function BranchDailyClose() {
     <div className="max-w-6xl mx-auto pb-10">
       <div className="print:hidden">
         <PageHeader 
-          title="Branch Daily Entry Table" 
-          subtitle="Daily cash flow and sales tracking per branch"
+          title={t.title}
+          subtitle={t.subtitle}
           icon={Store}
           secondaryActions={
             activeTab === 'entry' && (
@@ -311,12 +550,13 @@ export default function BranchDailyClose() {
             <CardContent className="pt-6">
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                 <FormField 
-                  label="Select Branch" 
+                  key={`branch-select-${selectedCompanyId}`}
+                  label={`Select ${t.branch}`} 
                   type="select" 
                   value={selectedBranchId} 
                   onChange={(e) => setSelectedBranchId(e.target.value)}
                   options={activeBranches.map(b => ({ value: b.id, label: b.name }))}
-                  placeholder="Choose a branch..."
+                  placeholder={`Choose a ${t.branch.toLowerCase()}...`}
                 />
                 <FormField 
                   label="Date" 
@@ -339,15 +579,16 @@ export default function BranchDailyClose() {
           </Card>
 
           {!selectedBranchId ? (
-            <div className="text-center py-10 text-slate-500">Please select a branch to continue.</div>
+            <div className="text-center py-10 text-slate-500">Please select a {t.branch.toLowerCase()} to continue.</div>
           ) : (
+            <>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               
               {/* LEFT COLUMN - INFLOWS */}
               <div className="space-y-6">
                 <Card>
                   <CardHeader className="pb-2 bg-blue-50">
-                    <CardTitle className="text-blue-700">Sales & Inflow</CardTitle>
+                    <CardTitle className="text-blue-700">{t.sales} & Inflow</CardTitle>
                   </CardHeader>
                   <CardContent className="pt-4 space-y-4">
                     <FormField 
@@ -359,7 +600,7 @@ export default function BranchDailyClose() {
                       placeholder="0.00"
                     />
                     <FormField 
-                      label="Cash Today (Cash Sales)" 
+                      label={`Cash Today (Cash ${t.sales})`}
                       name="cash_sales"
                       type="number" 
                       value={formData.cash_sales} 
@@ -383,7 +624,7 @@ export default function BranchDailyClose() {
                       placeholder="0.00"
                     />
                     <FormField 
-                      label="Online Order Sales" 
+                      label={t.online}
                       name="online_order_sales"
                       type="number" 
                       value={formData.online_order_sales} 
@@ -391,7 +632,7 @@ export default function BranchDailyClose() {
                       placeholder="0.00"
                     />
                     <div className="pt-4 border-t flex justify-between items-center">
-                      <span className="font-bold text-slate-700">Total Sales</span>
+                      <span className="font-bold text-slate-700">Total {t.sales}</span>
                       <span className="text-xl font-bold text-blue-600">{formatCurrency(totals.totalSales)}</span>
                     </div>
                   </CardContent>
@@ -422,7 +663,7 @@ export default function BranchDailyClose() {
                       placeholder="0.00"
                     />
                     <FormField 
-                      label="Purchases (Cash)" 
+                      label={t.purchases}
                       name="purchases"
                       type="number" 
                       value={formData.purchases} 
@@ -515,6 +756,133 @@ export default function BranchDailyClose() {
               </div>
 
             </div>
+
+            {/* COMMISSION PAYMENT DETAILS SECTION */}
+            <Card className="mt-6">
+              <CardHeader className="pb-2 bg-purple-50">
+                <CardTitle className="text-purple-700 flex justify-between items-center">
+                  <span>{type === 'Salon' ? 'Stylist Service Performance' : 'Daily Commission & Staff Payments'}</span>
+                  <span className="text-sm font-normal text-purple-600">Total Payable: {formatCurrency(totalPayableCommission)}</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-4">
+                {type === 'Salon' ? (
+                  <div className="space-y-4">
+                     <div className="flex gap-2 items-end p-4 bg-slate-50 rounded-lg border">
+                        <FormField 
+                           label="Select Stylist"
+                           type="select"
+                           options={activeEmployees.map(e => ({ value: e.id, label: e.name }))}
+                           value={newStylistEntry.stylist_id}
+                           onChange={(e) => setNewStylistEntry(prev => ({ ...prev, stylist_id: e.target.value }))}
+                           className="flex-1"
+                           placeholder="Choose Stylist..."
+                        />
+                        <FormField 
+                           label="Haircuts / Services"
+                           type="number"
+                           value={newStylistEntry.service_count}
+                           onChange={(e) => setNewStylistEntry(prev => ({ ...prev, service_count: e.target.value }))}
+                           className="w-40"
+                           placeholder="0"
+                        />
+                        <Button onClick={handleAddStylistEntry} className="mb-1 bg-purple-600 hover:bg-purple-700"><Plus className="h-4 w-4 mr-2" /> Add</Button>
+                     </div>
+
+                     <Table>
+                        <TableHeader>
+                           <TableRow>
+                              <TableHead>Stylist Name</TableHead>
+                              <TableHead className="text-right">Services</TableHead>
+                              <TableHead className="text-right">Commission (SAR)</TableHead>
+                              <TableHead className="text-right">Actions</TableHead>
+                           </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                           {stylistServices.length === 0 ? (
+                              <TableRow>
+                                 <TableCell colSpan={4} className="text-center text-slate-500">No services entered yet.</TableCell>
+                              </TableRow>
+                           ) : (
+                              stylistServices.map((entry, index) => {
+                                 const emp = activeEmployees.find(e => String(e.id) === String(entry.stylist_id));
+                                 const count = parseFloat(entry.service_count) || 0;
+                                 return (
+                                    <TableRow key={index}>
+                                       <TableCell className="font-medium">{emp?.name || 'Unknown'}</TableCell>
+                                       <TableCell className="text-right">{count}</TableCell>
+                                       <TableCell className="text-right">{formatCurrency(count * 1)}</TableCell>
+                                       <TableCell className="text-right">
+                                          <Button variant="ghost" size="sm" onClick={() => handleRemoveStylistEntry(index)}>
+                                             <Trash2 className="h-4 w-4 text-red-500" />
+                                          </Button>
+                                       </TableCell>
+                                    </TableRow>
+                                 );
+                              })
+                           )}
+                        </TableBody>
+                     </Table>
+                  </div>
+                ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Staff Name</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead className="text-right">Services</TableHead>
+                      <TableHead className="text-right">Commission (SAR)</TableHead>
+                      <TableHead className="text-right">Status</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {dailyCommissions.length === 0 ? (
+                       <TableRow>
+                         <TableCell colSpan={5} className="text-center text-slate-500">No staff activity recorded for today</TableCell>
+                       </TableRow>
+                    ) : (
+                       dailyCommissions.map(staff => (
+                         <TableRow key={staff.id}>
+                           <TableCell className="font-medium">{staff.name}</TableCell>
+                           <TableCell>
+                             <Badge variant={staff.type === 'Pro' ? 'default' : 'secondary'}>
+                               {staff.type}
+                             </Badge>
+                           </TableCell>
+                           <TableCell className="text-right">{staff.serviceCount}</TableCell>
+                           <TableCell className="text-right font-bold">{formatCurrency(staff.commissionAmount)}</TableCell>
+                           <TableCell className="text-right">
+                             {staff.isPayableToday ? (
+                               <span className="text-emerald-600 font-medium">Payable Today</span>
+                             ) : (
+                               <span className="text-slate-500">Monthly Accrual</span>
+                             )}
+                           </TableCell>
+                         </TableRow>
+                       ))
+                    )}
+                  </TableBody>
+                </Table>
+                )}
+                
+                {totalPayableCommission > 0 && (
+                  <div className="mt-4 p-3 bg-purple-100 rounded-md flex items-center justify-between">
+                    <span className="text-purple-800 text-sm">
+                      <strong>Tip:</strong> Add <strong>{formatCurrency(totalPayableCommission)}</strong> to "Emp Expenses" if paying cash today.
+                    </span>
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      className="bg-white border-purple-200 hover:bg-purple-50 text-purple-700"
+                      onClick={() => setFormData(prev => ({ ...prev, employee_expenses: (parseFloat(prev.employee_expenses) || 0) + totalPayableCommission }))}
+                    >
+                      <Plus className="h-3 w-3 mr-1" /> Add to Expenses
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+            </>
           )}
         </TabsContent>
 

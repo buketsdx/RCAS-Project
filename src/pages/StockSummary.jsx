@@ -12,8 +12,15 @@ import { Badge } from "@/components/ui/badge";
 import { Package, AlertTriangle, TrendingUp } from 'lucide-react';
 
 export default function StockSummary() {
-  const { type } = useCompany();
-  const { data: items = [], isLoading } = useQuery({ queryKey: ['stockItems'], queryFn: () => rcas.entities.StockItem.list() });
+  const { type, selectedCompanyId } = useCompany();
+  const { data: items = [], isLoading } = useQuery({ 
+    queryKey: ['stockItems', selectedCompanyId], 
+    queryFn: async () => {
+      const all = await rcas.entities.StockItem.list();
+      return all.filter(item => String(item.company_id) === String(selectedCompanyId));
+    },
+    enabled: !!selectedCompanyId
+  });
 
   const getTerminology = () => {
     switch (type) {
@@ -42,8 +49,22 @@ export default function StockSummary() {
   };
 
   const terms = getTerminology();
-  const { data: groups = [] } = useQuery({ queryKey: ['stockGroups'], queryFn: () => rcas.entities.StockGroup.list() });
-  const { data: units = [] } = useQuery({ queryKey: ['units'], queryFn: () => rcas.entities.Unit.list() });
+  const { data: groups = [] } = useQuery({ 
+    queryKey: ['stockGroups', selectedCompanyId], 
+    queryFn: async () => {
+      const all = await rcas.entities.StockGroup.list();
+      return all.filter(g => String(g.company_id) === String(selectedCompanyId));
+    },
+    enabled: !!selectedCompanyId
+  });
+  const { data: units = [] } = useQuery({ 
+    queryKey: ['units', selectedCompanyId], 
+    queryFn: async () => {
+      const all = await rcas.entities.Unit.list();
+      return all.filter(u => String(u.company_id) === String(selectedCompanyId));
+    },
+    enabled: !!selectedCompanyId
+  });
 
   const totalValue = items.reduce((sum, item) => sum + (parseFloat(item.current_qty || 0) * parseFloat(item.cost_price || item.opening_rate || 0)), 0);
   const lowStockItems = items.filter(item => item.reorder_level && parseFloat(item.current_qty || 0) <= parseFloat(item.reorder_level));

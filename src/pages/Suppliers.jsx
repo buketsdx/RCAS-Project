@@ -15,7 +15,7 @@ import { toast } from "sonner";
 import { Plus, Pencil, Trash2, Truck } from 'lucide-react';
 
 export default function Suppliers() {
-  const { type } = useCompany();
+  const { type, selectedCompanyId } = useCompany();
   const queryClient = useQueryClient();
 
   const getTerminology = () => {
@@ -63,8 +63,12 @@ export default function Suppliers() {
   });
 
   const { data: ledgers = [], isLoading } = useQuery({
-    queryKey: ['ledgers'],
-    queryFn: () => rcas.entities.Ledger.list()
+    queryKey: ['ledgers', selectedCompanyId],
+    queryFn: async () => {
+      const list = await rcas.entities.Ledger.list();
+      return list.filter(l => String(l.company_id) === String(selectedCompanyId));
+    },
+    enabled: !!selectedCompanyId
   });
 
   // Filter suppliers - show all ledgers that have customer_type field
@@ -79,12 +83,13 @@ export default function Suppliers() {
       const ledgerData = {
         ...data,
         group_id: 'Sundry Creditors',
-        is_active: true
+        is_active: true,
+        company_id: selectedCompanyId
       };
       return rcas.entities.Ledger.create(ledgerData);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['ledgers'] });
+      queryClient.invalidateQueries({ queryKey: ['ledgers', selectedCompanyId] });
       toast.success(`${terms.entity} created successfully`);
       closeDialog();
     },
@@ -96,7 +101,7 @@ export default function Suppliers() {
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => rcas.entities.Ledger.update(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['ledgers'] });
+      queryClient.invalidateQueries({ queryKey: ['ledgers', selectedCompanyId] });
       toast.success(`${terms.entity} updated successfully`);
       closeDialog();
     },
@@ -108,7 +113,7 @@ export default function Suppliers() {
   const deleteMutation = useMutation({
     mutationFn: (id) => rcas.entities.Ledger.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['ledgers'] });
+      queryClient.invalidateQueries({ queryKey: ['ledgers', selectedCompanyId] });
       toast.success(`${terms.entity} deleted successfully`);
     },
     onError: (error) => {

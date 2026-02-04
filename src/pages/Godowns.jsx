@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { rcas } from '@/api/rcasClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useCompany } from '@/context/CompanyContext';
 import PageHeader from '@/components/common/PageHeader';
 import DataTable from '@/components/common/DataTable';
 import FormField from '@/components/forms/FormField';
@@ -14,6 +15,31 @@ import { Warehouse, Plus, Pencil, Trash2 } from 'lucide-react';
 
 export default function Godowns() {
   const queryClient = useQueryClient();
+  const { company, selectedCompanyId } = useCompany();
+  const type = company?.type || 'General';
+
+  const getTerminology = () => {
+    switch (type) {
+      case 'Salon':
+      case 'Restaurant':
+        return {
+          title: 'Stores / Locations',
+          subtitle: 'Manage your inventory storage locations',
+          entity: 'Store',
+          create: 'Add Store'
+        };
+      default:
+        return {
+          title: 'Godowns / Warehouses',
+          subtitle: 'Manage your storage locations',
+          entity: 'Godown',
+          create: 'Add Godown'
+        };
+    }
+  };
+
+  const terms = getTerminology();
+
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingGodown, setEditingGodown] = useState(null);
   const [formData, setFormData] = useState({
@@ -27,24 +53,28 @@ export default function Godowns() {
   });
 
   const { data: godowns = [], isLoading } = useQuery({
-    queryKey: ['godowns'],
-    queryFn: () => rcas.entities.Godown.list()
+    queryKey: ['godowns', selectedCompanyId],
+    queryFn: async () => {
+      const list = await rcas.entities.Godown.list();
+      return list.filter(g => String(g.company_id) === String(selectedCompanyId));
+    },
+    enabled: !!selectedCompanyId
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => rcas.entities.Godown.create(data),
+    mutationFn: (data) => rcas.entities.Godown.create({ ...data, company_id: selectedCompanyId }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['godowns'] });
-      toast.success('Godown created successfully');
+      queryClient.invalidateQueries({ queryKey: ['godowns', selectedCompanyId] });
+      toast.success(`${terms.entity} created successfully`);
       closeDialog();
     }
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => rcas.entities.Godown.update(id, data),
+    mutationFn: ({ id, data }) => rcas.entities.Godown.update(id, { ...data, company_id: selectedCompanyId }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['godowns'] });
-      toast.success('Godown updated successfully');
+      queryClient.invalidateQueries({ queryKey: ['godowns', selectedCompanyId] });
+      toast.success(`${terms.entity} updated successfully`);
       closeDialog();
     }
   });
@@ -52,8 +82,8 @@ export default function Godowns() {
   const deleteMutation = useMutation({
     mutationFn: (id) => rcas.entities.Godown.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['godowns'] });
-      toast.success('Godown deleted successfully');
+      queryClient.invalidateQueries({ queryKey: ['godowns', selectedCompanyId] });
+      toast.success(`${terms.entity} deleted successfully`);
     }
   });
 
@@ -105,7 +135,7 @@ export default function Godowns() {
 
   const columns = [
     {
-      header: 'Godown Name',
+      header: `${terms.entity} Name`,
       accessor: 'name',
       render: (row) => (
         <div>
@@ -157,7 +187,7 @@ export default function Godowns() {
             size="icon" 
             onClick={(e) => { 
               e.stopPropagation(); 
-              if (confirm('Are you sure you want to delete this godown?')) {
+              if (confirm(`Are you sure you want to delete this ${terms.entity.toLowerCase()}?`)) {
                 deleteMutation.mutate(row.id);
               }
             }}
@@ -170,23 +200,23 @@ export default function Godowns() {
   ];
 
   if (isLoading) {
-    return <LoadingSpinner text="Loading godowns..." />;
+    return <LoadingSpinner text={`Loading ${terms.entity.toLowerCase()}s...`} />;
   }
 
   return (
     <div>
       <PageHeader 
-        title="Godowns / Warehouses" 
-        subtitle="Manage your storage locations"
-        primaryAction={{ label: 'Add Godown', onClick: () => openDialog() }}
+        title={terms.title} 
+        subtitle={terms.subtitle}
+        primaryAction={{ label: terms.create, onClick: () => openDialog() }}
       />
 
       {godowns.length === 0 ? (
         <EmptyState
           icon={Warehouse}
-          title="No Godowns"
-          description="Create godowns to manage your storage locations"
-          action={{ label: 'Add First Godown', onClick: () => openDialog() }}
+          title={`No ${terms.entity}s`}
+          description={`Create ${terms.entity.toLowerCase()}s to manage your storage locations`}
+          action={{ label: `Add First ${terms.entity}`, onClick: () => openDialog() }}
         />
       ) : (
         <DataTable columns={columns} data={godowns} />
@@ -195,31 +225,31 @@ export default function Godowns() {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>{editingGodown ? 'Edit Godown' : 'Create Godown'}</DialogTitle>
+            <DialogTitle>{editingGodown ? `Edit ${terms.entity}` : `Create ${terms.entity}`}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit}>
             <div className="space-y-4 py-4">
               <FormField
-                label="Godown Name (English)"
+                label={`${terms.entity} Name (English)`}
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
                 required
               />
               <FormField
-                label="Godown Name (Arabic)"
+                label={`${terms.entity} Name (Arabic)`}
                 name="name_arabic"
                 value={formData.name_arabic}
                 onChange={handleChange}
               />
               <FormField
-                label="Parent Godown"
+                label={`Parent ${terms.entity}`}
                 name="parent_godown_id"
                 type="select"
                 value={formData.parent_godown_id}
                 onChange={handleChange}
                 options={[
-                  { value: '', label: 'None (Main Godown)' },
+                  { value: '', label: `None (Main ${terms.entity})` },
                   ...godowns.filter(g => g.id !== editingGodown?.id).map(g => ({
                     value: g.id,
                     label: g.name

@@ -76,7 +76,7 @@ import VATReturns from './pages/VATReturns';
 import Employees from './pages/Employees';
 import SalaryComponents from './pages/SalaryComponents';
 import SalaryProcessing from './pages/SalaryProcessing';
-import PayrollReprts from './pages/PayrollReprts';
+import PayrollReports from './pages/PayrollReports';
 
 // Pages - Special Trackers
 import CustodyWallets from './pages/CustodyWallets';
@@ -100,6 +100,8 @@ import Deployment from './pages/Deployment';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsAndConditions from './pages/TermsAndConditions';
 import BranchDailyClose from './pages/BranchDailyClose';
+import CustomerBooking from './pages/CustomerBooking';
+import BookingManagement from './pages/BookingManagement';
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: false, refetchOnWindowFocus: false } }
@@ -127,6 +129,8 @@ function App() {
 
                       {/* Branch Operations */}
                       <Route path="BranchDailyClose" element={<BranchDailyClose />} />
+                      <Route path="CustomerBooking" element={<CustomerBooking />} />
+                      <Route path="BookingManagement" element={<BookingManagement />} />
 
                       {/* --- COMPANY SECTION --- */}
                       <Route element={<ProtectedRoute allowedRoles={[ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.OWNER]} />}>
@@ -204,8 +208,8 @@ function App() {
                         <Route path="Employees" element={<Employees />} />
                         <Route path="SalaryComponents" element={<SalaryComponents />} />
                         <Route path="SalaryProcessing" element={<SalaryProcessing />} />
-                        <Route path="PayrollReprts" element={<PayrollReprts />} />
-                        <Route path="PayrollReports" element={<PayrollReprts />} />
+                        <Route path="PayrollReprts" element={<PayrollReports />} />
+                        <Route path="PayrollReports" element={<PayrollReports />} />
                       </Route>
 
                       {/* --- SPECIAL TRACKERS --- */}

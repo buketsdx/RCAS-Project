@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { rcas } from '@/api/rcasClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { createPageUrl, generateVoucherCode } from "@/utils";
+import { useCompany } from '@/context/CompanyContext';
 import PageHeader from '@/components/common/PageHeader';
 import FormField from '@/components/forms/FormField';
 import LedgerEntriesTable from '@/components/vouchers/LedgerEntriesTable';
@@ -14,6 +15,7 @@ import { Save } from 'lucide-react';
 
 export default function PaymentVoucher() {
   const queryClient = useQueryClient();
+  const { selectedCompanyId } = useCompany();
   const urlParams = new URLSearchParams(window.location.search);
   const voucherId = urlParams.get('id');
 
@@ -31,13 +33,22 @@ export default function PaymentVoucher() {
     { ledger_id: '', debit_amount: 0, credit_amount: 0 }
   ]);
 
-  const { data: ledgers = [] } = useQuery({ queryKey: ['ledgers'], queryFn: () => rcas.entities.Ledger.list() });
+  const { data: ledgers = [] } = useQuery({
+    queryKey: ['ledgers', selectedCompanyId],
+    queryFn: async () => {
+      const all = await rcas.entities.Ledger.list();
+      return all.filter(l => String(l.company_id) === String(selectedCompanyId));
+    },
+    enabled: !!selectedCompanyId
+  });
 
   const { data: existingVoucher, isLoading } = useQuery({
-    queryKey: ['voucher', voucherId],
-    queryFn: () => rcas.entities.Voucher.list(),
-    enabled: !!voucherId,
-    select: (data) => data.find(v => v.id === voucherId)
+    queryKey: ['voucher', voucherId, selectedCompanyId],
+    queryFn: async () => {
+      const list = await rcas.entities.Voucher.list();
+      return list.find(v => v.id === voucherId && String(v.company_id) === String(selectedCompanyId));
+    },
+    enabled: !!voucherId && !!selectedCompanyId
   });
 
   const { data: existingEntries = [] } = useQuery({
@@ -46,7 +57,7 @@ export default function PaymentVoucher() {
       const all = await rcas.entities.VoucherLedgerEntry.list();
       return all.filter(e => e.voucher_id === voucherId);
     },
-    enabled: !!voucherId
+    enabled: !!voucherId && !!existingVoucher
   });
 
   useEffect(() => {
@@ -90,7 +101,7 @@ export default function PaymentVoucher() {
       
       if (Math.abs(totalDebit - totalCredit) > 0.01) throw new Error('Voucher is not balanced');
 
-      const voucherData = { ...formData, net_amount: totalCredit };
+      const voucherData = { ...formData, net_amount: totalCredit, company_id: selectedCompanyId };
 
       let voucher;
       if (voucherId) {

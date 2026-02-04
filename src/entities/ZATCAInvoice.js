@@ -2,6 +2,9 @@ export const ZATCAInvoice = {
   "name": "ZATCAInvoice",
   "type": "object",
   "properties": {
+    "company_id": {
+      "type": "string"
+    },
     "voucher_id": {
       "type": "string"
     },

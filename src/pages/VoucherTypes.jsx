@@ -14,6 +14,37 @@ import { FileText, Plus, Pencil, Trash2 } from 'lucide-react';
 
 export default function VoucherTypes() {
   const queryClient = useQueryClient();
+  const { company, selectedCompanyId } = useCompany();
+  const type = company?.type || 'General';
+
+  const getTerminology = () => {
+    switch (type) {
+      case 'Salon':
+        return {
+          title: 'Transaction Types',
+          subtitle: 'Configure invoice and receipt numbering',
+          entity: 'Transaction Type',
+          create: 'Add Type'
+        };
+      case 'Restaurant':
+        return {
+          title: 'Order Types',
+          subtitle: 'Configure order and bill numbering',
+          entity: 'Order Type',
+          create: 'Add Type'
+        };
+      default:
+        return {
+          title: 'Voucher Types',
+          subtitle: 'Customize voucher numbering and types',
+          entity: 'Voucher Type',
+          create: 'Add Type'
+        };
+    }
+  };
+
+  const terms = getTerminology();
+
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingType, setEditingType] = useState(null);
   const [formData, setFormData] = useState({
@@ -27,15 +58,19 @@ export default function VoucherTypes() {
   });
 
   const { data: types = [], isLoading } = useQuery({
-    queryKey: ['voucherTypes'],
-    queryFn: () => rcas.entities.VoucherType.list()
+    queryKey: ['voucherTypes', selectedCompanyId],
+    queryFn: async () => {
+      const list = await rcas.entities.VoucherType.list();
+      return list.filter(t => String(t.company_id) === String(selectedCompanyId));
+    },
+    enabled: !!selectedCompanyId
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => rcas.entities.VoucherType.create(data),
+    mutationFn: (data) => rcas.entities.VoucherType.create({ ...data, company_id: selectedCompanyId }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['voucherTypes'] });
-      toast.success('Voucher type created');
+      queryClient.invalidateQueries({ queryKey: ['voucherTypes', selectedCompanyId] });
+      toast.success(`${terms.entity} created`);
       closeDialog();
     }
   });
@@ -43,8 +78,8 @@ export default function VoucherTypes() {
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => rcas.entities.VoucherType.update(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['voucherTypes'] });
-      toast.success('Voucher type updated');
+      queryClient.invalidateQueries({ queryKey: ['voucherTypes', selectedCompanyId] });
+      toast.success(`${terms.entity} updated`);
       closeDialog();
     }
   });
@@ -52,8 +87,8 @@ export default function VoucherTypes() {
   const deleteMutation = useMutation({
     mutationFn: (id) => rcas.entities.VoucherType.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['voucherTypes'] });
-      toast.success('Voucher type deleted');
+      queryClient.invalidateQueries({ queryKey: ['voucherTypes', selectedCompanyId] });
+      toast.success(`${terms.entity} deleted`);
     }
   });
 
@@ -107,19 +142,19 @@ export default function VoucherTypes() {
     }
   ];
 
-  if (isLoading) return <LoadingSpinner text="Loading voucher types..." />;
+  if (isLoading) return <LoadingSpinner text={`Loading ${terms.entity.toLowerCase()}s...`} />;
 
   return (
     <div>
-      <PageHeader title="Voucher Types" subtitle="Customize voucher numbering and types" primaryAction={{ label: 'Add Type', onClick: () => openDialog() }} />
+      <PageHeader title={terms.title} subtitle={terms.subtitle} primaryAction={{ label: terms.create, onClick: () => openDialog() }} />
       {types.length === 0 ? (
-        <EmptyState icon={FileText} title="No Custom Voucher Types" description="Create custom voucher types" action={{ label: 'Add First', onClick: () => openDialog() }} />
+        <EmptyState icon={FileText} title={`No ${terms.entity}s`} description={`Create custom ${terms.entity.toLowerCase()}s`} action={{ label: 'Add First', onClick: () => openDialog() }} />
       ) : (
         <DataTable columns={columns} data={types} />
       )}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-lg max-h-[90vh] flex flex-col">
-          <DialogHeader><DialogTitle>{editingType ? 'Edit' : 'Create'} Voucher Type</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{editingType ? 'Edit' : 'Create'} {terms.entity}</DialogTitle></DialogHeader>
           <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto">
             <div className="space-y-5 py-4 px-0.5">
               <FormField label="Name *" name="name" value={formData.name} onChange={handleChange} required />

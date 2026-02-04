@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { rcas } from '@/api/rcasClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useCompany } from '@/context/CompanyContext';
 import PageHeader from '@/components/common/PageHeader';
 import DataTable from '@/components/common/DataTable';
 import FormField from '@/components/forms/FormField';
@@ -22,6 +23,7 @@ const natureColors = {
 
 export default function AccountGroups() {
   const queryClient = useQueryClient();
+  const { selectedCompanyId } = useCompany();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingGroup, setEditingGroup] = useState(null);
   const [formData, setFormData] = useState({
@@ -33,14 +35,18 @@ export default function AccountGroups() {
   });
 
   const { data: groups = [], isLoading } = useQuery({
-    queryKey: ['accountGroups'],
-    queryFn: () => rcas.entities.AccountGroup.list()
+    queryKey: ['accountGroups', selectedCompanyId],
+    queryFn: async () => {
+      const list = await rcas.entities.AccountGroup.list();
+      return list.filter(g => String(g.company_id) === String(selectedCompanyId));
+    },
+    enabled: !!selectedCompanyId
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => rcas.entities.AccountGroup.create(data),
+    mutationFn: (data) => rcas.entities.AccountGroup.create({ ...data, company_id: selectedCompanyId }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['accountGroups'] });
+      queryClient.invalidateQueries({ queryKey: ['accountGroups', selectedCompanyId] });
       toast.success('Account group created successfully');
       closeDialog();
     }
@@ -49,7 +55,7 @@ export default function AccountGroups() {
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => rcas.entities.AccountGroup.update(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['accountGroups'] });
+      queryClient.invalidateQueries({ queryKey: ['accountGroups', selectedCompanyId] });
       toast.success('Account group updated successfully');
       closeDialog();
     }
@@ -58,7 +64,7 @@ export default function AccountGroups() {
   const deleteMutation = useMutation({
     mutationFn: (id) => rcas.entities.AccountGroup.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['accountGroups'] });
+      queryClient.invalidateQueries({ queryKey: ['accountGroups', selectedCompanyId] });
       toast.success('Account group deleted successfully');
     }
   });

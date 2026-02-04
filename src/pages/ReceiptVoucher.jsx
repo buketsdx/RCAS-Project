@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { rcas } from '@/api/rcasClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { createPageUrl, generateVoucherCode } from "@/utils";
+import { useCompany } from '@/context/CompanyContext';
 import PageHeader from '@/components/common/PageHeader';
 import FormField from '@/components/forms/FormField';
 import LedgerEntriesTable from '@/components/vouchers/LedgerEntriesTable';
@@ -14,6 +15,7 @@ import { Save } from 'lucide-react';
 
 export default function ReceiptVoucher() {
   const queryClient = useQueryClient();
+  const { selectedCompanyId } = useCompany();
   const urlParams = new URLSearchParams(window.location.search);
   const voucherId = urlParams.get('id');
 
@@ -32,13 +34,22 @@ export default function ReceiptVoucher() {
     { ledger_id: '', debit_amount: 0, credit_amount: 0 }
   ]);
 
-  const { data: ledgers = [] } = useQuery({ queryKey: ['ledgers'], queryFn: () => rcas.entities.Ledger.list() });
+  const { data: ledgers = [] } = useQuery({
+    queryKey: ['ledgers', selectedCompanyId],
+    queryFn: async () => {
+      const all = await rcas.entities.Ledger.list();
+      return all.filter(l => String(l.company_id) === String(selectedCompanyId));
+    },
+    enabled: !!selectedCompanyId
+  });
 
   const { data: existingVoucher, isLoading } = useQuery({
-    queryKey: ['voucher', voucherId],
-    queryFn: () => rcas.entities.Voucher.list(),
-    enabled: !!voucherId,
-    select: (data) => data.find(v => v.id === voucherId)
+    queryKey: ['voucher', voucherId, selectedCompanyId],
+    queryFn: async () => {
+      const list = await rcas.entities.Voucher.list();
+      return list.find(v => v.id === voucherId && String(v.company_id) === String(selectedCompanyId));
+    },
+    enabled: !!voucherId && !!selectedCompanyId
   });
 
   const { data: existingEntries = [] } = useQuery({
@@ -47,7 +58,7 @@ export default function ReceiptVoucher() {
       const all = await rcas.entities.VoucherLedgerEntry.list();
       return all.filter(e => e.voucher_id === voucherId);
     },
-    enabled: !!voucherId
+    enabled: !!voucherId && !!existingVoucher
   });
 
   useEffect(() => {
@@ -94,30 +105,49 @@ export default function ReceiptVoucher() {
         throw new Error('Voucher is not balanced');
       }
 
-      const voucherData = { ...formData, net_amount: totalDebit };
+      const voucherData = { ...formData, net_amount: totalDebit, company_id: selectedCompanyId };
 
       let voucher;
       if (voucherId) {
         voucher = await rcas.entities.Voucher.update(voucherId, voucherData);
-        for (const entry of existingEntries) await rcas.entities.VoucherLedgerEntry.delete(entry.id);
+        // Delete old entries
+        for (const entry of existingEntries) {
+          try {
+            await rcas.entities.VoucherLedgerEntry.delete(entry.id);
+          } catch (error) {
+            console.warn('Failed to delete entry:', error);
+          }
+        }
       } else {
         voucher = await rcas.entities.Voucher.create(voucherData);
       }
 
+      // Create new entries
       for (const entry of entries) {
-        if (entry.ledger_id && (entry.debit_amount || entry.credit_amount)) {
-          await rcas.entities.VoucherLedgerEntry.create({
-            voucher_id: voucher.id, ledger_id: entry.ledger_id, ledger_name: entry.ledger_name,
-            debit_amount: parseFloat(entry.debit_amount) || 0, credit_amount: parseFloat(entry.credit_amount) || 0
-          });
+        if (entry.ledger_id) {
+          try {
+            await rcas.entities.VoucherLedgerEntry.create({
+              voucher_id: voucher.id,
+              ledger_id: entry.ledger_id,
+              ledger_name: ledgers.find(l => l.id === entry.ledger_id)?.name || '',
+              debit_amount: parseFloat(entry.debit_amount) || 0,
+              credit_amount: parseFloat(entry.credit_amount) || 0
+            });
+          } catch (error) {
+            console.warn('Failed to create entry:', error);
+          }
         }
       }
       return voucher;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['receiptVouchers'] });
-      toast.success('Receipt saved');
-      window.location.href = createPageUrl('Receipt');
+      queryClient.invalidateQueries({ queryKey: ['receiptVouchers', selectedCompanyId] });
+      queryClient.invalidateQueries({ queryKey: ['vouchers', selectedCompanyId] });
+      queryClient.invalidateQueries({ queryKey: ['ledgers', selectedCompanyId] });
+      toast.success('Receipt saved successfully');
+      setTimeout(() => {
+        window.location.href = createPageUrl('Receipt');
+      }, 1000);
     },
     onError: (error) => toast.error(error.message)
   });

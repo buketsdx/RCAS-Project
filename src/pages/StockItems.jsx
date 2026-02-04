@@ -16,7 +16,7 @@ import { toast } from "sonner";
 import { Package, Plus, Pencil, Trash2, Upload } from 'lucide-react';
 
 export default function StockItems() {
-  const { company } = useCompany();
+  const { company, selectedCompanyId } = useCompany();
   const type = company?.type || 'General';
 
   const getTerminology = () => {
@@ -86,33 +86,45 @@ export default function StockItems() {
   });
 
   const { data: items = [], isLoading } = useQuery({
-    queryKey: ['stockItems'],
-    queryFn: () => rcas.entities.StockItem.list()
+    queryKey: ['stockItems', selectedCompanyId],
+    queryFn: async () => {
+      const list = await rcas.entities.StockItem.list();
+      return list.filter(i => String(i.company_id) === String(selectedCompanyId));
+    },
+    enabled: !!selectedCompanyId
   });
 
   const { data: groups = [] } = useQuery({
-    queryKey: ['stockGroups'],
-    queryFn: () => rcas.entities.StockGroup.list()
+    queryKey: ['stockGroups', selectedCompanyId],
+    queryFn: async () => {
+      const list = await rcas.entities.StockGroup.list();
+      return list.filter(g => String(g.company_id) === String(selectedCompanyId));
+    },
+    enabled: !!selectedCompanyId
   });
 
   const { data: units = [] } = useQuery({
-    queryKey: ['units'],
-    queryFn: () => rcas.entities.Unit.list()
+    queryKey: ['units', selectedCompanyId],
+    queryFn: async () => {
+      const list = await rcas.entities.Unit.list();
+      return list.filter(u => String(u.company_id) === String(selectedCompanyId));
+    },
+    enabled: !!selectedCompanyId
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => rcas.entities.StockItem.create(data),
+    mutationFn: (data) => rcas.entities.StockItem.create({ ...data, company_id: selectedCompanyId }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['stockItems'] });
+      queryClient.invalidateQueries({ queryKey: ['stockItems', selectedCompanyId] });
       toast.success('Stock item created successfully');
       closeDialog();
     }
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => rcas.entities.StockItem.update(id, data),
+    mutationFn: ({ id, data }) => rcas.entities.StockItem.update(id, { ...data, company_id: selectedCompanyId }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['stockItems'] });
+      queryClient.invalidateQueries({ queryKey: ['stockItems', selectedCompanyId] });
       toast.success('Stock item updated successfully');
       closeDialog();
     }
@@ -121,7 +133,7 @@ export default function StockItems() {
   const deleteMutation = useMutation({
     mutationFn: (id) => rcas.entities.StockItem.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['stockItems'] });
+      queryClient.invalidateQueries({ queryKey: ['stockItems', selectedCompanyId] });
       toast.success('Stock item deleted successfully');
     }
   });

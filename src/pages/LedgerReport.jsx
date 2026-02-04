@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { rcas } from '@/api/rcasClient';
 import { useQuery } from '@tanstack/react-query';
+import { useCompany } from '@/context/CompanyContext';
 import PageHeader from '@/components/common/PageHeader';
 import DataTable from '@/components/common/DataTable';
 import FormField from '@/components/forms/FormField';
@@ -10,15 +11,46 @@ import { format, startOfMonth, endOfMonth } from 'date-fns';
 import { FileText } from 'lucide-react';
 
 export default function LedgerReport() {
+  const { selectedCompanyId } = useCompany();
   const [selectedLedger, setSelectedLedger] = useState('');
   const [filters, setFilters] = useState({
     fromDate: format(startOfMonth(new Date()), 'yyyy-MM-dd'),
     toDate: format(endOfMonth(new Date()), 'yyyy-MM-dd')
   });
 
-  const { data: ledgers = [] } = useQuery({ queryKey: ['ledgers'], queryFn: () => rcas.entities.Ledger.list() });
-  const { data: entries = [], isLoading } = useQuery({ queryKey: ['ledgerEntries'], queryFn: () => rcas.entities.VoucherLedgerEntry.list() });
-  const { data: vouchers = [] } = useQuery({ queryKey: ['vouchers'], queryFn: () => rcas.entities.Voucher.list() });
+  const { data: ledgers = [] } = useQuery({ 
+    queryKey: ['ledgers', selectedCompanyId], 
+    queryFn: async () => {
+      const list = await rcas.entities.Ledger.list();
+      return list.filter(l => String(l.company_id) === String(selectedCompanyId));
+    },
+    enabled: !!selectedCompanyId
+  });
+
+  const { data: entries = [], isLoading } = useQuery({ 
+    queryKey: ['ledgerEntries', selectedCompanyId], 
+    queryFn: async () => {
+      const list = await rcas.entities.VoucherLedgerEntry.list();
+      // Filter entries based on vouchers belonging to the selected company
+      const allVouchers = await rcas.entities.Voucher.list();
+      const companyVoucherIds = new Set(
+        allVouchers
+          .filter(v => String(v.company_id) === String(selectedCompanyId))
+          .map(v => v.id)
+      );
+      return list.filter(e => companyVoucherIds.has(e.voucher_id));
+    },
+    enabled: !!selectedCompanyId
+  });
+
+  const { data: vouchers = [] } = useQuery({ 
+    queryKey: ['vouchers', selectedCompanyId], 
+    queryFn: async () => {
+      const list = await rcas.entities.Voucher.list();
+      return list.filter(v => String(v.company_id) === String(selectedCompanyId));
+    },
+    enabled: !!selectedCompanyId
+  });
 
   const ledger = ledgers.find(l => l.id === selectedLedger);
   

@@ -16,6 +16,7 @@ import { Coins, Plus, Pencil, Trash2, RefreshCw, Globe } from 'lucide-react';
 
 export default function Currencies() {
   const queryClient = useQueryClient();
+  const { selectedCompanyId } = useCompany();
   const { baseCurrency, baseCurrencySymbol, setSelectedCurrency, CURRENCY_SYMBOLS } = useCurrency();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingCurrency, setEditingCurrency] = useState(null);
@@ -23,21 +24,28 @@ export default function Currencies() {
     code: '', name: '', symbol: '', exchange_rate: 1, decimal_places: 2, is_base_currency: false
   });
 
-  const { data: currencies = [], isLoading } = useQuery({ queryKey: ['currencies'], queryFn: () => rcas.entities.Currency.list() });
+  const { data: currencies = [], isLoading } = useQuery({ 
+    queryKey: ['currencies', selectedCompanyId], 
+    queryFn: async () => {
+      const list = await rcas.entities.Currency.list();
+      return list.filter(c => String(c.company_id) === String(selectedCompanyId));
+    },
+    enabled: !!selectedCompanyId
+  });
 
   const createMutation = useMutation({
-    mutationFn: (data) => rcas.entities.Currency.create(data),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['currencies'] }); toast.success('Currency added'); closeDialog(); }
+    mutationFn: (data) => rcas.entities.Currency.create({ ...data, company_id: selectedCompanyId }),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['currencies', selectedCompanyId] }); toast.success('Currency added'); closeDialog(); }
   });
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => rcas.entities.Currency.update(id, data),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['currencies'] }); toast.success('Currency updated'); closeDialog(); }
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['currencies', selectedCompanyId] }); toast.success('Currency updated'); closeDialog(); }
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id) => rcas.entities.Currency.delete(id),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['currencies'] }); toast.success('Currency deleted'); }
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['currencies', selectedCompanyId] }); toast.success('Currency deleted'); }
   });
 
   const openDialog = (currency = null) => {

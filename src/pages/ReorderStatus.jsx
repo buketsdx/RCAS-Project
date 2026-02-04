@@ -1,6 +1,7 @@
 import React from 'react';
 import { rcas } from '@/api/rcasClient';
 import { useQuery } from '@tanstack/react-query';
+import { useCompany } from '@/context/CompanyContext';
 import PageHeader from '@/components/common/PageHeader';
 import DataTable from '@/components/common/DataTable';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
@@ -8,8 +9,24 @@ import { Badge } from "@/components/ui/badge";
 import { Package, AlertTriangle, CheckCircle } from 'lucide-react';
 
 export default function ReorderStatus() {
-  const { data: items = [], isLoading } = useQuery({ queryKey: ['stockItems'], queryFn: () => rcas.entities.StockItem.list() });
-  const { data: units = [] } = useQuery({ queryKey: ['units'], queryFn: () => rcas.entities.Unit.list() });
+  const { selectedCompanyId } = useCompany();
+  const { data: items = [], isLoading } = useQuery({ 
+    queryKey: ['stockItems', selectedCompanyId], 
+    queryFn: async () => {
+      const list = await rcas.entities.StockItem.list();
+      return list.filter(i => String(i.company_id) === String(selectedCompanyId));
+    },
+    enabled: !!selectedCompanyId
+  });
+  
+  const { data: units = [] } = useQuery({ 
+    queryKey: ['units', selectedCompanyId], 
+    queryFn: async () => {
+      const list = await rcas.entities.Unit.list();
+      return list.filter(u => String(u.company_id) === String(selectedCompanyId));
+    },
+    enabled: !!selectedCompanyId
+  });
 
   const itemsWithReorder = items.filter(item => item.reorder_level);
   

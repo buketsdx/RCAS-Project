@@ -98,6 +98,7 @@ const menuItems = [
     icon: ArrowRightLeft,
     roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.OWNER, ROLES.CASHIER],
     children: [
+      { title: 'Booking Management', icon: ClipboardList, href: 'BookingManagement' },
       { title: 'Branch Daily Close', icon: Store, href: 'BranchDailyClose' },
       { title: 'Sales', icon: TrendingUp, href: 'Sales' },
       { title: 'Purchase', icon: ShoppingCart, href: 'Purchase' },
@@ -272,13 +273,21 @@ export default function Layout() {
     if (type === 'Salon') {
       items = items.map(item => {
         if (item.title === 'Inventory') {
-          return { ...item, title: 'Products & Services' };
+          return {
+            ...item,
+            title: 'Products & Services',
+            children: item.children.map(child => {
+              if (child.title === 'Godown Summary') return { ...child, title: 'Store Summary', icon: Warehouse };
+              return child;
+            })
+          };
         }
         if (item.title === 'Transactions') {
           return {
             ...item,
             children: item.children.map(child => {
               if (child.title === 'Sales') return { ...child, title: 'Appointments / Billing', icon: UsersRound };
+              if (child.title === 'Branch Daily Close') return { ...child, title: 'Daily Close Entry', icon: Store };
               return child;
             })
           };
@@ -290,6 +299,9 @@ export default function Layout() {
               if (child.title === 'Stock Items') return { ...child, title: 'Services & Products', icon: Package };
               if (child.title === 'Stock Groups') return { ...child, title: 'Categories', icon: FolderTree };
               if (child.title === 'Suppliers') return { ...child, title: 'Vendors', icon: Truck };
+              if (child.title === 'Voucher Types') return { ...child, title: 'Transaction Types', icon: FileText };
+              if (child.title === 'Godowns') return { ...child, title: 'Stores / Locations', icon: Warehouse };
+              if (child.title === 'Cost Centers') return { ...child, title: 'Departments / Sections', icon: Calculator };
               return child;
             })
           };
@@ -308,13 +320,21 @@ export default function Layout() {
     } else if (type === 'Restaurant') {
       items = items.map(item => {
         if (item.title === 'Inventory') {
-          return { ...item, title: 'Kitchen Inventory' };
+          return {
+            ...item,
+            title: 'Kitchen Inventory',
+            children: item.children.map(child => {
+              if (child.title === 'Godown Summary') return { ...child, title: 'Store Summary', icon: Warehouse };
+              return child;
+            })
+          };
         }
         if (item.title === 'Transactions') {
           return {
             ...item,
             children: item.children.map(child => {
               if (child.title === 'Sales') return { ...child, title: 'Orders / Billing', icon: ClipboardList };
+              if (child.title === 'Branch Daily Close') return { ...child, title: 'Daily Close Entry', icon: Store };
               return child;
             })
           };
@@ -326,6 +346,9 @@ export default function Layout() {
               if (child.title === 'Stock Items') return { ...child, title: 'Menu Items & Ingredients', icon: Package };
               if (child.title === 'Stock Groups') return { ...child, title: 'Menu Categories', icon: FolderTree };
               if (child.title === 'Suppliers') return { ...child, title: 'Vendors', icon: Truck };
+              if (child.title === 'Voucher Types') return { ...child, title: 'Order Types', icon: FileText };
+              if (child.title === 'Godowns') return { ...child, title: 'Stores / Locations', icon: Warehouse };
+              if (child.title === 'Cost Centers') return { ...child, title: 'Departments / Sections', icon: Calculator };
               return child;
             })
           };

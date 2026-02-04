@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { rcas } from '@/api/rcasClient';
+import { useCompany } from '@/context/CompanyContext';
 import { generateUniqueID } from '@/components/common/IDGenerator';
 import PageHeader from '@/components/common/PageHeader';
 import FormField from '@/components/forms/FormField';
@@ -16,6 +17,7 @@ import { getAllTypes, addStoredType, getTransactionNature } from '@/lib/custodyT
 export default function CustodyWalletEntry() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { selectedCompanyId } = useCompany();
   const [showTypeDialog, setShowTypeDialog] = useState(false);
   const [newTypeData, setNewTypeData] = useState({ name: '', nature: 'Withdrawal' });
   const [availableTypes, setAvailableTypes] = useState(getAllTypes());
@@ -32,8 +34,12 @@ export default function CustodyWalletEntry() {
 
   // Fetch wallets list
   const { data: wallets = [] } = useQuery({ 
-    queryKey: ['custodyWallets'], 
-    queryFn: () => rcas.entities.CustodyWallet.list() 
+    queryKey: ['custodyWallets', selectedCompanyId], 
+    queryFn: async () => {
+      const list = await rcas.entities.CustodyWallet.list();
+      return list.filter(w => String(w.company_id) === String(selectedCompanyId));
+    },
+    enabled: !!selectedCompanyId
   });
 
   const transactionMutation = useMutation({

@@ -8,6 +8,7 @@ import { Plus, Trash2 } from 'lucide-react';
 export default function VoucherItemsTable({
   items = [],
   stockItems = [],
+  employees = [],
   onItemChange,
   onAddItem,
   onRemoveItem,
@@ -22,7 +23,8 @@ export default function VoucherItemsTable({
         return {
           item: 'Service/Product',
           addItem: 'Add Service/Product',
-          selectItem: 'Select Service/Product'
+          selectItem: 'Select Service/Product',
+          stylist: 'Stylist'
         };
       case 'Restaurant':
         return {
@@ -66,7 +68,7 @@ export default function VoucherItemsTable({
     const updatedItem = { ...items[index], [field]: value };
     
     if (field === 'stock_item_id') {
-      const stockItem = stockItems.find(s => s.id === value);
+      const stockItem = filteredStockItems.find(s => s.id === value);
       if (stockItem) {
         updatedItem.stock_item_name = stockItem.name;
         updatedItem.rate = stockItem.selling_price || 0;
@@ -86,6 +88,9 @@ export default function VoucherItemsTable({
           <thead className="bg-slate-50">
             <tr>
               <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">{terms.item}</th>
+              {type === 'Salon' && (
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">{terms.stylist}</th>
+              )}
               <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Qty</th>
               <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Rate</th>
               <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Disc %</th>
@@ -108,12 +113,29 @@ export default function VoucherItemsTable({
                       <SelectValue placeholder={terms.selectItem} />
                     </SelectTrigger>
                     <SelectContent>
-                      {stockItems.map(s => (
+                      {filteredStockItems.map(s => (
                         <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </td>
+                {type === 'Salon' && (
+                  <td className="px-4 py-2">
+                    <Select 
+                      value={item.salesman_id || ''} 
+                      onValueChange={(v) => handleItemChange(index, 'salesman_id', v)}
+                    >
+                      <SelectTrigger className="min-w-[150px] bg-white">
+                        <SelectValue placeholder="Select Stylist" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {employees.map(e => (
+                          <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </td>
+                )}
                 <td className="px-4 py-2">
                   <Input
                     type="number"

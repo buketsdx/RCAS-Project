@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { rcas } from '@/api/rcasClient';
 import { useQuery } from '@tanstack/react-query';
+import { useCompany } from '@/context/CompanyContext';
 import { formatCurrency } from '@/utils';
 import PageHeader from '@/components/common/PageHeader';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
@@ -12,14 +13,19 @@ import { BadgePercent, Printer, Download } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 
 export default function VATComputation() {
+  const { selectedCompanyId } = useCompany();
   const [filters, setFilters] = useState({
     fromDate: format(startOfMonth(new Date()), 'yyyy-MM-dd'),
     toDate: format(endOfMonth(new Date()), 'yyyy-MM-dd')
   });
 
   const { data: vouchers = [], isLoading } = useQuery({
-    queryKey: ['vouchers'],
-    queryFn: () => rcas.entities.Voucher.list()
+    queryKey: ['vouchers', selectedCompanyId],
+    queryFn: async () => {
+      const all = await rcas.entities.Voucher.list();
+      return all.filter(v => String(v.company_id) === String(selectedCompanyId));
+    },
+    enabled: !!selectedCompanyId
   });
 
   const filteredVouchers = vouchers.filter(v => v.date >= filters.fromDate && v.date <= filters.toDate);

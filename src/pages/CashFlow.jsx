@@ -6,20 +6,26 @@ import PageHeader from '@/components/common/PageHeader';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import FormField from '@/components/forms/FormField';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useCompany } from '@/context/CompanyContext';
 import { format, startOfYear, endOfYear, parseISO, startOfMonth, endOfMonth, eachMonthOfInterval } from 'date-fns';
 import { Wallet, TrendingUp, TrendingDown, Printer } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
 export default function CashFlow() {
+  const { selectedCompanyId } = useCompany();
   const [filters, setFilters] = useState({
     fromDate: format(startOfYear(new Date()), 'yyyy-MM-dd'),
     toDate: format(endOfYear(new Date()), 'yyyy-MM-dd')
   });
 
   const { data: vouchers = [], isLoading } = useQuery({
-    queryKey: ['vouchers'],
-    queryFn: () => rcas.entities.Voucher.list()
+    queryKey: ['vouchers', selectedCompanyId],
+    queryFn: async () => {
+      const allVouchers = await rcas.entities.Voucher.list();
+      return allVouchers.filter(v => String(v.company_id) === String(selectedCompanyId));
+    },
+    enabled: !!selectedCompanyId
   });
 
   const filteredVouchers = vouchers.filter(v => v.date >= filters.fromDate && v.date <= filters.toDate);
