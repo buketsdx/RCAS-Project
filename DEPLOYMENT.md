@@ -1,8 +1,32 @@
 # Deployment & Database Connection Guide
 
-This application is designed to be flexible, allowing deployment on standard web servers like XAMPP and connection to various database backends.
+This application is designed to be flexible, allowing deployment on standard web servers like XAMPP, Cloud Platforms like Vercel, and connection to various database backends.
 
-## 1. Hosting on XAMPP (Windows/Linux)
+## 1. Hosting on Vercel (Recommended for Cloud)
+
+Vercel is the easiest way to deploy this React application.
+
+1.  **Push to GitHub:**
+    Ensure your latest code is pushed to your GitHub repository.
+
+2.  **Import in Vercel:**
+    - Go to [vercel.com](https://vercel.com) and click **Add New > Project**.
+    - Import your GitHub repository.
+
+3.  **Configure Project:**
+    - **Framework Preset:** Vite (should be detected automatically).
+    - **Root Directory:** `./` (default).
+    - **Build Command:** `npm run build` (default).
+    - **Output Directory:** `dist` (default).
+    - **Environment Variables:**
+      Add any variables from your `.env` file here (e.g., `VITE_GOOGLE_CLIENT_ID`).
+
+4.  **Deploy:**
+    Click **Deploy**.
+
+*Note: A `vercel.json` file is included in the project to handle routing (rewrites 404s to index.html).*
+
+## 2. Hosting on XAMPP (Windows/Linux)
 
 To run this application on XAMPP:
 
@@ -21,7 +45,7 @@ To run this application on XAMPP:
     
     *Note: The included `.htaccess` file ensures that refreshing pages works correctly (SPA routing).*
 
-## 2. Exposing via Cloudflare Tunnel
+## 3. Exposing via Cloudflare Tunnel
 
 To make your local XAMPP or Dev server accessible from the internet:
 
@@ -41,7 +65,7 @@ To make your local XAMPP or Dev server accessible from the internet:
 3.  **Share the Link:**
     Cloudflare will provide a random URL (e.g., `https://random-name.trycloudflare.com`) that you can share.
 
-## 3. Database Connections (One-Click Setup)
+## 4. Database Connections (One-Click Setup)
 
 You can connect the application to different databases without changing code.
 

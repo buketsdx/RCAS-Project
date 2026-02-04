@@ -99,6 +99,7 @@ const menuItems = [
     roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.OWNER, ROLES.CASHIER],
     children: [
       { title: 'Booking Management', icon: ClipboardList, href: 'BookingManagement' },
+      { title: 'Customer Booking', icon: Ticket, href: 'CustomerBooking' },
       { title: 'Branch Daily Close', icon: Store, href: 'BranchDailyClose' },
       { title: 'Sales', icon: TrendingUp, href: 'Sales' },
       { title: 'Purchase', icon: ShoppingCart, href: 'Purchase' },
