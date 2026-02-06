@@ -43,6 +43,9 @@ export default function VoucherItemsTable({
 
   const terms = getTerminology();
 
+  // Ensure stockItems is always an array
+  const filteredStockItems = Array.isArray(stockItems) ? stockItems : [];
+
   const calculateItem = (item) => {
     const qty = parseFloat(item.quantity) || 0;
     const rate = parseFloat(item.rate) || 0;

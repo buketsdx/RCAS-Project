@@ -59,7 +59,8 @@ import {
   Recycle,
   UserCircle,
   Store,
-  Check
+  Check,
+  Ticket
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 
@@ -270,6 +271,22 @@ export default function Layout() {
   const filteredMenuItems = React.useMemo(() => {
     const type = selectedCompany?.business_type;
     let items = [...menuItems]; // Create a shallow copy of the array
+
+    // HIDE SALON FEATURES IF NOT SALON
+    if (type !== 'Salon') {
+      items = items.map(item => {
+        if (item.title === 'Transactions') {
+          return {
+            ...item,
+            children: item.children.filter(child => 
+              child.href !== 'BookingManagement' && 
+              child.href !== 'CustomerBooking'
+            )
+          };
+        }
+        return item;
+      });
+    }
 
     if (type === 'Salon') {
       items = items.map(item => {
