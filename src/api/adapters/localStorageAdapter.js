@@ -43,17 +43,25 @@ const initializeStorage = () => {
       });
     }
 
-    // Seed default admin user if no users exist
-    if (!storage.User || storage.User.length === 0) {
-      storage.User = [{
+    // Seed default admin user if it doesn't exist
+    const adminUser = storage.User?.find(u => u.username === 'admin');
+    if (!adminUser) {
+      if (!storage.User) storage.User = [];
+      storage.User.push({
         id: 1,
         username: 'admin',
         password: '123',
         full_name: 'System Administrator',
         role: 'Super Admin',
         email: 'admin@rcas.com'
-      }];
+      });
       saveStorage();
+    } else {
+       // Ensure admin password is always 123 in dev mode (Optional, but helpful for user)
+       if (adminUser.password !== '123') {
+           adminUser.password = '123';
+           saveStorage();
+       }
     }
   } catch (e) {
     console.log('Failed to load from localStorage:', e);
