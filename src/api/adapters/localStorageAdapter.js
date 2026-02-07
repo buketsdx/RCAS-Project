@@ -101,7 +101,8 @@ export const localStorageAdapter = {
     const newRecord = { ...data, id: Date.now() };
     
     // Auto-inject Company ID
-    if (context?.companyId && !newRecord.company_id) {
+    const globalEntities = ['User', 'Company', 'Currency', 'Settings']; 
+    if (context?.companyId && !newRecord.company_id && !globalEntities.includes(entityName)) {
       newRecord.company_id = context.companyId;
     }
 

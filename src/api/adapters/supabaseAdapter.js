@@ -3,6 +3,8 @@ import { createClient } from '@supabase/supabase-js';
 
 let supabase = null;
 
+const globalEntities = ['User', 'Company', 'Currency', 'Settings'];
+
 export const supabaseAdapter = {
   name: 'supabase',
   
@@ -20,7 +22,6 @@ export const supabaseAdapter = {
     let query = supabase.from(entityName).select('*');
     
     // Filter by Company ID
-    const globalEntities = ['User', 'Company', 'Currency', 'Settings']; 
     if (context?.companyId && !globalEntities.includes(entityName)) {
       query = query.eq('company_id', context.companyId);
     }
@@ -34,8 +35,8 @@ export const supabaseAdapter = {
     if (!supabase) throw new Error("Supabase not initialized");
 
     const newRecord = { ...data };
-    // Auto-inject Company ID
-    if (context?.companyId && !newRecord.company_id) {
+    // Auto-inject Company ID for non-global entities
+    if (context?.companyId && !newRecord.company_id && !globalEntities.includes(entityName)) {
       newRecord.company_id = context.companyId;
     }
 
