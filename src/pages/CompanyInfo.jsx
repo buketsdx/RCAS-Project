@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Building2, Save, Upload, X, RotateCw, ZoomIn, ZoomOut, Crop, Trash2, Check, ArrowRightLeft } from 'lucide-react';
+import { Building2, Save, Upload, X, RotateCw, ZoomIn, ZoomOut, Crop, Trash2, Check, ArrowRightLeft, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export default function CompanyInfo() {
