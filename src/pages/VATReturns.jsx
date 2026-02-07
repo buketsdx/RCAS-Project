@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { format, startOfQuarter, endOfQuarter, subQuarters } from 'date-fns';
 import { BadgePercent, FileText, Download } from 'lucide-react';
 import { Button } from "@/components/ui/button";
+import { useCompany } from '@/context/CompanyContext';
 
 export default function VATReturns() {
   const { company, selectedCompanyId } = useCompany();

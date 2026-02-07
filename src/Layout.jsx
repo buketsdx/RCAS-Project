@@ -454,7 +454,9 @@ export default function Layout() {
       {/* Mobile Header */}
       <div className="lg:hidden fixed top-0 left-0 right-0 h-16 border-b flex items-center justify-between px-4 z-50 transition-colors bg-card border-border">
         <div className="flex items-center gap-3">
-          <AppLogo size="sm" showText={false} />
+          <Link to="/Dashboard">
+            <AppLogo size="sm" showText={false} />
+          </Link>
           <span className="font-bold text-sm truncate max-w-[200px]">{selectedCompany?.name || 'RCAS'}</span>
         </div>
         <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(!sidebarOpen)}>
@@ -476,7 +478,9 @@ export default function Layout() {
         sidebarOpen ? "translate-x-0" : "-translate-x-full"
       )}>
         <div className="h-16 flex items-center justify-between px-4 border-b border-border">
-          <AppLogo size="sm" />
+          <Link to="/Dashboard">
+            <AppLogo size="sm" />
+          </Link>
           <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(false)}>
             <X className="h-5 w-5" />
           </Button>
@@ -529,7 +533,11 @@ export default function Layout() {
         sidebarCollapsed ? "w-20" : "w-64"
       )}>
         <div className="h-16 flex items-center justify-between px-4 border-b border-border">
-          {!sidebarCollapsed && <AppLogo size="sm" />}
+          {!sidebarCollapsed && (
+            <Link to="/Dashboard">
+              <AppLogo size="sm" />
+            </Link>
+          )}
           <Button 
             variant="ghost" 
             size="icon" 

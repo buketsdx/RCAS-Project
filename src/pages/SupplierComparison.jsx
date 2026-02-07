@@ -10,6 +10,7 @@ import { BarChart3, ArrowUpDown, TrendingUp, TrendingDown, Package, History } fr
 import { formatCurrency, formatDate } from '@/utils';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { useCompany } from '@/context/CompanyContext';
 
 export default function SupplierComparison() {
   const { selectedCompanyId } = useCompany();
