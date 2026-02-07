@@ -15,6 +15,7 @@ import { Building2, Save, Upload, X, RotateCw, ZoomIn, ZoomOut, Crop, Trash2, Ch
 import { cn } from '@/lib/utils';
 
 export default function CompanyInfo() {
+  console.log("Rendering CompanyInfo Component");
   const queryClient = useQueryClient();
   const { selectedCompanyId, setSelectedCompanyId, companies: contextCompanies, isLoading: contextLoading } = useCompany();
   const canvasRef = useRef(null);
@@ -117,18 +118,18 @@ export default function CompanyInfo() {
           return result;
         } else {
           // This path might be unused if we use createMutation for new companies
-          console.log('Creating new company', data);
+          console.log('Creating new company via saveMutation', data);
           const result = await rcas.entities.Company.create(data);
           console.log('Create successful:', result);
           return result;
         }
       } catch (error) {
-        console.error('API Call Error:', error);
+        console.error('API Call Error in saveMutation:', error);
         throw error;
       }
     },
     onSuccess: (data) => {
-      console.log('Mutation succeeded:', data);
+      console.log('Save mutation succeeded:', data);
       queryClient.invalidateQueries({ queryKey: ['companies'] });
       toast.success('✅ Company information saved successfully');
     },
@@ -140,9 +141,18 @@ export default function CompanyInfo() {
 
   const createMutation = useMutation({
     mutationFn: async (data) => {
-      return await rcas.entities.Company.create(data);
+      console.log('Attempting to create company:', data);
+      try {
+        const result = await rcas.entities.Company.create(data);
+        console.log('Company created result:', result);
+        return result;
+      } catch (error) {
+        console.error('Error creating company:', error);
+        throw error;
+      }
     },
     onSuccess: (newCompany) => {
+      console.log('Create mutation success, new company:', newCompany);
       queryClient.invalidateQueries({ queryKey: ['companies'] });
       toast.success('✅ Company created successfully');
       setShowNewCompanyDialog(false);
@@ -153,6 +163,7 @@ export default function CompanyInfo() {
       }
     },
     onError: (error) => {
+      console.error('Create mutation error:', error);
       toast.error(`❌ ${error?.message || 'Failed to create company'}`);
     }
   });
