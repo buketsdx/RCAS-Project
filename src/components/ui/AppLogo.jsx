@@ -15,7 +15,7 @@ export default function AppLogo({ size = 'md', showText = true }) {
       </div>
       {showText && (
         <div className="flex flex-col">
-          <span className={`${sizes[size].text} font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent`}>
+          <span className={`${sizes[size].text} font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent text-left`}>
             RCAS
           </span>
           <span className="text-xs text-slate-500 -mt-1">Rustam Chartered Account System</span>
