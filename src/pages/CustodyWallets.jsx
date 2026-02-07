@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { rcas } from '@/api/rcasClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCompany } from '@/context/CompanyContext';
@@ -19,6 +20,8 @@ import { Wallet, Plus, Pencil, Trash2, ArrowUpRight, ArrowDownLeft, RefreshCw } 
 import { getAllTypes, addStoredType, getTransactionNature } from '@/lib/custodyTypes';
 
 export default function CustodyWallets() {
+  const { selectedCompanyId } = useCompany();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [transactionDialogOpen, setTransactionDialogOpen] = useState(false);
