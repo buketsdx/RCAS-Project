@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { rcas } from '@/api/rcasClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -12,15 +12,18 @@ import EmptyState from '@/components/common/EmptyState';
 import { generateUniqueID, ID_PREFIXES } from '@/components/common/IDGenerator';
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import { format } from 'date-fns';
 import { Wallet, Plus, Pencil, Trash2, ArrowUpRight, ArrowDownLeft, RefreshCw } from 'lucide-react';
 import { getAllTypes, addStoredType, getTransactionNature } from '@/lib/custodyTypes';
 
 export default function CustodyWallets() {
+  console.log("CustodyWallets component mounting");
+  
   const { selectedCompanyId } = useCompany();
+  console.log("Selected Company ID:", selectedCompanyId);
+
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -29,7 +32,22 @@ export default function CustodyWallets() {
   const [selectedWallet, setSelectedWallet] = useState(null);
   const [showTypeDialog, setShowTypeDialog] = useState(false);
   const [newTypeData, setNewTypeData] = useState({ name: '', nature: 'Withdrawal' });
-  const [availableTypes, setAvailableTypes] = useState(getAllTypes());
+  
+  // Safe initialization of availableTypes
+  const [availableTypes, setAvailableTypes] = useState([]);
+
+  useEffect(() => {
+    try {
+      if (typeof getAllTypes === 'function') {
+        setAvailableTypes(getAllTypes());
+      } else {
+        console.error("getAllTypes is not a function");
+      }
+    } catch (e) {
+      console.error("Error loading types:", e);
+    }
+  }, []);
+
   const [formData, setFormData] = useState({
     name: '', holder_name: '', holder_type: 'Employee', currency: 'SAR', purpose: '', contact_phone: '', notes: ''
   });
@@ -37,11 +55,20 @@ export default function CustodyWallets() {
     type: 'Deposit', amount: '', description: '', reference: '', transfer_to_wallet_id: ''
   });
 
-  const { data: wallets = [], isLoading } = useQuery({
+  const { data: wallets = [], isLoading, error: walletError } = useQuery({
     queryKey: ['custodyWallets', selectedCompanyId],
     queryFn: async () => {
-      const list = await rcas.entities.CustodyWallet.list();
-      return list.filter(w => String(w.company_id) === String(selectedCompanyId));
+      if (!rcas || !rcas.entities?.CustodyWallet) {
+        console.error("CustodyWallet entity is missing in rcas client");
+        return [];
+      }
+      try {
+        const list = await rcas.entities.CustodyWallet.list();
+        return list ? list.filter(w => String(w.company_id) === String(selectedCompanyId)) : [];
+      } catch (err) {
+        console.error("Error fetching wallets:", err);
+        return [];
+      }
     },
     enabled: !!selectedCompanyId
   });
@@ -49,25 +76,27 @@ export default function CustodyWallets() {
   const { data: transactions = [] } = useQuery({
     queryKey: ['custodyTransactions', selectedCompanyId],
     queryFn: async () => {
-      // Transactions are linked to wallets, so we filter by wallet's company if transaction doesn't have company_id
-      // Or if transaction has company_id, use that. CustodyTransaction usually should have company_id.
-      // Let's assume we filter by filtering wallets first.
-      const allTransactions = await rcas.entities.CustodyTransaction.list('-date');
-      // To be safe, we should filter transactions where wallet belongs to company.
-      // But we can also rely on the fact that we only see wallets of this company.
-      // However, showing all transactions might leak if we don't filter.
-      // Better to filter.
-      // Optimization: Get wallet IDs of this company first.
-      const companyWallets = await rcas.entities.CustodyWallet.list();
-      const companyWalletIds = companyWallets.filter(w => String(w.company_id) === String(selectedCompanyId)).map(w => w.id);
-      return allTransactions.filter(t => companyWalletIds.includes(t.wallet_id));
+      if (!rcas || !rcas.entities?.CustodyTransaction || !rcas.entities?.CustodyWallet) return [];
+      
+      try {
+        const allTransactions = await rcas.entities.CustodyTransaction.list(); // Removed filter arg as it's ignored
+        const companyWallets = await rcas.entities.CustodyWallet.list();
+        const companyWalletIds = companyWallets
+          .filter(w => String(w.company_id) === String(selectedCompanyId))
+          .map(w => w.id);
+          
+        return allTransactions ? allTransactions.filter(t => companyWalletIds.includes(t.wallet_id)) : [];
+      } catch (err) {
+        console.error("Error fetching transactions:", err);
+        return [];
+      }
     },
     enabled: !!selectedCompanyId
   });
 
   const createWalletMutation = useMutation({
     mutationFn: async (data) => {
-      const walletId = await generateUniqueID('wallet', ID_PREFIXES.WALLET);
+      const walletId = await generateUniqueID('wallet', ID_PREFIXES.WALLET || 'WAL');
       return rcas.entities.CustodyWallet.create({ ...data, wallet_id: walletId, balance: 0, company_id: selectedCompanyId });
     },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['custodyWallets'] }); toast.success('Wallet created'); closeDialog(); }
@@ -155,12 +184,10 @@ export default function CustodyWallets() {
     toast.success('New transaction type added');
   };
 
-  const handleNewTransaction = () => {
-    navigate('/CustodyWalletEntry');
-  };
-
-  const selectedTypeNature = getTransactionNature(transactionData.type);
-  const totalBalance = wallets.reduce((sum, w) => sum + (parseFloat(w.balance) || 0), 0);
+  const selectedTypeNature = typeof getTransactionNature === 'function' ? getTransactionNature(transactionData.type) : 'Withdrawal';
+  
+  const safeWallets = Array.isArray(wallets) ? wallets : [];
+  const totalBalance = safeWallets.reduce((sum, w) => sum + (parseFloat(w.balance) || 0), 0);
 
   const columns = [
     { header: 'Wallet ID', accessor: 'wallet_id', render: (row) => <span className="font-mono text-purple-600">{row.wallet_id}</span> },
@@ -172,10 +199,14 @@ export default function CustodyWallets() {
       <div className="flex gap-1">
         <Button variant="ghost" size="icon" onClick={() => openTransactionDialog(row)} title="Add Transaction"><RefreshCw className="h-4 w-4 text-blue-500" /></Button>
         <Button variant="ghost" size="icon" onClick={() => openDialog(row)}><Pencil className="h-4 w-4" /></Button>
-        <Button variant="ghost" size="icon" onClick={() => { if(confirm('Delete?')) deleteWalletMutation.mutate(row.id); }}><Trash2 className="h-4 w-4 text-red-500" /></Button>
+        <Button variant="ghost" size="icon" onClick={() => { if(window.confirm('Delete?')) deleteWalletMutation.mutate(row.id); }}><Trash2 className="h-4 w-4 text-red-500" /></Button>
       </div>
     )}
   ];
+
+  if (walletError) {
+    return <div className="p-8 text-center text-red-500">Error loading wallets: {walletError.message}</div>;
+  }
 
   if (isLoading) return <LoadingSpinner text="Loading wallets..." />;
 
@@ -198,21 +229,23 @@ export default function CustodyWallets() {
         <Card className="bg-emerald-50 border-emerald-200">
           <CardContent className="pt-6">
             <p className="text-sm text-emerald-700">Total Balance</p>
-            <p className="text-2xl font-bold text-emerald-700">{formatCurrency(totalBalance, 'SAR')}</p>
+            <p className="text-2xl font-bold text-emerald-700">
+              {typeof formatCurrency === 'function' ? formatCurrency(totalBalance, 'SAR') : `${totalBalance} SAR`}
+            </p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
             <p className="text-sm text-slate-500">Recent Transactions</p>
-            <p className="text-2xl font-bold">{transactions.length}</p>
+            <p className="text-2xl font-bold">{Array.isArray(transactions) ? transactions.length : 0}</p>
           </CardContent>
         </Card>
       </div>
 
-      {wallets.length === 0 ? (
+      {safeWallets.length === 0 ? (
         <EmptyState icon={Wallet} title="No Custody Wallets" description="Create wallets for flexible fund management" action={{ label: 'Create Wallet', onClick: () => openDialog() }} />
       ) : (
-        <DataTable columns={columns} data={wallets} />
+        <DataTable columns={columns} data={safeWallets} />
       )}
 
       {/* Wallet Dialog */}

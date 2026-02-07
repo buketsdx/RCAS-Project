@@ -81,10 +81,10 @@ export default function Login() {
       <div className="w-full max-w-md space-y-8">
         <div className="flex flex-col items-center justify-center text-center">
           <AppLogo size="lg" className="mb-4" />
-          <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+          <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100" style={{ margin: "7px 0 0 1px" }}>
             Sign in to RCAS
           </h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
+          <p className="text-sm text-slate-500 dark:text-slate-400" style={{ textAlign: "center", margin: "5px 0 0 5px" }}>
             Enter your credentials to access the system
           </p>
         </div>
