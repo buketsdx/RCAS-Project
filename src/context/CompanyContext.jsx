@@ -43,10 +43,20 @@ export function CompanyProvider({ children }) {
     return accessibleCompanies;
   }, [user, allCompanies]);
 
-  // Set first company as default if not already set
+  // Set default company logic
   useEffect(() => {
     if (companies.length > 0 && !selectedCompanyId) {
-      // Check if we have a stored preference
+      // 1. Check for "Default Company" setting first
+      const defaultCompanyId = localStorage.getItem('rcas_default_company_id');
+      const defaultCompany = companies.find(c => c.id === defaultCompanyId);
+
+      if (defaultCompany) {
+         setSelectedCompanyId(defaultCompany.id);
+         rcas.setContext({ companyId: defaultCompany.id });
+         return;
+      }
+
+      // 2. Fallback to last selected
       const storedId = localStorage.getItem('rcas_selected_company_id');
       const companyToSelect = companies.find(c => c.id === storedId) || companies[0];
       

@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Building2, Save, Upload, X, RotateCw, ZoomIn, ZoomOut, Crop, Trash2, Check, ArrowRightLeft, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -248,53 +250,80 @@ export default function CompanyInfo() {
     },
     { 
       header: 'Actions', 
-      render: (row) => (
-        <div className="flex gap-2">
-           <Button 
-            variant="ghost" 
-            size="sm" 
-            className="h-8 px-2 text-xs hover:bg-muted"
-            onClick={(e) => {
-              e.stopPropagation();
-              setSelectedCompanyId(row.id);
-              setShowEditCompanyDialog(true);
-            }}
-          >
-            <Settings className="h-3 w-3 mr-1" /> Edit
-          </Button>
-          {row.id !== selectedCompanyId && (
+      render: (row) => {
+        const isDefault = localStorage.getItem('rcas_default_company_id') === row.id;
+
+        return (
+          <div className="flex gap-2 items-center">
             <Button 
-              variant="outline" 
+              variant="ghost" 
               size="sm" 
-              className="h-8 px-2 text-xs"
+              className="h-8 px-2 text-xs hover:bg-muted"
               onClick={(e) => {
                 e.stopPropagation();
                 setSelectedCompanyId(row.id);
-                toast.success(`Switched to ${row.name}`);
+                setShowEditCompanyDialog(true);
               }}
             >
-              <ArrowRightLeft className="h-3 w-3 mr-1" /> Switch
+              <Settings className="h-3 w-3 mr-1" /> Edit
             </Button>
-          )}
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900/20"
-            onClick={(e) => { 
-              e.stopPropagation(); 
-              if (companies.length <= 1) {
-                toast.error("Cannot delete the only company");
-                return;
-              }
-              if(confirm(`Are you sure you want to delete ${row.name}? This action cannot be undone.`)) {
-                deleteMutation.mutate(row.id);
-              }
-            }}
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        </div>
-      )
+            {row.id !== selectedCompanyId && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="h-8 px-2 text-xs"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSelectedCompanyId(row.id);
+                  toast.success(`Switched to ${row.name}`);
+                }}
+              >
+                <ArrowRightLeft className="h-3 w-3 mr-1" /> Switch
+              </Button>
+            )}
+            
+            <div className="flex items-center space-x-2 ml-2 border-l pl-2 border-slate-200 dark:border-slate-700">
+              <Switch
+                id={`default-company-${row.id}`}
+                checked={isDefault}
+                onCheckedChange={(checked) => {
+                   if (checked) {
+                     localStorage.setItem('rcas_default_company_id', row.id);
+                     toast.success(`${row.name} is now the default company`);
+                     // Force re-render to update switch states
+                     queryClient.invalidateQueries(['companies']); 
+                   } else {
+                     localStorage.removeItem('rcas_default_company_id');
+                     toast.info('Default company cleared');
+                     queryClient.invalidateQueries(['companies']);
+                   }
+                }}
+              />
+              <Label htmlFor={`default-company-${row.id}`} className="text-xs cursor-pointer">
+                {isDefault ? 'Default' : 'Set Default'}
+              </Label>
+            </div>
+
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900/20 ml-auto"
+              onClick={(e) => { 
+                e.stopPropagation(); 
+                if (companies.length <= 1) {
+                  toast.error("Cannot delete the only company");
+                  return;
+                }
+                if(confirm(`Are you sure you want to delete ${row.name}? This action cannot be undone.`)) {
+                  deleteMutation.mutate(row.id);
+                }
+              }}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
+        );
+      }
     }
   ];
 
