@@ -492,12 +492,10 @@ export default function Layout() {
     <div className="min-h-screen transition-colors bg-background">
       {/* Mobile Header */}
       <div className="lg:hidden fixed top-0 left-0 right-0 h-16 border-b flex items-center justify-between px-4 z-50 transition-colors bg-card border-border">
-        <div className="flex items-center gap-3">
-          <Link to="/Dashboard">
-            <AppLogo size="sm" showText={false} />
-          </Link>
-          <span className="font-bold text-sm truncate max-w-[200px]">{selectedCompany?.name || 'RCAS'}</span>
-        </div>
+        <Link to="/Dashboard">
+          <AppLogo size="sm" showText={false} />
+        </Link>
+        <span className="font-bold text-sm truncate max-w-[200px]">{selectedCompany?.name || 'RCAS'}</span>
         <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(!sidebarOpen)}>
           {sidebarOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
         </Button>

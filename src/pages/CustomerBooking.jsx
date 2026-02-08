@@ -260,8 +260,8 @@ export default function CustomerBooking() {
 
                 {/* GROUP BOOKING FORM */}
                 <TabsContent value="group" className="space-y-4">
-                  <div className="p-3 bg-slate-50 rounded-lg border mb-4">
-                     <h4 className="font-medium text-sm text-slate-700 mb-3">Primary Contact</h4>
+                  <div className="p-3 bg-slate-50 dark:bg-slate-900 rounded-lg border dark:border-slate-800 mb-4">
+                     <h4 className="font-medium text-sm text-slate-700 dark:text-slate-300 mb-3">Primary Contact</h4>
                      <div className="grid grid-cols-2 gap-3">
                         <FormField 
                           value={groupData.primary_name}
@@ -287,7 +287,7 @@ export default function CustomerBooking() {
                     </div>
                     
                     {groupData.guests.map((guest, index) => (
-                      <div key={guest.id} className="p-3 border rounded-lg bg-white relative group">
+                      <div key={guest.id} className="p-3 border dark:border-slate-800 rounded-lg bg-white dark:bg-slate-900 relative group">
                         <div className="absolute top-2 right-2">
                            {groupData.guests.length > 1 && (
                              <button onClick={() => removeGuest(guest.id)} className="text-slate-400 hover:text-red-500">
@@ -339,7 +339,7 @@ export default function CustomerBooking() {
                   <div 
                     className={`border rounded-lg p-3 cursor-pointer flex flex-col items-center gap-2 transition-all ${
                       (bookingMode === 'single' ? formData.payment_method : groupData.payment_method) === 'Offline' 
-                      ? 'bg-blue-50 border-blue-500 ring-1 ring-blue-500' : 'hover:bg-slate-50'}`}
+                      ? 'bg-blue-50 border-blue-500 ring-1 ring-blue-500 dark:bg-blue-900/20' : 'hover:bg-slate-50 dark:hover:bg-slate-800'}`}
                     onClick={() => {
                        if (bookingMode === 'single') setFormData({...formData, payment_method: 'Offline'});
                        else setGroupData({...groupData, payment_method: 'Offline'});

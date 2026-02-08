@@ -19,7 +19,7 @@ export default function StatCard({ title, value, subtitle, icon: Icon, trend, tr
           {trend && (
             <div className={cn(
               "flex items-center gap-1 mt-3 text-sm font-medium",
-              trendUp ? "text-emerald-600 bg-emerald-500/10 w-fit px-2 py-0.5 rounded-full" : "text-red-500 bg-red-500/10 w-fit px-2 py-0.5 rounded-full"
+              trendUp ? "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 w-fit px-2 py-0.5 rounded-full" : "text-red-600 dark:text-red-400 bg-red-500/10 w-fit px-2 py-0.5 rounded-full"
             )}>
               <span>{trendUp ? '↑' : '↓'} {trend}</span>
             </div>

@@ -34,7 +34,7 @@ export default function PageHeader({
           {primaryAction && (
             <Button 
               onClick={primaryAction.onClick}
-              className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 shadow-lg shadow-emerald-200"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm"
             >
               <PrimaryIcon className="h-4 w-4 mr-2" />
               {primaryAction.label}

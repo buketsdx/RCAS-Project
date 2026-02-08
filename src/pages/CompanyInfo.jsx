@@ -56,7 +56,7 @@ export default function CompanyInfo() {
   const [newCompanyData, setNewCompanyData] = useState({ name: '', name_arabic: '' });
   const [showEditCompanyDialog, setShowEditCompanyDialog] = useState(false);
 
-  const { data: companies = [], isLoading } = useQuery({
+  const { data: companies = [], isLoading, isRefetching } = useQuery({
     queryKey: ['companies'],
     queryFn: () => rcas.entities.Company.list()
   });
@@ -216,7 +216,7 @@ export default function CompanyInfo() {
       accessor: 'name', 
       render: (row) => (
         <div className="flex flex-col">
-          <span className={cn("font-medium", row.id === selectedCompanyId && "text-emerald-700 font-bold")}>
+          <span className={cn("font-medium", row.id === selectedCompanyId && "text-emerald-700 dark:text-emerald-400 font-bold")}>
             {row.name}
           </span>
           {row.name_arabic && <span className="text-xs text-muted-foreground">{row.name_arabic}</span>}
@@ -227,7 +227,7 @@ export default function CompanyInfo() {
       header: 'Business Type', 
       accessor: 'business_type',
       render: (row) => (
-        <Badge variant="outline" className="bg-slate-50">
+        <Badge variant="outline" className="bg-slate-50 dark:bg-slate-900 dark:text-slate-200">
           {row.business_type || 'Retail'}
         </Badge>
       )
@@ -238,7 +238,7 @@ export default function CompanyInfo() {
       header: 'Status', 
       render: (row) => (
         row.id === selectedCompanyId ? (
-          <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100">
+          <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400 dark:hover:bg-emerald-900/40">
             <Check className="h-3 w-3 mr-1" /> Active
           </Badge>
         ) : (
@@ -279,7 +279,7 @@ export default function CompanyInfo() {
           <Button 
             variant="ghost" 
             size="icon" 
-            className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
+            className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900/20"
             onClick={(e) => { 
               e.stopPropagation(); 
               if (companies.length <= 1) {
@@ -546,9 +546,10 @@ export default function CompanyInfo() {
             variant="outline" 
             onClick={() => queryClient.invalidateQueries({ queryKey: ['companies'] })}
             className="gap-2"
+            disabled={isRefetching}
           >
-            <RotateCw className="h-4 w-4" />
-            Refresh List
+            <RotateCw className={cn("h-4 w-4", isRefetching && "animate-spin")} />
+            {isRefetching ? 'Refreshing...' : 'Refresh List'}
           </Button>
         }
       />
@@ -568,7 +569,7 @@ export default function CompanyInfo() {
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Building2 className="h-5 w-5 text-emerald-600" />
+              <Building2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
               Edit Details: {company?.name}
             </DialogTitle>
           </DialogHeader>
@@ -618,8 +619,8 @@ export default function CompanyInfo() {
                 
                 {/* Logo Upload */}
                 <div className="space-y-3">
-                  <label className="text-sm font-medium text-slate-700">Company Logo</label>
-                  <p className="text-xs text-slate-500">
+                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Company Logo</label>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
                     Recommended size: 200x200px • Format: JPG, PNG • Max size: 2MB
                   </p>
                   <div className="flex items-start gap-4">
@@ -627,8 +628,8 @@ export default function CompanyInfo() {
                     <div className={cn(
                       "h-32 w-32 rounded-lg border-2 border-dashed flex items-center justify-center overflow-hidden flex-shrink-0 relative transition-all duration-300",
                       formData.logo_url 
-                        ? "border-emerald-300 bg-emerald-50" 
-                        : "border-slate-300 bg-slate-50"
+                        ? "border-emerald-300 bg-emerald-50 dark:bg-emerald-950/20 dark:border-emerald-700" 
+                        : "border-slate-300 bg-slate-50 dark:bg-slate-900 dark:border-slate-700"
                     )}>
                       {formData.logo_url ? (
                         <>
@@ -646,7 +647,7 @@ export default function CompanyInfo() {
                       ) : (
                         <div className="text-center">
                           <div className="text-3xl mb-1">📷</div>
-                          <p className="text-xs text-slate-500 font-medium">200x200px</p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">200x200px</p>
                         </div>
                       )}
                     </div>
@@ -657,8 +658,8 @@ export default function CompanyInfo() {
                         <div className={cn(
                           "flex items-center gap-2 px-4 py-2.5 rounded-lg transition-all duration-200",
                           isUploadingLogo
-                            ? "bg-blue-100 border border-blue-300 text-blue-700 cursor-not-allowed"
-                            : "bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700"
+                            ? "bg-blue-100 border border-blue-300 text-blue-700 dark:bg-blue-900/20 dark:border-blue-700 dark:text-blue-400 cursor-not-allowed"
+                            : "bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 dark:bg-emerald-950/20 dark:hover:bg-emerald-950/30 dark:border-emerald-800 dark:text-emerald-400"
                         )}>
                           {isUploadingLogo ? (
                             <>
@@ -1006,9 +1007,9 @@ export default function CompanyInfo() {
               {/* Crop Tool */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <label className="text-sm font-medium text-slate-700">Crop</label>
+                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Crop</label>
                   {cropMode && cropArea && (
-                    <span className="text-xs text-emerald-600 font-medium">
+                    <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">
                       {Math.round(cropArea.width)} × {Math.round(cropArea.height)}
                     </span>
                   )}
@@ -1042,15 +1043,15 @@ export default function CompanyInfo() {
                   )}
                 </div>
                 {cropMode && !cropArea && (
-                  <p className="text-xs text-slate-500 italic">Click and drag to create crop area</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 italic">Click and drag to create crop area</p>
                 )}
               </div>
 
               {/* Rotation */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <label className="text-sm font-medium text-slate-700">Rotation</label>
-                  <span className="text-sm text-slate-500">{rotation}°</span>
+                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Rotation</label>
+                  <span className="text-sm text-slate-500 dark:text-slate-400">{rotation}°</span>
                 </div>
                 <div className="flex gap-2">
                   <Button
@@ -1069,8 +1070,8 @@ export default function CompanyInfo() {
               {/* Brightness */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <label className="text-sm font-medium text-slate-700">Brightness</label>
-                  <span className="text-sm text-slate-500">{brightness}%</span>
+                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Brightness</label>
+                  <span className="text-sm text-slate-500 dark:text-slate-400">{brightness}%</span>
                 </div>
                 <input
                   type="range"
@@ -1078,15 +1079,15 @@ export default function CompanyInfo() {
                   max="150"
                   value={brightness}
                   onChange={(e) => setBrightness(Number(e.target.value))}
-                  className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-emerald-600"
+                  className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-emerald-600"
                 />
               </div>
 
               {/* Contrast */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <label className="text-sm font-medium text-slate-700">Contrast</label>
-                  <span className="text-sm text-slate-500">{contrast}%</span>
+                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Contrast</label>
+                  <span className="text-sm text-slate-500 dark:text-slate-400">{contrast}%</span>
                 </div>
                 <input
                   type="range"
@@ -1094,15 +1095,15 @@ export default function CompanyInfo() {
                   max="150"
                   value={contrast}
                   onChange={(e) => setContrast(Number(e.target.value))}
-                  className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-emerald-600"
+                  className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-emerald-600"
                 />
               </div>
 
               {/* Scale/Zoom */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <label className="text-sm font-medium text-slate-700">Scale</label>
-                  <span className="text-sm text-slate-500">{scale}%</span>
+                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Scale</label>
+                  <span className="text-sm text-slate-500 dark:text-slate-400">{scale}%</span>
                 </div>
                 <div className="flex gap-2">
                   <Button
@@ -1119,7 +1120,7 @@ export default function CompanyInfo() {
                     max="150"
                     value={scale}
                     onChange={(e) => setScale(Number(e.target.value))}
-                    className="flex-1 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-emerald-600"
+                    className="flex-1 h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-emerald-600"
                   />
                   <Button
                     type="button"

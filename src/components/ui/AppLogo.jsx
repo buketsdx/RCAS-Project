@@ -10,7 +10,7 @@ export default function AppLogo({ size = 'md', showText = true }) {
 
   return (
     <div className="flex items-center gap-3">
-      <div className={`${sizes[size].logo} bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center shadow-lg`} style={{ height: '55px', width: '64px' }}>
+      <div className={`${sizes[size].logo} bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center shadow-lg`}>
         <span className="text-white font-bold text-lg">R</span>
       </div>
       {showText && (

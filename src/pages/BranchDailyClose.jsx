@@ -866,14 +866,14 @@ export default function BranchDailyClose() {
                 )}
                 
                 {totalPayableCommission > 0 && (
-                  <div className="mt-4 p-3 bg-purple-100 rounded-md flex items-center justify-between">
-                    <span className="text-purple-800 text-sm">
+                  <div className="mt-4 p-3 bg-purple-100 dark:bg-purple-900/20 rounded-md flex items-center justify-between">
+                    <span className="text-purple-800 dark:text-purple-300 text-sm">
                       <strong>Tip:</strong> Add <strong>{formatCurrency(totalPayableCommission)}</strong> to "Emp Expenses" if paying cash today.
                     </span>
                     <Button 
                       size="sm" 
                       variant="outline" 
-                      className="bg-white border-purple-200 hover:bg-purple-50 text-purple-700"
+                      className="bg-white dark:bg-slate-950 border-purple-200 dark:border-purple-800 hover:bg-purple-50 dark:hover:bg-purple-900/50 text-purple-700 dark:text-purple-300"
                       onClick={() => setFormData(prev => ({ ...prev, employee_expenses: (parseFloat(prev.employee_expenses) || 0) + totalPayableCommission }))}
                     >
                       <Plus className="h-3 w-3 mr-1" /> Add to Expenses
@@ -922,7 +922,7 @@ export default function BranchDailyClose() {
                   <Button variant="outline" onClick={handlePrint}>
                     <Printer className="mr-2 h-4 w-4" /> Print
                   </Button>
-                  <Button variant="outline" onClick={handleExportExcel} className="bg-green-50 text-green-700 border-green-200 hover:bg-green-100">
+                  <Button variant="outline" onClick={handleExportExcel} className="bg-green-50 text-green-700 border-green-200 hover:bg-green-100 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800 dark:hover:bg-green-900/30">
                     <FileSpreadsheet className="mr-2 h-4 w-4" /> Export Excel
                   </Button>
                 </div>

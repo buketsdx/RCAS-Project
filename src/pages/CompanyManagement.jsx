@@ -193,13 +193,13 @@ export default function CompanyManagement() {
       header: 'VAT Number',
       accessor: 'vat_number',
       render: (row) => (
-        <code className="text-xs bg-slate-100 px-2 py-1 rounded">{row.vat_number || '-'}</code>
+        <code className="text-xs bg-slate-100 dark:bg-slate-800 dark:text-slate-300 px-2 py-1 rounded">{row.vat_number || '-'}</code>
       )
     },
     {
       header: 'Email',
       accessor: 'email',
-      render: (row) => <a href={`mailto:${row.email}`} className="text-emerald-600 hover:underline">{row.email || '-'}</a>
+      render: (row) => <a href={`mailto:${row.email}`} className="text-emerald-600 dark:text-emerald-400 hover:underline">{row.email || '-'}</a>
     },
     {
       header: 'Phone',

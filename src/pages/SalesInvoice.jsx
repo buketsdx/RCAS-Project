@@ -518,16 +518,16 @@ export default function SalesInvoice() {
             <CardContent className="pt-6">
               <div className="flex flex-col items-end space-y-2">
                 <div className="flex justify-between w-64">
-                  <span className="text-slate-600">Subtotal:</span>
+                  <span className="text-slate-600 dark:text-muted-foreground">Subtotal:</span>
                   <span className="font-medium">{formatCurrency(totals.gross, 'SAR')}</span>
                 </div>
                 <div className="flex justify-between w-64">
-                  <span className="text-slate-600">VAT (15%):</span>
+                  <span className="text-slate-600 dark:text-muted-foreground">VAT (15%):</span>
                   <span className="font-medium">{formatCurrency(totals.vat, 'SAR')}</span>
                 </div>
-                <div className="flex justify-between w-64 pt-2 border-t">
+                <div className="flex justify-between w-64 pt-2 border-t dark:border-border">
                   <span className="text-lg font-semibold">Total:</span>
-                  <span className="text-lg font-bold text-emerald-600">{formatCurrency(totals.net, 'SAR')}</span>
+                  <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(totals.net, 'SAR')}</span>
                 </div>
               </div>
             </CardContent>
@@ -564,7 +564,7 @@ export default function SalesInvoice() {
         </div>
 
         {/* Sticky Action Buttons at Bottom */}
-        <div className="sticky bottom-0 bg-white border-t border-slate-200 shadow-lg px-4 md:px-8 py-4">
+        <div className="sticky bottom-0 bg-white dark:bg-card border-t border-slate-200 dark:border-border shadow-lg px-4 md:px-8 py-4 z-10">
           <div className="max-w-6xl mx-auto flex justify-end gap-3">
             <Button type="button" variant="outline" onClick={() => window.location.href = createPageUrl('Sales')}>
               Cancel

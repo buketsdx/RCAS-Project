@@ -278,9 +278,9 @@ export default function Dashboard() {
                 </div>
               </div>
             </div>
-            <div className="flex items-center justify-between p-4 bg-blue-500/10 rounded-xl">
+            <div className="flex items-center justify-between p-4 bg-blue-500/10 dark:bg-blue-500/20 rounded-xl">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-blue-500/20 rounded-lg">
+                <div className="p-2 bg-blue-500/20 dark:bg-blue-500/30 rounded-lg">
                   <Wallet className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                 </div>
                 <div>
@@ -291,14 +291,14 @@ export default function Dashboard() {
                 </div>
               </div>
             </div>
-            <div className="flex items-center justify-between p-4 bg-purple-50 rounded-xl">
+            <div className="flex items-center justify-between p-4 bg-purple-50 dark:bg-purple-500/10 rounded-xl">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-purple-100 rounded-lg">
-                  <Receipt className="h-5 w-5 text-purple-600" />
+                <div className="p-2 bg-purple-100 dark:bg-purple-500/20 rounded-lg">
+                  <Receipt className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                 </div>
                 <div>
-                  <p className="text-sm text-slate-600">VAT Collected</p>
-                  <p className="text-lg font-bold text-purple-700">
+                  <p className="text-sm text-slate-600 dark:text-muted-foreground">VAT Collected</p>
+                  <p className="text-lg font-bold text-purple-700 dark:text-purple-400">
                     {formatCurrency(monthlyVouchers
                       .filter(v => v.voucher_type === 'Sales')
                       .reduce((sum, v) => sum + (parseFloat(v.vat_amount) || 0), 0), 'SAR')}

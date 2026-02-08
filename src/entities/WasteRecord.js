@@ -1,4 +1,4 @@
-export const FlowerrWaste = {
+export const FlowerWaste = {
   "name": "FlowerWaste",
   "type": "object",
   "properties": {

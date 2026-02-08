@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { rcas } from '@/api/rcasClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCurrency } from '@/context/CurrencyContext';
+import { useCompany } from '@/context/CompanyContext';
 import PageHeader from '@/components/common/PageHeader';
 import DataTable from '@/components/common/DataTable';
 import FormField from '@/components/forms/FormField';
@@ -110,7 +111,7 @@ export default function Currencies() {
             </div>
             <div>
               <p className="text-sm text-slate-600 dark:text-slate-400 mb-2">Symbol</p>
-              <p className="text-5xl font-bold text-green-600 dark:text-green-400">{baseCurrencySymbol}</p>
+              <p className="text-5xl font-bold text-green-600 dark:text-green-400">{baseCurrency === 'SAR' ? 'SAR' : baseCurrencySymbol}</p>
             </div>
             <div>
               <p className="text-sm text-slate-600 dark:text-slate-400 mb-2">Quick Select</p>

@@ -33,9 +33,9 @@ export default function DataTable({
     : filteredData;
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+    <div className="bg-white dark:bg-card rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden">
       {(searchable || actions) && (
-        <div className="p-4 border-b border-slate-100 flex flex-col sm:flex-row gap-3 justify-between">
+        <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row gap-3 justify-between">
           {searchable && (
             <div className="relative flex-1 max-w-xs">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
@@ -43,7 +43,7 @@ export default function DataTable({
                 placeholder="Search..."
                 value={search}
                 onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
-                className="pl-9 bg-slate-50 border-slate-200"
+                className="pl-9 bg-slate-50 border-slate-200 dark:bg-slate-900 dark:border-slate-700 dark:text-slate-100"
               />
             </div>
           )}
@@ -55,9 +55,9 @@ export default function DataTable({
       <div className="hidden md:block overflow-x-auto">
         <Table>
           <TableHeader>
-            <TableRow className="bg-slate-50 hover:bg-slate-50">
+            <TableRow className="bg-slate-50 hover:bg-slate-50 dark:bg-slate-900/50 dark:hover:bg-slate-900/50">
               {columns.map((col, i) => (
-                <TableHead key={i} className={cn("font-semibold text-slate-700", col.className)}>
+                <TableHead key={i} className={cn("font-semibold text-slate-700 dark:text-slate-300", col.className)}>
                   {col.header}
                 </TableHead>
               ))}
@@ -66,7 +66,7 @@ export default function DataTable({
           <TableBody>
             {paginatedData.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={columns.length} className="text-center py-12 text-slate-500">
+                <TableCell colSpan={columns.length} className="text-center py-12 text-slate-500 dark:text-slate-400">
                   {emptyMessage}
                 </TableCell>
               </TableRow>
@@ -75,7 +75,7 @@ export default function DataTable({
                 <TableRow 
                   key={row.id || rowIndex}
                   className={cn(
-                    "hover:bg-slate-50 transition-colors",
+                    "hover:bg-slate-50 dark:hover:bg-slate-900/30 transition-colors",
                     onRowClick && "cursor-pointer"
                   )}
                   onClick={() => onRowClick?.(row)}
@@ -93,9 +93,9 @@ export default function DataTable({
       </div>
 
       {/* Mobile Card View */}
-      <div className="md:hidden bg-slate-50/50">
+      <div className="md:hidden bg-slate-50/50 dark:bg-slate-900/20">
         {paginatedData.length === 0 ? (
-          <div className="text-center py-12 text-slate-500">
+          <div className="text-center py-12 text-slate-500 dark:text-slate-400">
             {emptyMessage}
           </div>
         ) : (
@@ -104,7 +104,7 @@ export default function DataTable({
               <Card 
                 key={row.id || rowIndex}
                 className={cn(
-                  "overflow-hidden shadow-sm border-slate-200",
+                  "overflow-hidden shadow-sm border-slate-200 dark:border-slate-800 dark:bg-card",
                   onRowClick && "active:scale-[0.98] transition-transform"
                 )}
                 onClick={() => onRowClick?.(row)}
@@ -119,25 +119,36 @@ export default function DataTable({
 
                     if (isActions) {
                       return (
-                        <div key={colIndex} className="pt-2 mt-2 border-t border-slate-100 flex justify-end">
+                        <div key={colIndex} className="pt-2 mt-2 border-t border-slate-100 dark:border-slate-800 flex justify-end">
                            {col.render ? col.render(row) : null}
                         </div>
                       );
                     }
 
+                    const value = row[col.accessor];
+                    const hasValue = value !== null && value !== undefined && value !== '';
+
                     return (
-                      <div key={colIndex} className={cn("flex justify-between items-start gap-4", isPrimary ? "mb-2" : "")}>
+                      <div 
+                        key={colIndex} 
+                        className={cn(
+                          "flex justify-between items-start gap-4",
+                          isPrimary 
+                            ? "mb-3 pb-3 border-b border-slate-100 dark:border-slate-800" 
+                            : "mb-3 pb-3 border-b border-slate-100 dark:border-slate-800 last:mb-0 last:pb-0 last:border-0"
+                        )}
+                      >
                         <span className={cn(
-                          "text-xs font-medium uppercase tracking-wider text-slate-500 shrink-0 mt-0.5",
+                          "text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400 shrink-0 mt-0.5",
                           isPrimary && "hidden" // Hide label for first column (usually title)
                         )}>
                           {col.header}
                         </span>
                         <div className={cn(
-                          "text-sm text-slate-700 text-right break-words flex-1",
-                          isPrimary && "text-lg font-bold text-slate-900 text-left w-full"
+                          "text-sm text-slate-700 dark:text-slate-300 text-right break-words flex-1",
+                          isPrimary && "text-lg font-bold text-slate-900 dark:text-slate-100 text-left w-full"
                         )}>
-                          {col.render ? col.render(row) : row[col.accessor]}
+                          {col.render ? col.render(row) : (hasValue ? value : <span className="text-slate-300 dark:text-slate-600">-</span>)}
                         </div>
                       </div>
                     );
@@ -150,8 +161,8 @@ export default function DataTable({
       </div>
 
       {pagination && totalPages > 1 && (
-        <div className="p-4 border-t border-slate-100 flex items-center justify-between bg-white">
-          <span className="text-sm text-slate-500">
+        <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-card">
+          <span className="text-sm text-slate-500 dark:text-slate-400">
             Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, filteredData.length)} of {filteredData.length}
           </span>
           <div className="flex gap-2">
@@ -160,10 +171,11 @@ export default function DataTable({
               size="sm" 
               onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
               disabled={currentPage === 1}
+              className="dark:bg-slate-900 dark:border-slate-700 dark:hover:bg-slate-800"
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <span className="px-3 py-1 text-sm text-slate-600">
+            <span className="px-3 py-1 text-sm text-slate-600 dark:text-slate-400">
               {currentPage} / {totalPages}
             </span>
             <Button 
@@ -171,6 +183,7 @@ export default function DataTable({
               size="sm" 
               onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
               disabled={currentPage === totalPages}
+              className="dark:bg-slate-900 dark:border-slate-700 dark:hover:bg-slate-800"
             >
               <ChevronRight className="h-4 w-4" />
             </Button>
