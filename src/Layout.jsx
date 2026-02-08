@@ -264,6 +264,10 @@ export default function Layout() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [openMenus, setOpenMenus] = useState(['Transactions']);
   const [showShortcutsDialog, setShowShortcutsDialog] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
+  const [previousMenus, setPreviousMenus] = useState(['Transactions']);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const mobileSidebarRef = React.useRef(null);
   const location = useLocation();
 
   const selectedCompany = companies.find(c => c.id === selectedCompanyId);
@@ -436,12 +440,47 @@ export default function Layout() {
     };
   }, [sidebarOpen]);
 
+  // Detect screen size changes
+  React.useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 1024);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Handle sidebar scroll for auto-collapse on mobile
+  React.useEffect(() => {
+    if (!isMobile || !mobileSidebarRef.current) return;
+
+    const handleSidebarScroll = () => {
+      const scrollTop = mobileSidebarRef.current?.scrollTop || 0;
+
+      if (scrollTop > 10 && !isScrolled && openMenus.length > 0) {
+        // User scrolled down - collapse all menus
+        setPreviousMenus(openMenus);
+        setOpenMenus([]);
+        setIsScrolled(true);
+      } else if (scrollTop === 0 && isScrolled && previousMenus.length > 0) {
+        // User scrolled back to top - restore menus
+        setOpenMenus(previousMenus);
+        setIsScrolled(false);
+      }
+    };
+
+    const ref = mobileSidebarRef.current;
+    ref?.addEventListener('scroll', handleSidebarScroll);
+    return () => ref?.removeEventListener('scroll', handleSidebarScroll);
+  }, [isMobile, isScrolled, openMenus, previousMenus]);
+
   const toggleMenu = (title) => {
-    setOpenMenus(prev => 
-      prev.includes(title) 
+    setOpenMenus(prev =>
+      prev.includes(title)
         ? prev.filter(t => t !== title)
         : [...prev, title]
     );
+    // Reset scroll state when user manually toggles menu
+    setIsScrolled(false);
   };
 
   const handleLogout = () => {
@@ -473,10 +512,13 @@ export default function Layout() {
       )}
 
       {/* Mobile Sidebar */}
-      <div className={cn(
-        "lg:hidden fixed inset-y-0 left-0 w-64 border-r z-50 transform transition-transform duration-300 bg-card border-border flex flex-col",
-        sidebarOpen ? "translate-x-0" : "-translate-x-full"
-      )}>
+      <div
+        ref={mobileSidebarRef}
+        className={cn(
+          "lg:hidden fixed inset-y-0 left-0 w-64 border-r z-50 transform transition-transform duration-300 bg-card border-border flex flex-col max-h-screen overflow-y-auto",
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        )}
+      >
         <div className="h-16 flex items-center justify-between px-4 border-b border-border flex-shrink-0">
           <Link to="/Dashboard">
             <AppLogo size="sm" />
