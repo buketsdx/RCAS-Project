@@ -7,6 +7,7 @@ import { CompanyProvider } from '@/context/CompanyContext';
 import { AuthProvider, ROLES } from '@/context/AuthContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { Toaster } from "@/components/ui/sonner";
+import { SpeedInsights } from '@vercel/speed-insights/react';
 import '@emran-alhaddad/saudi-riyal-font/index.css';
 import Layout from './Layout';
 
@@ -254,6 +255,7 @@ function App() {
             </CompanyProvider>
           </AuthProvider>
           <Toaster />
+          <SpeedInsights />
         </ThemeProvider>
       </CurrencyProvider>
     </QueryClientProvider>
