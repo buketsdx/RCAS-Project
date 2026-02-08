@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Card, CardContent } from "@/components/ui/card";
 import { ChevronLeft, ChevronRight, Search, Download, Printer } from 'lucide-react';
 import { cn } from "@/lib/utils";
 
@@ -50,7 +51,8 @@ export default function DataTable({
         </div>
       )}
       
-      <div className="overflow-x-auto">
+      {/* Desktop Table View */}
+      <div className="hidden md:block overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow className="bg-slate-50 hover:bg-slate-50">
@@ -90,8 +92,65 @@ export default function DataTable({
         </Table>
       </div>
 
+      {/* Mobile Card View */}
+      <div className="md:hidden bg-slate-50/50">
+        {paginatedData.length === 0 ? (
+          <div className="text-center py-12 text-slate-500">
+            {emptyMessage}
+          </div>
+        ) : (
+          <div className="space-y-3 p-4">
+            {paginatedData.map((row, rowIndex) => (
+              <Card 
+                key={row.id || rowIndex}
+                className={cn(
+                  "overflow-hidden shadow-sm border-slate-200",
+                  onRowClick && "active:scale-[0.98] transition-transform"
+                )}
+                onClick={() => onRowClick?.(row)}
+              >
+                <CardContent className="p-4 space-y-3">
+                  {columns.map((col, colIndex) => {
+                    // Skip if no header (often actions or checkboxes)
+                    if (!col.header && !col.accessor) return null;
+                    
+                    const isActions = col.header === 'Actions' || (!col.header && col.render);
+                    const isPrimary = colIndex === 0;
+
+                    if (isActions) {
+                      return (
+                        <div key={colIndex} className="pt-2 mt-2 border-t border-slate-100 flex justify-end">
+                           {col.render ? col.render(row) : null}
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <div key={colIndex} className={cn("flex justify-between items-start gap-4", isPrimary ? "mb-2" : "")}>
+                        <span className={cn(
+                          "text-xs font-medium uppercase tracking-wider text-slate-500 shrink-0 mt-0.5",
+                          isPrimary && "hidden" // Hide label for first column (usually title)
+                        )}>
+                          {col.header}
+                        </span>
+                        <div className={cn(
+                          "text-sm text-slate-700 text-right break-words flex-1",
+                          isPrimary && "text-lg font-bold text-slate-900 text-left w-full"
+                        )}>
+                          {col.render ? col.render(row) : row[col.accessor]}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
+
       {pagination && totalPages > 1 && (
-        <div className="p-4 border-t border-slate-100 flex items-center justify-between">
+        <div className="p-4 border-t border-slate-100 flex items-center justify-between bg-white">
           <span className="text-sm text-slate-500">
             Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, filteredData.length)} of {filteredData.length}
           </span>
