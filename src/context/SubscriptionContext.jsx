@@ -1,7 +1,9 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { toast } from 'sonner';
+import { useAuth } from '@/context/AuthContext';
 
 const SubscriptionContext = createContext(null);
+const BACKEND_URL = 'http://localhost:3001/api';
 
 export const SUBSCRIPTION_PLANS = {
   FREE: 'free',
@@ -25,27 +27,78 @@ export const FEATURE_LIMITS = {
 };
 
 export const SubscriptionProvider = ({ children }) => {
+  const { user } = useAuth();
   const [plan, setPlan] = useState(SUBSCRIPTION_PLANS.FREE);
   const [adUnlocks, setAdUnlocks] = useState({}); // { feature_action: timestamp }
 
   useEffect(() => {
-    // Load subscription status from localStorage
-    const savedPlan = localStorage.getItem('rcas_subscription_plan');
-    if (savedPlan) {
-      setPlan(savedPlan);
-    }
-  }, []);
+    const fetchSubscription = async () => {
+      // 1. Try fetching from Backend
+      try {
+        const response = await fetch(`${BACKEND_URL}/subscription`, {
+          headers: {
+            'x-user-id': user?.id || 'guest'
+          }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          if (data.plan) {
+            setPlan(data.plan);
+            localStorage.setItem('rcas_subscription_plan', data.plan); // Sync local
+            return;
+          }
+        }
+      } catch (err) {
+        // Backend offline, ignore
+      }
 
-  const upgradeToPremium = () => {
+      // 2. Fallback to LocalStorage
+      const savedPlan = localStorage.getItem('rcas_subscription_plan');
+      if (savedPlan) {
+        setPlan(savedPlan);
+      }
+    };
+
+    fetchSubscription();
+  }, [user]);
+
+  const upgradeToPremium = async () => {
+    // Optimistic Update
     setPlan(SUBSCRIPTION_PLANS.PREMIUM);
     localStorage.setItem('rcas_subscription_plan', SUBSCRIPTION_PLANS.PREMIUM);
-    toast.success('Upgraded to Premium! All features unlocked.');
+    
+    try {
+      await fetch(`${BACKEND_URL}/subscription/upgrade`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': user?.id || 'guest'
+        },
+        body: JSON.stringify({ plan: SUBSCRIPTION_PLANS.PREMIUM })
+      });
+      toast.success('Upgraded to Premium! All features unlocked.');
+    } catch (err) {
+      toast.warning('Premium activated locally (Server Offline)');
+    }
   };
 
-  const downgradeToFree = () => {
+  const downgradeToFree = async () => {
+    // Optimistic Update
     setPlan(SUBSCRIPTION_PLANS.FREE);
     localStorage.setItem('rcas_subscription_plan', SUBSCRIPTION_PLANS.FREE);
-    toast.info('Downgraded to Free plan.');
+    
+    try {
+      await fetch(`${BACKEND_URL}/subscription/downgrade`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': user?.id || 'guest'
+        }
+      });
+      toast.info('Downgraded to Free plan.');
+    } catch (err) {
+      toast.info('Downgraded locally.');
+    }
   };
 
   const unlockWithAd = (actionKey) => {
