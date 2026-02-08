@@ -447,6 +447,8 @@ export default function Layout() {
   }, [companies, selectedCompanyId, setSelectedCompanyId]);
 
   // Prevent body scroll when mobile sidebar is open
+  // Removed body scroll lock to allow content interaction when sidebar is open in ERP-style layout
+  /*
   useEffect(() => {
     if (sidebarOpen) {
       document.body.style.overflow = 'hidden';
@@ -457,6 +459,7 @@ export default function Layout() {
       document.body.style.overflow = 'unset';
     };
   }, [sidebarOpen]);
+  */
 
   // Detect screen size changes
   React.useEffect(() => {
@@ -552,13 +555,13 @@ export default function Layout() {
         </Button>
       </div>
 
-      {/* Mobile Overlay */}
-      {sidebarOpen && (
+      {/* Mobile Overlay - Hidden for ERP-style layout where content shifts */}
+      {/* {sidebarOpen && (
         <div 
           className="lg:hidden fixed inset-0 bg-black/50 z-40"
           onClick={() => setSidebarOpen(false)}
         />
-      )}
+      )} */}
 
       {/* Mobile Sidebar */}
       <div
@@ -707,7 +710,8 @@ export default function Layout() {
       <div className={cn(
         "transition-all duration-300",
         "lg:pl-64",
-        sidebarCollapsed && "lg:pl-20"
+        sidebarCollapsed && "lg:pl-20",
+        sidebarOpen && "pl-64"
       )}>
         {/* Desktop Header */}
         <header className="hidden lg:flex h-16 items-center justify-between px-8 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-20">
