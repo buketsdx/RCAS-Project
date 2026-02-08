@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { rcas } from '@/api/rcasClient';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCompany } from '@/context/CompanyContext';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, exportToCSV } from '@/utils';
 import PageHeader from '@/components/common/PageHeader';
 import DataTable from '@/components/common/DataTable';
 import FormField from '@/components/forms/FormField';
@@ -15,14 +15,19 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import { format } from 'date-fns';
-import { Wallet, Plus, Pencil, Trash2, ArrowUpRight, ArrowDownLeft, RefreshCw } from 'lucide-react';
+import { Wallet, Plus, Pencil, Trash2, ArrowUpRight, ArrowDownLeft, RefreshCw, Lock, Download } from 'lucide-react';
 import { getAllTypes, addStoredType, getTransactionNature } from '@/lib/custodyTypes';
+import { useFeatureAccess } from '@/hooks/useFeatureAccess';
+import { UpgradeDialog, AdWatchDialog, PremiumLock } from '@/components/monetization/MonetizationComponents';
 
 export default function CustodyWallets() {
-  console.log("CustodyWallets component mounting");
   
   const { selectedCompanyId } = useCompany();
-  console.log("Selected Company ID:", selectedCompanyId);
+
+  const { checkAccess, isPremium, unlockWithAd } = useFeatureAccess('custody_wallet');
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const [adWatchOpen, setAdWatchOpen] = useState(false);
+  const [pendingAction, setPendingAction] = useState(null);
 
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -94,6 +99,13 @@ export default function CustodyWallets() {
     enabled: !!selectedCompanyId
   });
 
+  const currentMonthTransactions = transactions.filter(t => {
+    if (!t.date) return false;
+    const d = new Date(t.date);
+    const now = new Date();
+    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  }).length;
+
   const createWalletMutation = useMutation({
     mutationFn: async (data) => {
       const walletId = await generateUniqueID('wallet', ID_PREFIXES.WALLET || 'WAL');
@@ -145,16 +157,46 @@ export default function CustodyWallets() {
   });
 
   const openDialog = (wallet = null) => {
-    if (wallet) { setEditingWallet(wallet); setFormData({ ...wallet }); }
-    else { setEditingWallet(null); setFormData({ name: '', holder_name: '', holder_type: 'Employee', currency: 'SAR', purpose: '', contact_phone: '', notes: '' }); }
+    if (wallet) { 
+      setEditingWallet(wallet); 
+      setFormData({ ...wallet }); 
+    } else { 
+      const access = checkAccess('create_wallet', wallets.length);
+      if (!access.allowed) {
+        setUpgradeOpen(true);
+        return;
+      }
+      setEditingWallet(null); 
+      setFormData({ name: '', holder_name: '', holder_type: 'Employee', currency: 'SAR', purpose: '', contact_phone: '', notes: '' }); 
+    }
     setDialogOpen(true);
   };
 
   const closeDialog = () => { setDialogOpen(false); setEditingWallet(null); };
 
   const openTransactionDialog = (wallet) => {
+    const access = checkAccess('create_transaction', currentMonthTransactions);
+    if (!access.allowed) {
+      if (access.reason === 'limit_reached') {
+        setPendingAction({ type: 'create_transaction', payload: wallet });
+        setAdWatchOpen(true);
+        return;
+      }
+      setUpgradeOpen(true);
+      return;
+    }
     setSelectedWallet(wallet);
     setTransactionDialogOpen(true);
+  };
+
+  const handleAdComplete = () => {
+    unlockWithAd('custody_wallet_create_transaction');
+    setAdWatchOpen(false);
+    if (pendingAction?.type === 'create_transaction') {
+      setSelectedWallet(pendingAction.payload);
+      setTransactionDialogOpen(true);
+    }
+    setPendingAction(null);
   };
 
   const handleChange = (e) => setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -182,6 +224,23 @@ export default function CustodyWallets() {
     setShowTypeDialog(false);
     setNewTypeData({ name: '', nature: 'Withdrawal' });
     toast.success('New transaction type added');
+  };
+
+  const handleExport = () => {
+    if (!isPremium) {
+      setUpgradeOpen(true);
+      return;
+    }
+    const data = safeWallets.map(w => ({
+      ID: w.wallet_id,
+      Name: w.name,
+      Holder: w.holder_name,
+      Type: w.holder_type,
+      Balance: w.balance,
+      Currency: w.currency,
+      Purpose: w.purpose
+    }));
+    exportToCSV(data, 'custody_wallets.csv');
   };
 
   const selectedTypeNature = typeof getTransactionNature === 'function' ? getTransactionNature(transactionData.type) : 'Withdrawal';
@@ -212,7 +271,17 @@ export default function CustodyWallets() {
 
   return (
     <div>
-      <PageHeader title="Custody Wallets" subtitle="Separate wallets for flexible use" primaryAction={{ label: 'Add Wallet', onClick: () => openDialog() }} />
+      <PageHeader 
+        title="Custody Wallets" 
+        subtitle="Separate wallets for flexible use" 
+        primaryAction={{ label: 'Add Wallet', onClick: () => openDialog() }} 
+        secondaryActions={
+          <Button variant="outline" onClick={handleExport} className="gap-2">
+            {!isPremium ? <Lock className="h-4 w-4 text-amber-500" /> : <Download className="h-4 w-4" />}
+            Export List
+          </Button>
+        }
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <Card className="bg-purple-50 border-purple-200">
@@ -349,6 +418,15 @@ export default function CustodyWallets() {
           </form>
         </DialogContent>
       </Dialog>
+
+      <UpgradeDialog open={upgradeOpen} onOpenChange={setUpgradeOpen} />
+      <AdWatchDialog 
+        open={adWatchOpen} 
+        onOpenChange={setAdWatchOpen}
+        onComplete={handleAdComplete}
+        title="Unlock Transaction Limit"
+        description="Watch a short ad to create another transaction this month."
+      />
     </div>
   );
 }

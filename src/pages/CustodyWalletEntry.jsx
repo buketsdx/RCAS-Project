@@ -13,11 +13,17 @@ import { toast } from "sonner";
 import { format } from 'date-fns';
 import { Save, Plus } from 'lucide-react';
 import { getAllTypes, addStoredType, getTransactionNature } from '@/lib/custodyTypes';
+import { useFeatureAccess } from '@/hooks/useFeatureAccess';
+import { UpgradeDialog, AdWatchDialog } from '@/components/monetization/MonetizationComponents';
 
 export default function CustodyWalletEntry() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { selectedCompanyId } = useCompany();
+  const { checkAccess, unlockWithAd } = useFeatureAccess('custody_wallet');
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const [adWatchOpen, setAdWatchOpen] = useState(false);
+
   const [showTypeDialog, setShowTypeDialog] = useState(false);
   const [newTypeData, setNewTypeData] = useState({ name: '', nature: 'Withdrawal' });
   const [availableTypes, setAvailableTypes] = useState(getAllTypes());
@@ -41,6 +47,32 @@ export default function CustodyWalletEntry() {
     },
     enabled: !!selectedCompanyId
   });
+
+  const { data: transactions = [] } = useQuery({
+    queryKey: ['custodyTransactions', selectedCompanyId],
+    queryFn: async () => {
+      if (!rcas || !rcas.entities?.CustodyTransaction || !rcas.entities?.CustodyWallet) return [];
+      try {
+        const allTransactions = await rcas.entities.CustodyTransaction.list();
+        const companyWallets = await rcas.entities.CustodyWallet.list();
+        const companyWalletIds = companyWallets
+          .filter(w => String(w.company_id) === String(selectedCompanyId))
+          .map(w => w.id);
+        return allTransactions ? allTransactions.filter(t => companyWalletIds.includes(t.wallet_id)) : [];
+      } catch (err) {
+        console.error("Error fetching transactions:", err);
+        return [];
+      }
+    },
+    enabled: !!selectedCompanyId
+  });
+
+  const currentMonthTransactions = transactions.filter(t => {
+    if (!t.date) return false;
+    const d = new Date(t.date);
+    const now = new Date();
+    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  }).length;
 
   const transactionMutation = useMutation({
     mutationFn: async (data) => {
@@ -108,7 +140,25 @@ export default function CustodyWalletEntry() {
       toast.error("Please select a target wallet for transfer");
       return;
     }
+
+    // Check Access
+    const access = checkAccess('create_transaction', currentMonthTransactions);
+    if (!access.allowed) {
+      if (access.reason === 'limit_reached') {
+        setAdWatchOpen(true);
+        return;
+      }
+      setUpgradeOpen(true);
+      return;
+    }
+
     transactionMutation.mutate(formData);
+  };
+
+  const handleAdComplete = () => {
+    unlockWithAd('custody_wallet_create_transaction');
+    setAdWatchOpen(false);
+    toast.success("Transaction limit unlocked for this entry! Please click Save again.");
   };
 
   const selectedWallet = wallets.find(w => w.id === formData.wallet_id);
@@ -312,6 +362,15 @@ export default function CustodyWalletEntry() {
           </form>
         </DialogContent>
       </Dialog>
+
+      <UpgradeDialog open={upgradeOpen} onOpenChange={setUpgradeOpen} />
+      <AdWatchDialog 
+        open={adWatchOpen} 
+        onOpenChange={setAdWatchOpen}
+        onComplete={handleAdComplete}
+        title="Unlock Transaction Limit"
+        description="Watch a short ad to create another transaction this month."
+      />
     </div>
   );
 }

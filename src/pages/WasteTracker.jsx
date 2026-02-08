@@ -16,8 +16,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { format, startOfMonth, endOfMonth } from 'date-fns';
-import { Flower2, Plus, Pencil, Trash2, AlertTriangle, TrendingDown, Upload } from 'lucide-react';
+import { Flower2, Plus, Pencil, Trash2, AlertTriangle, TrendingDown, Upload, Lock, Download } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
+import { useFeatureAccess } from '@/hooks/useFeatureAccess';
+import { UpgradeDialog, PremiumLock } from '@/components/monetization/MonetizationComponents';
+import { exportToCSV } from '@/utils';
 
 const wasteReasons = ['Expired', 'Damaged', 'Wilted', 'Pest Infestation', 'Storage Issue', 'Transportation Damage', 'Customer Return', 'Other'];
 const disposalMethods = ['Composting', 'Disposal', 'Donation', 'Recycling'];
@@ -26,6 +29,8 @@ const reasonColors = { 'Expired': '#ef4444', 'Damaged': '#f97316', 'Wilted': '#e
 export default function FlowerWasteTracker() {
   const { selectedCompanyId } = useCompany();
   const queryClient = useQueryClient();
+  const { checkAccess, isPremium } = useFeatureAccess('waste_tracker');
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingWaste, setEditingWaste] = useState(null);
   const [filters, setFilters] = useState({
@@ -90,6 +95,22 @@ export default function FlowerWasteTracker() {
   });
 
   const openDialog = (waste = null) => {
+    if (!waste) {
+       // Check limit for new entries (Monthly Limit)
+       const currentMonthEntries = wasteRecords.filter(w => {
+         if (!w.date) return false;
+         const d = new Date(w.date);
+         const now = new Date();
+         return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+       }).length;
+
+       const access = checkAccess('create_entry', currentMonthEntries);
+       if (!access.allowed) {
+         setUpgradeOpen(true);
+         return;
+       }
+    }
+
     if (waste) { setEditingWaste(waste); setFormData({ ...waste }); }
     else { setEditingWaste(null); setFormData({ date: format(new Date(), 'yyyy-MM-dd'), stock_item_id: '', stock_item_name: '', quantity: '', unit: 'Pcs', waste_reason: 'Wilted', cost_value: '', disposal_method: 'Composting', notes: '', image_url: '' }); }
     setDialogOpen(true);
@@ -122,6 +143,26 @@ export default function FlowerWasteTracker() {
     }
   };
 
+  const handleExport = () => {
+    if (!isPremium) {
+      setUpgradeOpen(true);
+      return;
+    }
+    const data = filteredRecords.map(r => ({
+      ID: r.waste_id,
+      Date: r.date,
+      Item: r.stock_item_name,
+      Quantity: r.quantity,
+      Unit: r.unit,
+      Reason: r.waste_reason,
+      Value: r.cost_value,
+      Disposal: r.disposal_method,
+      Notes: r.notes
+    }));
+    exportToCSV(data, `waste_records_${format(new Date(), 'yyyyMMdd')}.csv`);
+    toast.success("Export started");
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     const data = { ...formData, quantity: parseFloat(formData.quantity) || 0, cost_value: parseFloat(formData.cost_value) || 0 };
@@ -149,7 +190,17 @@ export default function FlowerWasteTracker() {
 
   return (
     <div>
-      <PageHeader title="Flower Waste Tracker" subtitle="Track and analyze flower wastage" primaryAction={{ label: 'Record Waste', onClick: () => openDialog() }} />
+      <PageHeader 
+        title="Flower Waste Tracker" 
+        subtitle="Track and analyze flower wastage" 
+        primaryAction={{ label: 'Record Waste', onClick: () => openDialog() }} 
+        secondaryActions={
+          <Button variant="outline" onClick={handleExport} className="gap-2">
+            {!isPremium ? <Lock className="h-4 w-4 text-amber-500" /> : <Download className="h-4 w-4" />}
+            Export CSV
+          </Button>
+        }
+      />
 
       <Card className="mb-6">
         <CardContent className="pt-6">
@@ -185,28 +236,40 @@ export default function FlowerWasteTracker() {
         </Card>
 
         <Card>
-          <CardHeader><CardTitle>Waste by Reason</CardTitle></CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle>Waste by Reason</CardTitle>
+            {!isPremium && <Lock className="h-4 w-4 text-amber-500" />}
+          </CardHeader>
           <CardContent>
-            {wasteByReason.length > 0 ? (
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie data={wasteByReason} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label>
-                      {wasteByReason.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={reasonColors[entry.name] || '#8884d8'} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                    <Legend />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-            ) : (
-              <p className="text-center text-slate-500 py-8">No data to display</p>
-            )}
+            <PremiumLock isLocked={!isPremium} featureName="Waste Tracker Analytics" triggerAction="export">
+              {wasteByReason.length > 0 ? (
+                <div className="h-64">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie data={wasteByReason} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label>
+                        {wasteByReason.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={reasonColors[entry.name] || '#8884d8'} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                      <Legend />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              ) : (
+                <p className="text-center text-slate-500 py-8">No data to display</p>
+              )}
+            </PremiumLock>
           </CardContent>
         </Card>
       </div>
+
+      <UpgradeDialog 
+        open={upgradeOpen} 
+        onOpenChange={setUpgradeOpen} 
+        featureName="Waste Tracker" 
+        triggerAction="create_entry"
+      />
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-lg max-h-screen overflow-y-auto">

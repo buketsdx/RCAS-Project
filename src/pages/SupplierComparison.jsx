@@ -7,16 +7,25 @@ import LoadingSpinner from '@/components/common/LoadingSpinner';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { BarChart3, ArrowUpDown, TrendingUp, TrendingDown, Package, History } from 'lucide-react';
-import { formatCurrency, formatDate } from '@/utils';
+import { formatCurrency, formatDate, exportToCSV } from '@/utils';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useCompany } from '@/context/CompanyContext';
+import { useFeatureAccess } from '@/hooks/useFeatureAccess';
+import { UpgradeDialog, AdWatchDialog } from '@/components/monetization/MonetizationComponents';
+import { Lock, Download } from 'lucide-react';
 
 export default function SupplierComparison() {
   const { selectedCompanyId } = useCompany();
+  const { isPremium, hasAdAccess, unlockWithAd } = useFeatureAccess('supplier_comparison');
   const [activeTab, setActiveTab] = useState('overview');
   const [selectedItem, setSelectedItem] = useState(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const [adWatchOpen, setAdWatchOpen] = useState(false);
+  const [pendingItem, setPendingItem] = useState(null);
+
+  const MAX_FREE_ITEMS = 3;
 
   // Fetch Suppliers
   const { data: ledgers = [], isLoading: isLoadingLedgers } = useQuery({
@@ -140,6 +149,61 @@ export default function SupplierComparison() {
       };
     });
   }, [vouchers, voucherItems, stockItems]);
+  
+  const handleViewHistory = (item) => {
+    if (!isPremium) {
+      if (hasAdAccess('supplier_comparison_view_history')) {
+        setSelectedItem(item);
+        setDialogOpen(true);
+        return;
+      }
+      setPendingItem(item);
+      setAdWatchOpen(true);
+      return;
+    }
+    setSelectedItem(item);
+    setDialogOpen(true);
+  };
+
+  const handleAdComplete = () => {
+    unlockWithAd('supplier_comparison_view_history');
+    setAdWatchOpen(false);
+    if (pendingItem) {
+      setSelectedItem(pendingItem);
+      setDialogOpen(true);
+    }
+    setPendingItem(null);
+  };
+
+  const handleExport = () => {
+    if (!isPremium) {
+      setUpgradeOpen(true);
+      return;
+    }
+    
+    if (activeTab === 'overview') {
+      const data = supplierMetrics.map(s => ({
+        Supplier: s.name,
+        Type: s.customer_type,
+        'Total Purchases': s.total_purchases,
+        'Outstanding': s.outstanding,
+        'Transactions': s.transaction_count,
+        'Rating': s.rating
+      }));
+      exportToCSV(data, 'supplier_performance.csv');
+    } else {
+      const data = itemRateAnalysis.map(i => ({
+        Item: i.name,
+        'Purchase Count': i.purchaseCount,
+        'Min Rate': i.minRate,
+        'Max Rate': i.maxRate,
+        'Avg Rate': i.avgRate,
+        'Best Supplier': i.bestSupplier,
+        'Last Purchase': i.lastPurchaseDate
+      }));
+      exportToCSV(data, 'item_rate_analysis.csv');
+    }
+  };
 
   const overviewColumns = [
     { 
@@ -186,12 +250,15 @@ export default function SupplierComparison() {
     { 
       header: 'Actions', 
       render: (row) => (
-        <Button variant="ghost" size="sm" onClick={() => { setSelectedItem(row); setDialogOpen(true); }}>
+        <Button variant="ghost" size="sm" onClick={() => handleViewHistory(row)}>
           View History
         </Button>
       )
     }
   ];
+
+  const visibleSupplierMetrics = isPremium ? supplierMetrics : supplierMetrics.slice(0, MAX_FREE_ITEMS);
+  const visibleItemRates = isPremium ? itemRateAnalysis : itemRateAnalysis.slice(0, MAX_FREE_ITEMS);
 
   if (isLoadingLedgers || isLoadingVouchers || isLoadingVoucherItems || isLoadingStockItems) {
     return <LoadingSpinner text="Loading comparison data..." />;
@@ -203,6 +270,12 @@ export default function SupplierComparison() {
         title="Supplier Comparison" 
         subtitle="Compare supplier performance and item rates"
         icon={BarChart3}
+        secondaryActions={
+          <Button variant="outline" onClick={handleExport} className="gap-2">
+            {!isPremium ? <Lock className="h-4 w-4 text-amber-500" /> : <Download className="h-4 w-4" />}
+            Export Report
+          </Button>
+        }
       />
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
@@ -268,10 +341,21 @@ export default function SupplierComparison() {
             <CardContent>
               <DataTable 
                 columns={overviewColumns} 
-                data={supplierMetrics}
+                data={visibleSupplierMetrics}
                 searchable
                 searchKey="name"
               />
+              {!isPremium && supplierMetrics.length > MAX_FREE_ITEMS && (
+                <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 flex flex-col items-center justify-center text-center mt-2">
+                  <Lock className="h-8 w-8 text-slate-400 mb-2" />
+                  <p className="text-sm text-slate-600 font-medium mb-2">
+                    Showing {MAX_FREE_ITEMS} of {supplierMetrics.length} suppliers. Upgrade to Premium to compare all.
+                  </p>
+                  <Button onClick={() => setUpgradeOpen(true)} variant="default" size="sm" className="bg-amber-500 hover:bg-amber-600">
+                    Upgrade Now
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -288,12 +372,25 @@ export default function SupplierComparison() {
                   <p>No purchase history available for comparison.</p>
                 </div>
               ) : (
-                <DataTable 
-                  columns={rateColumns} 
-                  data={itemRateAnalysis}
-                  searchable
-                  searchKey="name"
-                />
+                <>
+                  <DataTable 
+                    columns={rateColumns} 
+                    data={visibleItemRates}
+                    searchable
+                    searchKey="name"
+                  />
+                  {!isPremium && itemRateAnalysis.length > MAX_FREE_ITEMS && (
+                    <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 flex flex-col items-center justify-center text-center mt-2">
+                      <Lock className="h-8 w-8 text-slate-400 mb-2" />
+                      <p className="text-sm text-slate-600 font-medium mb-2">
+                        Showing {MAX_FREE_ITEMS} of {itemRateAnalysis.length} items. Upgrade to Premium to see all rates.
+                      </p>
+                      <Button onClick={() => setUpgradeOpen(true)} variant="default" size="sm" className="bg-amber-500 hover:bg-amber-600">
+                        Upgrade Now
+                      </Button>
+                    </div>
+                  )}
+                </>
               )}
             </CardContent>
           </Card>
@@ -333,6 +430,15 @@ export default function SupplierComparison() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <UpgradeDialog open={upgradeOpen} onOpenChange={setUpgradeOpen} />
+      <AdWatchDialog 
+        open={adWatchOpen} 
+        onOpenChange={setAdWatchOpen}
+        onComplete={handleAdComplete}
+        title="Unlock Detailed History"
+        description="Watch a short ad to view detailed rate history for this item."
+      />
     </div>
   );
 }

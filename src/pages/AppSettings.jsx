@@ -4,10 +4,13 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCurrency } from '@/context/CurrencyContext';
 import { useAuth, ROLES } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
+import { useSubscription, SUBSCRIPTION_PLANS, FEATURE_LIMITS } from '@/context/SubscriptionContext';
+import { formatCurrency } from '@/utils';
 import PageHeader from '@/components/common/PageHeader';
 import FormField from '@/components/forms/FormField';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -16,12 +19,20 @@ import { toast } from "sonner";
 import { 
   Settings, Save, Database, FileText, Calculator, Globe, 
   Building2, Receipt, ShieldCheck, Printer, Lock, KeyRound,
-  Download, Upload, Cloud, HardDrive, Palette, Moon, Sun, Monitor
+  Download, Upload, Cloud, HardDrive, Palette, Moon, Sun, Monitor,
+  CreditCard, Check, X, Crown
 } from 'lucide-react';
 
 export default function AppSettings() {
   const queryClient = useQueryClient();
   const { user, hasRole } = useAuth();
+  const { plan, upgradeToPremium, downgradeToFree } = useSubscription();
+  
+  const currentPlan = {
+    id: plan,
+    name: plan === SUBSCRIPTION_PLANS.PREMIUM ? 'Premium Plan' : 'Free Plan',
+    price: plan === SUBSCRIPTION_PLANS.PREMIUM ? 49 : 0
+  };
   const { theme, setTheme, colorTheme, setColorTheme } = useTheme();
   const { baseCurrency, baseCurrencySymbol, setSelectedCurrency, CURRENCY_SYMBOLS } = useCurrency();
   const [activeTab, setActiveTab] = useState('appearance');
@@ -324,7 +335,100 @@ export default function AppSettings() {
           >
             Backup & Data
           </TabsTrigger>
-          {hasRole([ROLES.SUPER_ADMIN]) && (
+          <TabsTrigger 
+            value="subscription" 
+            className="flex-1 min-w-[100px] py-3"
+          >
+            Subscription
+          </TabsTrigger>
+          {/* Subscription Settings */}
+        <TabsContent value="subscription">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CreditCard className="h-5 w-5 text-purple-600" />
+                Subscription & Billing
+              </CardTitle>
+              <CardDescription>Manage your subscription plan and billing details</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Current Plan Status */}
+              <div className="flex items-center justify-between p-4 border rounded-lg bg-slate-50 dark:bg-slate-900/50">
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-slate-500">Current Plan</p>
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl font-bold">{currentPlan.name}</span>
+                    {currentPlan.id === SUBSCRIPTION_PLANS.PREMIUM && (
+                      <Badge className="bg-amber-500 hover:bg-amber-600">
+                        <Crown className="h-3 w-3 mr-1" /> PRO
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-sm text-slate-500">
+                    {currentPlan.id === SUBSCRIPTION_PLANS.FREE 
+                      ? "Basic access to all features with monthly limits." 
+                      : "Unlimited access to all features and advanced reports."}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-medium text-slate-500">Price</p>
+                  <p className="text-2xl font-bold">{formatCurrency(currentPlan.price, 'USD')}<span className="text-sm font-normal text-slate-500">/mo</span></p>
+                </div>
+              </div>
+
+              {/* Plan Comparison / Features */}
+              <div className="grid md:grid-cols-2 gap-6">
+                 {/* Free Plan Details */}
+                 <div className={`p-6 rounded-xl border-2 ${currentPlan.id === SUBSCRIPTION_PLANS.FREE ? 'border-primary bg-primary/5' : 'border-slate-100 dark:border-slate-800'}`}>
+                    <div className="flex justify-between items-start mb-4">
+                      <div>
+                        <h3 className="font-bold text-lg">Free Tier</h3>
+                        <p className="text-slate-500 text-sm">For individuals and small tests</p>
+                      </div>
+                      {currentPlan.id === SUBSCRIPTION_PLANS.FREE && <Badge variant="outline" className="border-primary text-primary">Current</Badge>}
+                    </div>
+                    <ul className="space-y-3 mb-6">
+                      <li className="flex items-center gap-2 text-sm"><Check className="h-4 w-4 text-emerald-500" /> {FEATURE_LIMITS.waste_tracker.max_entries_per_month} Waste Entries/mo</li>
+                      <li className="flex items-center gap-2 text-sm"><Check className="h-4 w-4 text-emerald-500" /> {FEATURE_LIMITS.custody_wallet.max_wallets} Custody Wallet</li>
+                      <li className="flex items-center gap-2 text-sm"><Check className="h-4 w-4 text-emerald-500" /> {FEATURE_LIMITS.custody_wallet.max_transactions_per_month} Wallet Transactions/mo</li>
+                      <li className="flex items-center gap-2 text-sm"><Check className="h-4 w-4 text-emerald-500" /> {FEATURE_LIMITS.supplier_comparison.max_suppliers} Supplier Comparisons</li>
+                      <li className="flex items-center gap-2 text-sm text-slate-400"><X className="h-4 w-4" /> No Export / Reports</li>
+                      <li className="flex items-center gap-2 text-sm text-slate-400"><X className="h-4 w-4" /> Ad-supported</li>
+                    </ul>
+                    {currentPlan.id !== SUBSCRIPTION_PLANS.FREE && (
+                      <Button variant="outline" className="w-full" onClick={() => downgradeToFree()}>Downgrade to Free</Button>
+                    )}
+                 </div>
+
+                 {/* Premium Plan Details */}
+                 <div className={`p-6 rounded-xl border-2 ${currentPlan.id === SUBSCRIPTION_PLANS.PREMIUM ? 'border-amber-500 bg-amber-50 dark:bg-amber-900/10' : 'border-slate-100 dark:border-slate-800'}`}>
+                    <div className="flex justify-between items-start mb-4">
+                      <div>
+                        <h3 className="font-bold text-lg flex items-center gap-2">Premium <Crown className="h-4 w-4 text-amber-500" /></h3>
+                        <p className="text-slate-500 text-sm">For growing businesses</p>
+                      </div>
+                      {currentPlan.id === SUBSCRIPTION_PLANS.PREMIUM && <Badge className="bg-amber-500 hover:bg-amber-600">Current</Badge>}
+                    </div>
+                    <ul className="space-y-3 mb-6">
+                      <li className="flex items-center gap-2 text-sm"><Check className="h-4 w-4 text-emerald-500" /> Unlimited Waste Entries</li>
+                      <li className="flex items-center gap-2 text-sm"><Check className="h-4 w-4 text-emerald-500" /> Unlimited Custody Wallets</li>
+                      <li className="flex items-center gap-2 text-sm"><Check className="h-4 w-4 text-emerald-500" /> Unlimited Transactions</li>
+                      <li className="flex items-center gap-2 text-sm"><Check className="h-4 w-4 text-emerald-500" /> Full Supplier Comparison</li>
+                      <li className="flex items-center gap-2 text-sm"><Check className="h-4 w-4 text-emerald-500" /> CSV/PDF Exports</li>
+                      <li className="flex items-center gap-2 text-sm"><Check className="h-4 w-4 text-emerald-500" /> No Ads</li>
+                    </ul>
+                    {currentPlan.id !== SUBSCRIPTION_PLANS.PREMIUM && (
+                      <Button className="w-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white border-0" onClick={() => upgradeToPremium()}>
+                        Upgrade to Premium
+                      </Button>
+                    )}
+                 </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {hasRole([ROLES.SUPER_ADMIN]) && (
             <>
               <TabsTrigger 
                 value="company" 

@@ -5,6 +5,7 @@ import { ThemeProvider } from '@/context/ThemeContext';
 import { CurrencyProvider } from '@/context/CurrencyContext';
 import { CompanyProvider } from '@/context/CompanyContext';
 import { AuthProvider, ROLES } from '@/context/AuthContext';
+import { SubscriptionProvider } from '@/context/SubscriptionContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { Toaster } from "@/components/ui/sonner";
 import { SpeedInsights } from '@vercel/speed-insights/react';
@@ -120,6 +121,7 @@ function App() {
       <CurrencyProvider>
         <ThemeProvider>
           <AuthProvider>
+            <SubscriptionProvider>
             <CompanyProvider>
               <Router>
                 <Suspense fallback={<LoadingSpinner />}>
@@ -253,6 +255,7 @@ function App() {
                 </Suspense>
               </Router>
             </CompanyProvider>
+            </SubscriptionProvider>
           </AuthProvider>
           <Toaster />
           <SpeedInsights />
