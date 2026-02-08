@@ -474,10 +474,10 @@ export default function Layout() {
 
       {/* Mobile Sidebar */}
       <div className={cn(
-        "lg:hidden fixed inset-y-0 left-0 w-64 border-r z-50 transform transition-transform duration-300 bg-card border-border flex flex-col overscroll-contain",
+        "lg:hidden fixed inset-y-0 left-0 w-64 border-r z-50 transform transition-transform duration-300 bg-card border-border flex flex-col",
         sidebarOpen ? "translate-x-0" : "-translate-x-full"
       )}>
-        <div className="h-16 flex items-center justify-between px-4 border-b border-border">
+        <div className="h-16 flex items-center justify-between px-4 border-b border-border flex-shrink-0">
           <Link to="/Dashboard">
             <AppLogo size="sm" />
           </Link>
@@ -485,24 +485,22 @@ export default function Layout() {
             <X className="h-5 w-5" />
           </Button>
         </div>
-        <ScrollArea className="flex-1 py-4">
-          <nav className="space-y-1 px-3">
-            {filteredMenuItems
-              .filter(item => !item.roles || hasRole(item.roles))
-              .map((item) => (
-              <MenuItem
-                key={item.title}
-                item={item}
-                isActive={location.pathname.includes(item.href)}
-                isOpen={openMenus.includes(item.title)}
-                onToggle={() => toggleMenu(item.title)}
-                isDark={isDark}
-                collapsed={false}
-              />
-            ))}
-          </nav>
-        </ScrollArea>
-        <div className="p-4 border-t border-border">
+        <nav className="flex-1 min-h-0 overflow-y-auto space-y-1 px-3 py-4">
+          {filteredMenuItems
+            .filter(item => !item.roles || hasRole(item.roles))
+            .map((item) => (
+            <MenuItem
+              key={item.title}
+              item={item}
+              isActive={location.pathname.includes(item.href)}
+              isOpen={openMenus.includes(item.title)}
+              onToggle={() => toggleMenu(item.title)}
+              isDark={isDark}
+              collapsed={false}
+            />
+          ))}
+        </nav>
+        <div className="p-4 border-t border-border flex-shrink-0">
           <div className="flex items-center gap-3 mb-4 px-2">
             <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
               <UserCircle className="h-5 w-5" />
@@ -532,15 +530,15 @@ export default function Layout() {
         "hidden lg:flex fixed inset-y-0 left-0 flex-col border-r transition-all duration-300 z-30 bg-card border-border",
         sidebarCollapsed ? "w-20" : "w-64"
       )}>
-        <div className="h-16 flex items-center justify-between px-4 border-b border-border">
+        <div className="h-16 flex items-center justify-between px-4 border-b border-border flex-shrink-0">
           {!sidebarCollapsed && (
             <Link to="/Dashboard">
               <AppLogo size="sm" />
             </Link>
           )}
-          <Button 
-            variant="ghost" 
-            size="icon" 
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
             className={cn(sidebarCollapsed && "mx-auto")}
           >
@@ -548,25 +546,23 @@ export default function Layout() {
           </Button>
         </div>
 
-        <ScrollArea className="flex-1 py-4">
-          <nav className={cn("space-y-1", sidebarCollapsed ? "px-1" : "px-3")}>
-            {filteredMenuItems
-              .filter(item => !item.roles || hasRole(item.roles))
-              .map((item) => (
-              <MenuItem
-                key={item.title}
-                item={item}
-                isActive={location.pathname.includes(item.href)}
-                isOpen={openMenus.includes(item.title)}
-                onToggle={() => toggleMenu(item.title)}
-                isDark={isDark}
-                collapsed={sidebarCollapsed}
-              />
-            ))}
-          </nav>
-        </ScrollArea>
+        <nav className={cn("flex-1 min-h-0 overflow-y-auto space-y-1 py-4", sidebarCollapsed ? "px-1" : "px-3")}>
+          {filteredMenuItems
+            .filter(item => !item.roles || hasRole(item.roles))
+            .map((item) => (
+            <MenuItem
+              key={item.title}
+              item={item}
+              isActive={location.pathname.includes(item.href)}
+              isOpen={openMenus.includes(item.title)}
+              onToggle={() => toggleMenu(item.title)}
+              isDark={isDark}
+              collapsed={sidebarCollapsed}
+            />
+          ))}
+        </nav>
 
-        <div className="p-4 border-t border-border">
+        <div className="p-4 border-t border-border flex-shrink-0">
           {!sidebarCollapsed ? (
             <>
               <div className="flex items-center gap-3 mb-4 px-2">

@@ -142,7 +142,7 @@ export default function Currencies() {
       </div>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md max-h-screen overflow-y-auto">
           <DialogHeader><DialogTitle>{editingCurrency ? 'Edit' : 'Add'} Currency</DialogTitle></DialogHeader>
           <form onSubmit={handleSubmit}>
             <div className="space-y-4 py-4">

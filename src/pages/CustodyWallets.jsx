@@ -250,7 +250,7 @@ export default function CustodyWallets() {
 
       {/* Wallet Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md max-h-screen overflow-y-auto">
           <DialogHeader><DialogTitle>{editingWallet ? 'Edit' : 'Create'} Wallet</DialogTitle></DialogHeader>
           <form onSubmit={handleSubmit}>
             <div className="space-y-4 py-4">
@@ -276,7 +276,7 @@ export default function CustodyWallets() {
 
       {/* Transaction Dialog */}
       <Dialog open={transactionDialogOpen} onOpenChange={setTransactionDialogOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md max-h-screen overflow-y-auto">
           <DialogHeader><DialogTitle>Add Transaction - {selectedWallet?.name}</DialogTitle></DialogHeader>
           <form onSubmit={handleTransactionSubmit}>
             <div className="space-y-4 py-4">
@@ -321,7 +321,7 @@ export default function CustodyWallets() {
 
       {/* Add New Type Dialog */}
       <Dialog open={showTypeDialog} onOpenChange={setShowTypeDialog}>
-        <DialogContent className="max-w-sm">
+        <DialogContent className="max-w-sm max-h-screen overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Add Transaction Type</DialogTitle>
           </DialogHeader>

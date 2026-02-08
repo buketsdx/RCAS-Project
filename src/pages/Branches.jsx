@@ -118,7 +118,7 @@ export default function Branches() {
       )}
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg max-h-screen overflow-y-auto">
           <DialogHeader><DialogTitle>{editingBranch ? 'Edit' : 'Add'} Branch</DialogTitle></DialogHeader>
           <form onSubmit={handleSubmit}>
             <div className="space-y-4 py-4">

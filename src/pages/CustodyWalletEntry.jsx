@@ -284,7 +284,7 @@ export default function CustodyWalletEntry() {
 
       {/* Add New Type Dialog */}
       <Dialog open={showTypeDialog} onOpenChange={setShowTypeDialog}>
-        <DialogContent className="max-w-sm">
+        <DialogContent className="max-w-sm max-h-screen overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Add Transaction Type</DialogTitle>
           </DialogHeader>

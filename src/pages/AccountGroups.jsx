@@ -188,7 +188,7 @@ export default function AccountGroups() {
       )}
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md max-h-screen overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingGroup ? 'Edit Account Group' : 'Create Account Group'}</DialogTitle>
           </DialogHeader>

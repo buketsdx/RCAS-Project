@@ -483,7 +483,7 @@ export default function CompanyManagement() {
         </DialogContent>
       </Dialog>
       <Dialog open={usersDialogOpen} onOpenChange={setUsersDialogOpen}>
-        <DialogContent className="max-w-3xl">
+        <DialogContent className="max-w-3xl max-h-screen overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Manage Users - {selectedCompanyForUsers?.name}</DialogTitle>
           </DialogHeader>

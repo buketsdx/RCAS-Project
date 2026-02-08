@@ -211,7 +211,7 @@ export default function StockGroups() {
       )}
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md max-h-screen overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingGroup ? terms.edit : terms.create}</DialogTitle>
           </DialogHeader>

@@ -112,7 +112,7 @@ export default function SalaryComponents() {
       )}
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg max-h-screen overflow-y-auto">
           <DialogHeader><DialogTitle>{editingComponent ? 'Edit' : 'Create'} Salary Component</DialogTitle></DialogHeader>
           <form onSubmit={handleSubmit}>
             <div className="space-y-4 py-4">

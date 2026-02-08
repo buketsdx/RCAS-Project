@@ -223,7 +223,7 @@ export default function Godowns() {
       )}
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md max-h-screen overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingGodown ? `Edit ${terms.entity}` : `Create ${terms.entity}`}</DialogTitle>
           </DialogHeader>

@@ -301,7 +301,7 @@ export default function SupplierComparison() {
       </Tabs>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-screen overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Rate History: {selectedItem?.name}</DialogTitle>
           </DialogHeader>
