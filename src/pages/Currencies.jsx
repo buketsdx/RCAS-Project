@@ -107,11 +107,15 @@ export default function Currencies() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
               <p className="text-sm text-slate-600 dark:text-slate-400 mb-2">Current Base Currency</p>
-              <p className="text-3xl font-bold text-green-600 dark:text-green-400">{baseCurrency}</p>
+              <p className="text-3xl font-bold text-green-600 dark:text-green-400">
+                {baseCurrency === 'SAR' ? <span className="icon-saudi_riyal_new" style={{display: 'inline-block'}} /> : baseCurrency}
+              </p>
             </div>
             <div>
               <p className="text-sm text-slate-600 dark:text-slate-400 mb-2">Symbol</p>
-              <p className="text-5xl font-bold text-green-600 dark:text-green-400">{baseCurrency === 'SAR' ? 'SAR' : baseCurrencySymbol}</p>
+              <p className="text-5xl font-bold text-green-600 dark:text-green-400">
+                {baseCurrency === 'SAR' ? <span className="icon-saudi_riyal_new" style={{display: 'inline-block'}} /> : baseCurrencySymbol}
+              </p>
             </div>
             <div>
               <p className="text-sm text-slate-600 dark:text-slate-400 mb-2">Quick Select</p>
@@ -124,7 +128,13 @@ export default function Currencies() {
                     onClick={() => setSelectedCurrency(code, symbol)}
                     className={baseCurrency === code ? "bg-green-600 hover:bg-green-700" : ""}
                   >
-                    {code} {symbol}
+                    {code === 'SAR' ? (
+                      <span className="flex items-center gap-1">
+                        <span className="icon-saudi_riyal_new" style={{display: 'inline-block'}} /> {symbol}
+                      </span>
+                    ) : (
+                      `${code} ${symbol}`
+                    )}
                   </Button>
                 ))}
               </div>

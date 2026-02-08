@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Plus } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from "@/utils";
+import { cn } from "@/lib/utils";
 
 export default function PageHeader({ 
   title, 
@@ -19,14 +20,14 @@ export default function PageHeader({
         <div className="flex items-center gap-4">
           {backUrl && (
             <Link to={createPageUrl(backUrl)}>
-              <Button variant="ghost" size="icon" className="rounded-xl hover:bg-slate-100">
+              <Button variant="ghost" size="icon" className="rounded-xl hover:bg-primary/10 hover:text-primary">
                 <ArrowLeft className="h-5 w-5" />
               </Button>
             </Link>
           )}
           <div>
-            <h1 className="text-2xl font-bold text-slate-800">{title}</h1>
-            {subtitle && <p className="text-slate-500 text-sm mt-0.5">{subtitle}</p>}
+            <h1 className="text-2xl font-bold text-primary">{title}</h1>
+            {subtitle && <p className="text-muted-foreground text-sm mt-0.5">{subtitle}</p>}
           </div>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
@@ -34,7 +35,7 @@ export default function PageHeader({
           {primaryAction && (
             <Button 
               onClick={primaryAction.onClick}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm"
             >
               <PrimaryIcon className="h-4 w-4 mr-2" />
               {primaryAction.label}

@@ -47,6 +47,56 @@
     --input: 217.2 32.6% 17.5%;
     --ring: 158 64% 52%;
   }
+
+  /* Color Themes - Material You Style */
+  
+  /* Blue Theme */
+  .theme-blue {
+    --primary: 217 91% 60%;
+    --primary-foreground: 210 40% 98%;
+    --ring: 217 91% 60%;
+  }
+  .dark .theme-blue {
+    --primary: 217 91% 60%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --ring: 217 91% 60%;
+  }
+
+  /* Purple Theme */
+  .theme-purple {
+    --primary: 270 95% 75%;
+    --primary-foreground: 210 40% 98%;
+    --ring: 270 95% 75%;
+  }
+  .dark .theme-purple {
+    --primary: 270 95% 75%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --ring: 270 95% 75%;
+  }
+
+  /* Rose Theme */
+  .theme-rose {
+    --primary: 340 82% 52%;
+    --primary-foreground: 210 40% 98%;
+    --ring: 340 82% 52%;
+  }
+  .dark .theme-rose {
+    --primary: 340 82% 52%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --ring: 340 82% 52%;
+  }
+
+  /* Orange Theme */
+  .theme-orange {
+    --primary: 24 95% 53%;
+    --primary-foreground: 210 40% 98%;
+    --ring: 24 95% 53%;
+  }
+  .dark .theme-orange {
+    --primary: 24 95% 53%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --ring: 24 95% 53%;
+  }
 }
 
 @layer base {
@@ -55,5 +105,11 @@
   }
   body {
     @apply bg-background text-foreground font-sans;
+  }
+  a {
+    @apply hover:text-primary transition-colors;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply text-foreground;
   }
 }

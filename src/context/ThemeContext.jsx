@@ -4,13 +4,19 @@ const ThemeContext = createContext();
 
 export function ThemeProvider({ children }) {
   const [theme, setTheme] = useState('system');
+  const [colorTheme, setColorTheme] = useState('emerald');
   const [isDark, setIsDark] = useState(false);
 
   // Initialize theme from localStorage
   useEffect(() => {
     const saved = localStorage.getItem('theme') || 'system';
+    const savedColor = localStorage.getItem('colorTheme') || 'emerald';
+    
     setTheme(saved);
+    setColorTheme(savedColor);
+    
     applyTheme(saved);
+    applyColorTheme(savedColor);
   }, []);
 
   const applyTheme = (mode) => {
@@ -35,10 +41,28 @@ export function ThemeProvider({ children }) {
     }
   };
 
+  const applyColorTheme = (color) => {
+    const html = document.documentElement;
+    // Remove all existing theme classes
+    const themes = ['theme-blue', 'theme-purple', 'theme-rose', 'theme-orange'];
+    html.classList.remove(...themes);
+    
+    // Add new theme class if not default (emerald)
+    if (color !== 'emerald') {
+      html.classList.add(`theme-${color}`);
+    }
+  };
+
   const toggleTheme = (mode) => {
     setTheme(mode);
     localStorage.setItem('theme', mode);
     applyTheme(mode);
+  };
+
+  const changeColorTheme = (color) => {
+    setColorTheme(color);
+    localStorage.setItem('colorTheme', color);
+    applyColorTheme(color);
   };
 
   // Listen to system theme changes
@@ -55,7 +79,14 @@ export function ThemeProvider({ children }) {
   }, [theme]);
 
   return (
-    <ThemeContext.Provider value={{ theme, isDark, setTheme: toggleTheme, toggleTheme }}>
+    <ThemeContext.Provider value={{ 
+      theme, 
+      isDark, 
+      colorTheme,
+      setTheme: toggleTheme, 
+      toggleTheme,
+      setColorTheme: changeColorTheme
+    }}>
       {children}
     </ThemeContext.Provider>
   );

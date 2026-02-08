@@ -27,16 +27,16 @@ export default function ProfessionalFooter() {
       isDark ? "bg-slate-950 border-slate-800" : "bg-slate-50 border-slate-200"
     )}>
       {/* Main Footer Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           
           {/* Brand Column */}
-          <div className="space-y-3">
+          <div className="space-y-4 lg:col-span-2">
             <AppLogo />
-            <p className={cn("text-sm leading-relaxed max-w-xs", isDark ? "text-slate-400" : "text-slate-600")}>
+            <p className={cn("text-sm leading-relaxed max-w-sm", isDark ? "text-slate-400" : "text-slate-600")}>
               Empowering businesses with professional accounting and inventory management solutions. Open source, secure, and reliable.
             </p>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 pt-2">
               <SocialLink href="https://github.com" icon={Github} label="GitHub" isDark={isDark} />
               <SocialLink href="https://twitter.com" icon={Twitter} label="Twitter" isDark={isDark} />
               <SocialLink href="https://linkedin.com" icon={Linkedin} label="LinkedIn" isDark={isDark} />
@@ -74,7 +74,7 @@ export default function ProfessionalFooter() {
                 rel="noreferrer"
                 className={cn(
                   "group flex items-center text-sm transition-colors",
-                  isDark ? "text-slate-400 hover:text-emerald-400" : "text-slate-600 hover:text-emerald-600"
+                  isDark ? "text-slate-400 hover:text-primary" : "text-slate-600 hover:text-primary"
                 )}
               >
                 Report an Issue
@@ -82,43 +82,13 @@ export default function ProfessionalFooter() {
               </a>
             </ul>
           </div>
-
-          {/* Newsletter / CTA */}
-          <div>
-            <h3 className={cn("text-sm font-semibold tracking-wider uppercase mb-2", isDark ? "text-slate-100" : "text-slate-900")}>
-              Stay Updated
-            </h3>
-            <p className={cn("text-sm mb-2", isDark ? "text-slate-400" : "text-slate-600")}>
-              Subscribe to our newsletter for the latest updates and features.
-            </p>
-            <div className="space-y-2">
-              <div className="flex gap-2">
-                <input 
-                  type="email"
-                  placeholder="Enter your email" 
-                  className={cn(
-                    "flex h-9 w-full rounded-md border px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:outline-none focus-visible:ring-1 disabled:cursor-not-allowed disabled:opacity-50",
-                    isDark 
-                      ? "bg-slate-900 border-slate-700 text-slate-100 placeholder:text-slate-500 focus-visible:ring-emerald-500" 
-                      : "bg-white border-slate-200 text-slate-900 placeholder:text-slate-400 focus-visible:ring-emerald-600"
-                  )}
-                />
-                <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white shrink-0">
-                  Subscribe
-                </Button>
-              </div>
-              <p className={cn("text-xs", isDark ? "text-slate-500" : "text-slate-500")}>
-                We respect your privacy. Unsubscribe at any time.
-              </p>
-            </div>
-          </div>
         </div>
       </div>
 
       <div className={cn("h-px w-full", isDark ? "bg-slate-800" : "bg-slate-200")} />
 
       {/* Bottom Bar */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
           
           {/* Copyright */}
@@ -178,8 +148,8 @@ function SocialLink({ href, icon: Icon, label, isDark }) {
       className={cn(
         "p-2 rounded-lg transition-all duration-200",
         isDark 
-          ? "text-slate-400 hover:bg-slate-800 hover:text-emerald-400" 
-          : "text-slate-500 hover:bg-emerald-50 hover:text-emerald-600"
+          ? "text-slate-400 hover:bg-slate-800 hover:text-primary" 
+          : "text-slate-500 hover:bg-primary/10 hover:text-primary"
       )}
       aria-label={label}
     >
@@ -195,13 +165,13 @@ function FooterLink({ to, label, isDark, badge }) {
         to={to} 
         className={cn(
           "group flex items-center text-sm transition-colors",
-          isDark ? "text-slate-400 hover:text-emerald-400" : "text-slate-600 hover:text-emerald-600"
+          isDark ? "text-slate-400 hover:text-primary" : "text-slate-600 hover:text-primary"
         )}
       >
         <ArrowRight className="h-3 w-3 mr-2 opacity-0 -ml-5 group-hover:opacity-100 group-hover:ml-0 transition-all duration-300" />
         {label}
         {badge && (
-          <span className="ml-2 px-1.5 py-0.5 text-[10px] font-medium rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+          <span className="ml-2 px-1.5 py-0.5 text-[10px] font-medium rounded-full bg-primary/10 text-primary border border-primary/20">
             {badge}
           </span>
         )}
@@ -217,7 +187,7 @@ function ThemeBtn({ active, onClick, icon: Icon, label, isDark }) {
       className={cn(
         "p-1.5 rounded-full transition-all duration-200",
         active 
-          ? isDark ? "bg-slate-800 text-emerald-400 shadow-sm" : "bg-white text-emerald-600 shadow-sm"
+          ? isDark ? "bg-slate-800 text-primary shadow-sm" : "bg-white text-primary shadow-sm"
           : isDark ? "text-slate-500 hover:text-slate-300" : "text-slate-400 hover:text-slate-600"
       )}
       title={`Switch to ${label} theme`}

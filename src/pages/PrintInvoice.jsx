@@ -68,7 +68,7 @@ export default function PrintInvoice() {
         <Button variant="outline" onClick={() => window.history.back()}>
           <ArrowLeft className="h-4 w-4 mr-2" /> Back
         </Button>
-        <Button onClick={handlePrint} className="bg-emerald-600 hover:bg-emerald-700">
+        <Button onClick={handlePrint} className="bg-primary hover:bg-primary/90 text-primary-foreground">
           <Printer className="h-4 w-4 mr-2" /> Print Invoice
         </Button>
       </div>
@@ -76,17 +76,17 @@ export default function PrintInvoice() {
       {/* Invoice Content */}
       <div ref={printRef} className="bg-white p-8 max-w-4xl mx-auto shadow-lg print:shadow-none">
         {/* Header with Company Info */}
-        <div className="border-b-4 border-emerald-600 pb-6 mb-6">
+        <div className="border-b-4 border-primary pb-6 mb-6">
           <div className="flex justify-between items-start">
             <div className="flex-1">
               {company?.logo_url && <img src={company.logo_url} alt="Logo" className="h-20 mb-3" />}
               <div>
-                <h1 className="text-3xl font-bold text-slate-800">{company?.name || 'Company Name'}</h1>
+                <h1 className="text-3xl font-bold text-primary">{company?.name || 'Company Name'}</h1>
                 {company?.name_arabic && <p className="text-xl text-slate-600 mt-1">{company.name_arabic}</p>}
               </div>
             </div>
             <div className="text-right">
-              <div className="bg-emerald-600 text-white px-6 py-4 rounded-lg mb-3">
+              <div className="bg-primary text-primary-foreground px-6 py-4 rounded-lg mb-3">
                 <h2 className="text-2xl font-bold">
                   {type === 'sales' ? 'TAX INVOICE' : 'PURCHASE INVOICE'}
                 </h2>

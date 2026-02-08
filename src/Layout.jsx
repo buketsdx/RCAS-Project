@@ -38,6 +38,7 @@ import {
   X,
   ChevronDown,
   ChevronRight,
+  ArrowRight,
   LogOut,
   Warehouse,
   Ruler,
@@ -188,7 +189,7 @@ const menuItems = [
   }
 ];
 
-function MenuItem({ item, isActive, isOpen, onToggle, collapsed, isDark }) {
+function MenuItem({ item, isActive, isOpen, onToggle, onOpen, onClose, collapsed, isDark, isMobile }) {
   const hasChildren = item.children && item.children.length > 0;
   const location = useLocation();
 
@@ -198,19 +199,23 @@ function MenuItem({ item, isActive, isOpen, onToggle, collapsed, isDark }) {
     );
 
     return (
-      <div>
+      <div
+        onMouseEnter={() => !isMobile && onOpen && onOpen()}
+        onMouseLeave={() => !isMobile && onClose && onClose()}
+      >
         <button
           onClick={onToggle}
           className={cn(
-            "w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200",
+            "group w-full flex items-center px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200",
             (isOpen || isChildActive) 
               ? "bg-primary/10 text-primary" 
-              : "text-muted-foreground hover:bg-muted hover:text-foreground"
+              : "text-muted-foreground hover:bg-primary/5 hover:text-primary"
           )}
         >
-          <item.icon className="h-5 w-5 flex-shrink-0" />
+          <item.icon className="h-5 w-5 flex-shrink-0 mr-3" />
           {!collapsed && (
             <>
+              <ArrowRight className="h-4 w-4 mr-2 text-primary opacity-0 -ml-6 group-hover:opacity-100 group-hover:ml-0 transition-all duration-300" />
               <span className="flex-1 text-left">{item.title}</span>
               {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
             </>
@@ -223,14 +228,22 @@ function MenuItem({ item, isActive, isOpen, onToggle, collapsed, isDark }) {
                 key={child.href}
                 to={createPageUrl(child.href)}
                 className={cn(
-                  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all duration-200",
+                  "group flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all duration-200",
                   location.pathname.includes(child.href)
-                    ? "bg-primary/10 text-primary font-medium translate-x-1" 
-                    : "text-muted-foreground hover:text-foreground hover:translate-x-1"
+                    ? "bg-primary/10 text-primary font-medium" 
+                    : "text-muted-foreground hover:bg-primary/5 hover:text-primary"
                 )}
               >
-                <div className={cn("h-1.5 w-1.5 rounded-full transition-colors", location.pathname.includes(child.href) ? "bg-primary" : "bg-muted-foreground/30")} />
-                {child.title}
+                <div className="relative flex items-center justify-center w-4 h-4 flex-shrink-0">
+                  <div className={cn(
+                    "absolute h-1.5 w-1.5 rounded-full transition-all duration-300 group-hover:scale-0 group-hover:opacity-0", 
+                    location.pathname.includes(child.href) ? "bg-primary" : "bg-muted-foreground/40"
+                  )} />
+                  <ArrowRight className={cn(
+                    "absolute h-3 w-3 text-primary transition-all duration-300 transform scale-0 opacity-0 group-hover:scale-100 group-hover:opacity-100"
+                  )} />
+                </div>
+                <span className="group-hover:translate-x-1 transition-transform duration-300">{child.title}</span>
               </Link>
             ))}
           </div>
@@ -243,14 +256,19 @@ function MenuItem({ item, isActive, isOpen, onToggle, collapsed, isDark }) {
     <Link
       to={createPageUrl(item.href)}
       className={cn(
-        "flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200",
+        "group flex items-center px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200",
         isActive 
           ? "bg-primary/10 text-primary shadow-sm border border-primary/10" 
-          : "text-muted-foreground hover:bg-muted hover:text-foreground"
+          : "text-muted-foreground hover:bg-primary/5 hover:text-primary"
       )}
     >
-      <item.icon className={cn("h-5 w-5 flex-shrink-0 transition-transform duration-300", isActive ? "" : "group-hover:scale-110")} />
-      {!collapsed && <span>{item.title}</span>}
+      <item.icon className={cn("h-5 w-5 flex-shrink-0 mr-3 transition-transform duration-300", isActive ? "" : "group-hover:scale-110")} />
+      {!collapsed && (
+        <>
+          <ArrowRight className="h-4 w-4 mr-2 text-primary opacity-0 -ml-6 group-hover:opacity-100 group-hover:ml-0 transition-all duration-300" />
+          <span>{item.title}</span>
+        </>
+      )}
     </Link>
   );
 }
@@ -473,6 +491,28 @@ export default function Layout() {
     return () => ref?.removeEventListener('scroll', handleSidebarScroll);
   }, [isMobile, isScrolled, openMenus, previousMenus]);
 
+  // Handle desktop window scroll to collapse menus
+  const lastScrollY = React.useRef(0);
+
+  useEffect(() => {
+    if (isMobile) return;
+
+    lastScrollY.current = window.scrollY; // Sync initial scroll position
+
+    const handleWindowScroll = () => {
+      const currentScrollY = window.scrollY;
+      // If user scrolls down significantly (>50px) and menus are open, collapse them
+      // Only collapse on downward scroll
+      if (currentScrollY > lastScrollY.current && currentScrollY > 50 && openMenus.length > 0) {
+        setOpenMenus([]);
+      }
+      lastScrollY.current = currentScrollY;
+    };
+
+    window.addEventListener('scroll', handleWindowScroll);
+    return () => window.removeEventListener('scroll', handleWindowScroll);
+  }, [isMobile, openMenus]);
+
   const toggleMenu = (title) => {
     setOpenMenus(prev =>
       prev.includes(title)
@@ -481,6 +521,17 @@ export default function Layout() {
     );
     // Reset scroll state when user manually toggles menu
     setIsScrolled(false);
+  };
+
+  const openMenu = (title) => {
+    setOpenMenus(prev => {
+      if (prev.includes(title)) return prev;
+      return [...prev, title];
+    });
+  };
+
+  const closeMenu = (title) => {
+    setOpenMenus(prev => prev.filter(t => t !== title));
   };
 
   const handleLogout = () => {
@@ -535,7 +586,10 @@ export default function Layout() {
               isActive={location.pathname.includes(item.href)}
               isOpen={openMenus.includes(item.title)}
               onToggle={() => toggleMenu(item.title)}
+              onOpen={() => openMenu(item.title)}
+              onClose={() => closeMenu(item.title)}
               isDark={isDark}
+              isMobile={isMobile}
               collapsed={false}
             />
           ))}
@@ -596,7 +650,10 @@ export default function Layout() {
               isActive={location.pathname.includes(item.href)}
               isOpen={openMenus.includes(item.title)}
               onToggle={() => toggleMenu(item.title)}
+              onOpen={() => openMenu(item.title)}
+              onClose={() => closeMenu(item.title)}
               isDark={isDark}
+              isMobile={isMobile}
               collapsed={sidebarCollapsed}
             />
           ))}

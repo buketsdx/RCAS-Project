@@ -241,7 +241,7 @@ export default function StockItems() {
             </div>
           )}
           <div>
-            <p className="font-medium text-slate-800">{row.name}</p>
+            <p className="font-medium text-foreground">{row.name}</p>
             {row.part_number && <p className="text-xs text-slate-500">#{row.part_number}</p>}
           </div>
         </div>
@@ -440,9 +440,9 @@ export default function StockItems() {
                     onChange={handleChange}
                   />
                 </div>
-                <div className="p-4 bg-slate-50 rounded-lg">
-                  <p className="text-sm text-slate-600">Opening Value:</p>
-                  <p className="text-lg font-semibold text-slate-800">
+                <div className="p-4 bg-muted rounded-lg">
+                  <p className="text-sm text-muted-foreground">Opening Value:</p>
+                  <p className="text-lg font-semibold text-foreground">
                     {((parseFloat(formData.opening_qty) || 0) * (parseFloat(formData.opening_rate) || 0)).toFixed(2)} SAR
                   </p>
                 </div>

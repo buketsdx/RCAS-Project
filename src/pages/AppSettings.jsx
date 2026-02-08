@@ -3,6 +3,7 @@ import { rcas } from '@/api/rcasClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCurrency } from '@/context/CurrencyContext';
 import { useAuth, ROLES } from '@/context/AuthContext';
+import { useTheme } from '@/context/ThemeContext';
 import PageHeader from '@/components/common/PageHeader';
 import FormField from '@/components/forms/FormField';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
@@ -15,14 +16,15 @@ import { toast } from "sonner";
 import { 
   Settings, Save, Database, FileText, Calculator, Globe, 
   Building2, Receipt, ShieldCheck, Printer, Lock, KeyRound,
-  Download, Upload, Cloud, HardDrive
+  Download, Upload, Cloud, HardDrive, Palette, Moon, Sun, Monitor
 } from 'lucide-react';
 
 export default function AppSettings() {
   const queryClient = useQueryClient();
   const { user, hasRole } = useAuth();
+  const { theme, setTheme, colorTheme, setColorTheme } = useTheme();
   const { baseCurrency, baseCurrencySymbol, setSelectedCurrency, CURRENCY_SYMBOLS } = useCurrency();
-  const [activeTab, setActiveTab] = useState('security');
+  const [activeTab, setActiveTab] = useState('appearance');
   
   // Change Password State
   const [passwordData, setPasswordData] = useState({ current: '', new: '', confirm: '' });
@@ -297,20 +299,153 @@ export default function AppSettings() {
       />
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-8 h-auto">
-          <TabsTrigger value="security" className="py-3">Security</TabsTrigger>
-          <TabsTrigger value="database" className="py-3">Database</TabsTrigger>
-          <TabsTrigger value="data" className="py-3">Backup & Data</TabsTrigger>
+        <TabsList className="flex flex-wrap justify-center h-auto w-full gap-1 bg-muted p-1">
+          <TabsTrigger 
+            value="appearance" 
+            className="flex-1 min-w-[100px] py-3"
+          >
+            Appearance
+          </TabsTrigger>
+          <TabsTrigger 
+            value="security" 
+            className="flex-1 min-w-[100px] py-3"
+          >
+            Security
+          </TabsTrigger>
+          <TabsTrigger 
+            value="database" 
+            className="flex-1 min-w-[100px] py-3"
+          >
+            Database
+          </TabsTrigger>
+          <TabsTrigger 
+            value="data" 
+            className="flex-1 min-w-[100px] py-3"
+          >
+            Backup & Data
+          </TabsTrigger>
           {hasRole([ROLES.SUPER_ADMIN]) && (
             <>
-              <TabsTrigger value="company" className="py-3">Company</TabsTrigger>
-              <TabsTrigger value="accounting" className="py-3">Accounting</TabsTrigger>
-              <TabsTrigger value="inventory" className="py-3">Inventory</TabsTrigger>
-              <TabsTrigger value="vouchers" className="py-3">Vouchers</TabsTrigger>
-              <TabsTrigger value="system" className="py-3">System</TabsTrigger>
+              <TabsTrigger 
+                value="company" 
+                className="flex-1 min-w-[100px] py-3"
+              >
+                Company
+              </TabsTrigger>
+              <TabsTrigger 
+                value="accounting" 
+                className="flex-1 min-w-[100px] py-3"
+              >
+                Accounting
+              </TabsTrigger>
+              <TabsTrigger 
+                value="inventory" 
+                className="flex-1 min-w-[100px] py-3"
+              >
+                Inventory
+              </TabsTrigger>
+              <TabsTrigger 
+                value="vouchers" 
+                className="flex-1 min-w-[100px] py-3"
+              >
+                Vouchers
+              </TabsTrigger>
+              <TabsTrigger 
+                value="system" 
+                className="flex-1 min-w-[100px] py-3"
+              >
+                System
+              </TabsTrigger>
             </>
           )}
         </TabsList>
+
+        {/* Appearance Settings */}
+        <TabsContent value="appearance">
+          <div className="grid gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Palette className="h-5 w-5 text-primary" />
+                  Theme Customization
+                </CardTitle>
+                <CardDescription>Customize the look and feel of the application</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-8">
+                {/* Mode Selection */}
+                <div className="space-y-4">
+                  <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300">Interface Mode</h3>
+                  <div className="grid grid-cols-3 gap-4">
+                    <button
+                      onClick={() => setTheme('light')}
+                      className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all ${
+                        theme === 'light' 
+                          ? 'border-primary bg-primary/5 text-primary' 
+                          : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
+                      }`}
+                    >
+                      <Sun className="h-6 w-6 mb-2" />
+                      <span className="text-sm font-medium">Light</span>
+                    </button>
+                    <button
+                      onClick={() => setTheme('dark')}
+                      className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all ${
+                        theme === 'dark' 
+                          ? 'border-primary bg-primary/5 text-primary' 
+                          : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
+                      }`}
+                    >
+                      <Moon className="h-6 w-6 mb-2" />
+                      <span className="text-sm font-medium">Dark</span>
+                    </button>
+                    <button
+                      onClick={() => setTheme('system')}
+                      className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all ${
+                        theme === 'system' 
+                          ? 'border-primary bg-primary/5 text-primary' 
+                          : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
+                      }`}
+                    >
+                      <Monitor className="h-6 w-6 mb-2" />
+                      <span className="text-sm font-medium">System</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Color Theme Selection */}
+                <div className="space-y-4">
+                  <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300">Accent Color</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                    {[
+                      { id: 'emerald', name: 'Emerald', color: 'bg-emerald-500' },
+                      { id: 'blue', name: 'Blue', color: 'bg-blue-500' },
+                      { id: 'purple', name: 'Purple', color: 'bg-purple-500' },
+                      { id: 'rose', name: 'Rose', color: 'bg-rose-500' },
+                      { id: 'orange', name: 'Orange', color: 'bg-orange-500' }
+                    ].map((color) => (
+                      <button
+                        key={color.id}
+                        onClick={() => setColorTheme(color.id)}
+                        className={`group relative flex items-center gap-3 p-3 rounded-xl border-2 transition-all ${
+                          colorTheme === color.id 
+                            ? 'border-primary bg-primary/5' 
+                            : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
+                        }`}
+                      >
+                        <div className={`h-6 w-6 rounded-full ${color.color} shadow-sm`} />
+                        <span className={`text-sm font-medium ${
+                          colorTheme === color.id ? 'text-primary' : 'text-slate-600 dark:text-slate-400'
+                        }`}>
+                          {color.name}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
 
         {/* Security Settings */}
         <TabsContent value="security">

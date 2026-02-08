@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { createPageUrl } from "@/lib/utils"; // <-- Yahan maine 'lib' jod diya hai
+import { createPageUrl, cn } from "@/lib/utils"; // <-- Yahan maine 'lib' jod diya hai
 import { Badge } from "@/components/ui/badge";
 import { format } from 'date-fns';
 import { FileText, ArrowRight } from 'lucide-react';
@@ -18,8 +18,8 @@ export default function RecentVouchers({ vouchers = [] }) {
   return (
     <div className="bg-white dark:bg-card rounded-2xl border border-slate-100 dark:border-border overflow-hidden shadow-sm">
       <div className="p-4 border-b border-slate-100 dark:border-border flex items-center justify-between">
-        <h3 className="font-semibold text-slate-800 dark:text-foreground">Recent Transactions</h3>
-        <Link to={createPageUrl('DayBook')} className="text-sm text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 flex items-center gap-1">
+        <h3 className="font-semibold text-primary">Recent Transactions</h3>
+        <Link to={createPageUrl('DayBook')} className="text-sm text-primary hover:text-primary/80 flex items-center gap-1">
           View All <ArrowRight className="h-4 w-4" />
         </Link>
       </div>
@@ -38,13 +38,13 @@ export default function RecentVouchers({ vouchers = [] }) {
                     {voucher.voucher_type}
                   </Badge>
                   <div>
-                    <p className="font-medium text-slate-800 dark:text-foreground">{voucher.voucher_number || `#${voucher.id?.slice(-6)}`}</p>
-                    <p className="text-xs text-slate-500 dark:text-muted-foreground">{voucher.party_name || 'No party'}</p>
+                    <p className="font-medium text-foreground">{voucher.voucher_number || `#${voucher.id?.slice(-6)}`}</p>
+                    <p className="text-xs text-muted-foreground">{voucher.party_name || 'No party'}</p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="font-semibold text-slate-800 dark:text-foreground">{parseFloat(voucher.net_amount || 0).toFixed(2)} SAR</p>
-                  <p className="text-xs text-slate-500 dark:text-muted-foreground">{voucher.date && format(new Date(voucher.date), 'dd MMM yyyy')}</p>
+                  <p className="font-semibold text-foreground">{parseFloat(voucher.net_amount || 0).toFixed(2)} SAR</p>
+                  <p className="text-xs text-muted-foreground">{voucher.date && format(new Date(voucher.date), 'dd MMM yyyy')}</p>
                 </div>
               </div>
             </div>

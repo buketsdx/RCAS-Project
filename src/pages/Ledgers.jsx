@@ -177,7 +177,7 @@ export default function Ledgers() {
       accessor: 'name',
       render: (row) => (
         <div>
-          <p className="font-medium text-slate-800">{row.name}</p>
+          <p className="font-medium text-foreground">{row.name}</p>
           {row.name_arabic && <p className="text-xs text-slate-500">{row.name_arabic}</p>}
         </div>
       )
