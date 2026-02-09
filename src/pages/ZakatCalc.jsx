@@ -97,7 +97,23 @@ export default function ZakatCalc() {
         stockValue: stockValue
       }));
 
-      toast.success("Data fetched from books", { id: toastId });
+      // Check if any data was actually found
+      const hasData = ledgers.length > 0 || stockItems.length > 0;
+      const hasValues = 
+        Math.abs(sumLedgers(cashGroupIds)) > 0 ||
+        Math.abs(sumLedgers(bankGroupIds)) > 0 ||
+        Math.abs(sumLedgers(debtorGroupIds)) > 0 ||
+        Math.abs(sumLedgers(creditorGroupIds)) > 0 ||
+        stockValue > 0;
+
+      if (!hasData) {
+        toast.info("No records found in books for this company", { id: toastId });
+      } else if (!hasValues) {
+        toast.info("Records found but all balances are zero", { id: toastId });
+      } else {
+        toast.success("Data fetched from books", { id: toastId });
+      }
+
     } catch (error) {
       console.error(error);
       toast.error("Failed to fetch data", { id: toastId });
