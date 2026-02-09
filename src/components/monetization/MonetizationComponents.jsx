@@ -72,7 +72,7 @@ export const UpgradeDialog = ({ open, onOpenChange, featureName, triggerAction }
   );
 };
 
-const AdWatchDialog = ({ open, onOpenChange, onComplete }) => {
+export const AdWatchDialog = ({ open, onOpenChange, onComplete }) => {
   const [progress, setProgress] = useState(0);
   const [canSkip, setCanSkip] = useState(false);
 

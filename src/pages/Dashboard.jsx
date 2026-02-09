@@ -132,9 +132,12 @@ export default function Dashboard() {
           <div className="flex items-center gap-2 px-3 py-1 bg-white dark:bg-slate-800 rounded-md border border-slate-200 dark:border-slate-700">
             <User className="h-4 w-4 text-slate-500" />
             <div className="text-sm">
-              <p className="font-medium">{user?.user_metadata?.full_name || 'User'}</p>
-              <p className="text-xs text-slate-500">{user?.email}</p>
-            </div>
+            <p className="font-medium flex items-center gap-2">
+              {user?.user_metadata?.full_name || 'User'}
+              {user?.role && <span className="text-[10px] px-1.5 py-0.5 bg-primary/10 text-primary rounded-full uppercase">{user.role.replace('_', ' ')}</span>}
+            </p>
+            <p className="text-xs text-slate-500">{user?.email}</p>
+          </div>
           </div>
           
           <Button variant="outline" size="icon" onClick={signOut} title="Logout">
