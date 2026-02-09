@@ -57,6 +57,7 @@ export default function CompanyInfo() {
   const [showNewCompanyDialog, setShowNewCompanyDialog] = useState(false);
   const [newCompanyData, setNewCompanyData] = useState({ name: '', name_arabic: '' });
   const [showEditCompanyDialog, setShowEditCompanyDialog] = useState(false);
+  const [defaultCompanyId, setDefaultCompanyId] = useState(localStorage.getItem('rcas_default_company_id'));
 
   const { data: companies = [], isLoading, isRefetching } = useQuery({
     queryKey: ['companies'],
@@ -251,7 +252,7 @@ export default function CompanyInfo() {
     { 
       header: 'Actions', 
       render: (row) => {
-        const isDefault = localStorage.getItem('rcas_default_company_id') === row.id;
+        const isDefault = defaultCompanyId === row.id;
 
         return (
           <div className="flex gap-2 items-center">
@@ -289,13 +290,12 @@ export default function CompanyInfo() {
                 onCheckedChange={(checked) => {
                    if (checked) {
                      localStorage.setItem('rcas_default_company_id', row.id);
+                     setDefaultCompanyId(row.id);
                      toast.success(`${row.name} is now the default company`);
-                     // Force re-render to update switch states
-                     queryClient.invalidateQueries(['companies']); 
                    } else {
                      localStorage.removeItem('rcas_default_company_id');
+                     setDefaultCompanyId(null);
                      toast.info('Default company cleared');
-                     queryClient.invalidateQueries(['companies']);
                    }
                 }}
               />
