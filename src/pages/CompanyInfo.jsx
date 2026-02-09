@@ -293,16 +293,16 @@ export default function CompanyInfo() {
                    if (checked) {
                      localStorage.setItem('rcas_default_company_id', row.id);
                      setDefaultCompanyId(row.id);
-                     toast.success(`${row.name} is now the default company`);
+                     toast.success(`${row.name} is now the primary company`);
                    } else {
                      localStorage.removeItem('rcas_default_company_id');
                      setDefaultCompanyId(null);
-                     toast.info('Default company cleared');
+                     toast.info('Primary company cleared');
                    }
                 }}
               />
               <Label htmlFor={`default-company-${row.id}`} className="text-xs cursor-pointer">
-                {isDefault ? 'Default' : 'Set Default'}
+                {isDefault ? 'Primary' : 'Set Primary'}
               </Label>
             </div>
 
