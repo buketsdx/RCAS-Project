@@ -33,23 +33,29 @@ export const SubscriptionProvider = ({ children }) => {
 
   useEffect(() => {
     const fetchSubscription = async () => {
-      // 1. Try fetching from Backend
-      try {
-        const response = await fetch(`${BACKEND_URL}/subscription`, {
-          headers: {
-            'x-user-id': user?.id || 'guest'
+      // 1. Try fetching from Backend (Only if configured)
+      // Check if backend URL is not localhost default or if explicitly enabled
+      // For now, we disable backend fetch by default to avoid console errors in frontend-only mode
+      const ENABLE_BACKEND = false; 
+
+      if (ENABLE_BACKEND) {
+        try {
+          const response = await fetch(`${BACKEND_URL}/subscription`, {
+            headers: {
+              'x-user-id': user?.id || 'guest'
+            }
+          });
+          if (response.ok) {
+            const data = await response.json();
+            if (data.plan) {
+              setPlan(data.plan);
+              localStorage.setItem('rcas_subscription_plan', data.plan); // Sync local
+              return;
+            }
           }
-        });
-        if (response.ok) {
-          const data = await response.json();
-          if (data.plan) {
-            setPlan(data.plan);
-            localStorage.setItem('rcas_subscription_plan', data.plan); // Sync local
-            return;
-          }
+        } catch (err) {
+          // Backend offline, ignore
         }
-      } catch (err) {
-        // Backend offline, ignore
       }
 
       // 2. Fallback to LocalStorage

@@ -172,6 +172,18 @@ export default function AppSettings() {
     const savedConfig = localStorage.getItem('rcas_db_config');
     if (savedConfig) {
       setDbConfig(JSON.parse(savedConfig));
+    } else {
+      // Auto-detect from Env Vars (Supabase)
+      const envSupabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const envSupabaseKey = import.meta.env.VITE_SUPABASE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY;
+      if (envSupabaseUrl && envSupabaseKey) {
+        setDbConfig(prev => ({
+          ...prev,
+          provider: 'supabase',
+          supabaseUrl: envSupabaseUrl,
+          supabaseKey: envSupabaseKey
+        }));
+      }
     }
   }, []);
 

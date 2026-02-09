@@ -86,6 +86,34 @@ export const supabaseAdapter = {
       if (error) throw error;
       return data.user;
     },
+
+    loginWithGoogle: async (data) => {
+      if (!supabase) throw new Error("Supabase not initialized");
+      
+      if (data.token) {
+        // Exchange Google ID Token for Supabase Session
+        const { data: result, error } = await supabase.auth.signInWithIdToken({
+          provider: 'google',
+          token: data.token,
+        });
+        if (error) throw error;
+        return result.user;
+      } 
+      
+      // Fallback: If no token (should not happen with updated Login.jsx), try OAuth flow (redirects)
+      const { data: result, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
+        },
+      });
+      if (error) throw error;
+      // This path redirects, so it won't return immediately
+      return null;
+    },
     
     register: async ({ email, password, full_name }) => {
       if (!supabase) throw new Error("Supabase not initialized");

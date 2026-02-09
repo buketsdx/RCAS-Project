@@ -48,7 +48,7 @@ export function CompanyProvider({ children }) {
     if (companies.length > 0 && !selectedCompanyId) {
       // 1. Check for "Default Company" setting first
       const defaultCompanyId = localStorage.getItem('rcas_default_company_id');
-      const defaultCompany = companies.find(c => c.id === defaultCompanyId);
+      const defaultCompany = companies.find(c => String(c.id) === String(defaultCompanyId));
 
       if (defaultCompany) {
          setSelectedCompanyId(defaultCompany.id);
@@ -58,7 +58,7 @@ export function CompanyProvider({ children }) {
 
       // 2. Fallback to last selected
       const storedId = localStorage.getItem('rcas_selected_company_id');
-      const companyToSelect = companies.find(c => c.id === storedId) || companies[0];
+      const companyToSelect = companies.find(c => String(c.id) === String(storedId)) || companies[0];
       
       setSelectedCompanyId(companyToSelect.id);
       rcas.setContext({ companyId: companyToSelect.id });

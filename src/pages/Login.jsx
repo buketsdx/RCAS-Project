@@ -20,6 +20,9 @@ export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com";
+  const isGoogleAuthEnabled = GOOGLE_CLIENT_ID !== "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com";
+
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
@@ -59,7 +62,8 @@ export default function Login() {
       await loginWithGoogle({
         email: decoded.email,
         name: decoded.name,
-        picture: decoded.picture
+        picture: decoded.picture,
+        token: credentialResponse.credential
       });
       
       navigate(from, { replace: true });
@@ -156,7 +160,7 @@ export default function Login() {
               </div>
 
               <div className="w-full flex justify-center">
-                {isOnline ? (
+                {isOnline && isGoogleAuthEnabled ? (
                   <GoogleLogin
                     onSuccess={handleGoogleSuccess}
                     onError={handleGoogleError}
@@ -166,7 +170,7 @@ export default function Login() {
                   />
                 ) : (
                   <div className="text-sm text-center text-muted-foreground bg-muted p-2 rounded-md w-full">
-                    Google Login unavailable (Offline)
+                    {isOnline ? "Google Login unavailable (Client ID not set)" : "Google Login unavailable (Offline)"}
                   </div>
                 )}
               </div>

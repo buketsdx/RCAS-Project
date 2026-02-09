@@ -254,7 +254,7 @@ export default function CompanyInfo() {
     { 
       header: 'Actions', 
       render: (row) => {
-        const isDefault = defaultCompanyId === row.id;
+        const isDefault = String(defaultCompanyId) === String(row.id);
 
         return (
           <div className="flex gap-2 items-center">

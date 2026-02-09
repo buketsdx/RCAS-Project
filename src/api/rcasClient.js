@@ -43,9 +43,23 @@ const initializeClient = async () => {
           break;
       }
     } else {
-      // Default to local storage
-      currentAdapter = localStorageAdapter;
-      await localStorageAdapter.initialize();
+      // Check for Environment Variables (Supabase Auto-Discovery)
+      const envSupabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const envSupabaseKey = import.meta.env.VITE_SUPABASE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+      if (envSupabaseUrl && envSupabaseKey) {
+        console.log("Initializing Supabase from Environment Variables");
+        currentAdapter = supabaseAdapter;
+        await supabaseAdapter.initialize({
+          provider: 'supabase',
+          supabaseUrl: envSupabaseUrl,
+          supabaseKey: envSupabaseKey
+        });
+      } else {
+        // Default to local storage
+        currentAdapter = localStorageAdapter;
+        await localStorageAdapter.initialize();
+      }
     }
   } catch (error) {
     console.error("Failed to initialize database adapter:", error);
