@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { rcas } from '@/api/rcasClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCompany } from '@/context/CompanyContext';
+import { useConfirm } from '@/context/ConfirmContext';
 import { formatCurrency } from '@/utils';
 import PageHeader from '@/components/common/PageHeader';
 import DataTable from '@/components/common/DataTable';
@@ -25,6 +26,7 @@ const calculationTypes = [
 
 export default function SalaryComponents() {
   const queryClient = useQueryClient();
+  const { confirm } = useConfirm();
   const { selectedCompanyId } = useCompany();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingComponent, setEditingComponent] = useState(null);
@@ -93,8 +95,18 @@ export default function SalaryComponents() {
     { header: 'GOSI', render: (row) => row.affects_gosi ? <Badge className="bg-blue-100 text-blue-700">Yes</Badge> : '-' },
     { header: 'Actions', render: (row) => (
       <div className="flex gap-2">
-        <Button variant="ghost" size="icon" onClick={() => openDialog(row)}><Pencil className="h-4 w-4" /></Button>
-        <Button variant="ghost" size="icon" onClick={() => { if(confirm('Delete?')) deleteMutation.mutate(row.id); }}><Trash2 className="h-4 w-4 text-red-500" /></Button>
+        <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); openDialog(row); }}><Pencil className="h-4 w-4" /></Button>
+        <Button variant="ghost" size="icon" onClick={async (e) => { 
+          e.stopPropagation(); 
+          if (await confirm({
+            title: 'Delete Salary Component',
+            description: 'Are you sure you want to delete this component? This action cannot be undone.',
+            variant: 'destructive',
+            confirmText: 'Delete'
+          })) {
+            deleteMutation.mutate(row.id); 
+          }
+        }}><Trash2 className="h-4 w-4 text-red-500" /></Button>
       </div>
     )}
   ];

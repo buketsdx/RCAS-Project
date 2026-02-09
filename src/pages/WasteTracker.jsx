@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { rcas } from '@/api/rcasClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCompany } from '@/context/CompanyContext';
+import { useConfirm } from '@/context/ConfirmContext';
 import { formatCurrency } from '@/utils';
 import PageHeader from '@/components/common/PageHeader';
 import DataTable from '@/components/common/DataTable';
@@ -29,6 +30,7 @@ const reasonColors = { 'Expired': '#ef4444', 'Damaged': '#f97316', 'Wilted': '#e
 export default function FlowerWasteTracker() {
   const { selectedCompanyId } = useCompany();
   const queryClient = useQueryClient();
+  const { confirm } = useConfirm();
   const { checkAccess, isPremium } = useFeatureAccess('waste_tracker');
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -181,7 +183,16 @@ export default function FlowerWasteTracker() {
     { header: 'Actions', render: (row) => (
       <div className="flex gap-2">
         <Button variant="ghost" size="icon" onClick={() => openDialog(row)}><Pencil className="h-4 w-4" /></Button>
-        <Button variant="ghost" size="icon" onClick={() => { if(confirm('Delete?')) deleteMutation.mutate(row.id); }}><Trash2 className="h-4 w-4 text-red-500" /></Button>
+        <Button variant="ghost" size="icon" onClick={async () => { 
+          if (await confirm({
+            title: 'Delete Waste Record',
+            description: 'Are you sure you want to delete this waste record? This action cannot be undone.',
+            variant: 'destructive',
+            confirmText: 'Delete'
+          })) {
+            deleteMutation.mutate(row.id); 
+          }
+        }}><Trash2 className="h-4 w-4 text-red-500" /></Button>
       </div>
     )}
   ];

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { rcas } from '@/api/rcasClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCompany } from '@/context/CompanyContext';
+import { useConfirm } from '@/context/ConfirmContext';
 import PageHeader from '@/components/common/PageHeader';
 import DataTable from '@/components/common/DataTable';
 import FormField from '@/components/forms/FormField';
@@ -14,6 +15,7 @@ import { Ruler, Plus, Pencil, Trash2 } from 'lucide-react';
 
 export default function Units() {
   const queryClient = useQueryClient();
+  const { confirm } = useConfirm();
   const { company, selectedCompanyId } = useCompany();
   const type = company?.type || 'General';
 
@@ -175,9 +177,14 @@ export default function Units() {
           <Button 
             variant="ghost" 
             size="icon" 
-            onClick={(e) => { 
+            onClick={async (e) => { 
               e.stopPropagation(); 
-              if (confirm('Are you sure you want to delete this unit?')) {
+              if (await confirm({
+                title: 'Delete Unit',
+                description: 'Are you sure you want to delete this unit?',
+                variant: 'destructive',
+                confirmText: 'Delete'
+              })) {
                 deleteMutation.mutate(row.id);
               }
             }}

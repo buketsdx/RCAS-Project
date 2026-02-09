@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { rcas } from '@/api/rcasClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCompany } from '@/context/CompanyContext';
+import { useConfirm } from '@/context/ConfirmContext';
 import PageHeader from '@/components/common/PageHeader';
 import DataTable from '@/components/common/DataTable';
 import FormField from '@/components/forms/FormField';
@@ -16,6 +17,7 @@ import { Warehouse, Plus, Pencil, Trash2 } from 'lucide-react';
 export default function Godowns() {
   const queryClient = useQueryClient();
   const { company, selectedCompanyId } = useCompany();
+  const { confirm } = useConfirm();
   const type = company?.type || 'General';
 
   const getTerminology = () => {
@@ -185,9 +187,14 @@ export default function Godowns() {
           <Button 
             variant="ghost" 
             size="icon" 
-            onClick={(e) => { 
+            onClick={async (e) => { 
               e.stopPropagation(); 
-              if (confirm(`Are you sure you want to delete this ${terms.entity.toLowerCase()}?`)) {
+              if (await confirm({
+                title: `Delete ${terms.entity}`,
+                description: `Are you sure you want to delete this ${terms.entity.toLowerCase()}?`,
+                variant: 'destructive',
+                confirmText: 'Delete'
+              })) {
                 deleteMutation.mutate(row.id);
               }
             }}

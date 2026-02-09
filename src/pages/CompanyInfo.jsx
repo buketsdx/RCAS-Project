@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { rcas } from '@/api/rcasClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCompany } from '@/context/CompanyContext';
+import { useConfirm } from '@/context/ConfirmContext';
 import PageHeader from '@/components/common/PageHeader';
 import DataTable from '@/components/common/DataTable';
 import FormField from '@/components/forms/FormField';
@@ -19,6 +20,7 @@ import { cn } from '@/lib/utils';
 export default function CompanyInfo() {
   console.log("Rendering CompanyInfo Component");
   const queryClient = useQueryClient();
+  const { confirm } = useConfirm();
   const { selectedCompanyId, setSelectedCompanyId, companies: contextCompanies, isLoading: contextLoading } = useCompany();
   const canvasRef = useRef(null);
   const previewRef = useRef(null);
@@ -308,13 +310,18 @@ export default function CompanyInfo() {
               variant="ghost" 
               size="icon" 
               className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900/20 ml-auto"
-              onClick={(e) => { 
+              onClick={async (e) => { 
                 e.stopPropagation(); 
                 if (companies.length <= 1) {
                   toast.error("Cannot delete the only company");
                   return;
                 }
-                if(confirm(`Are you sure you want to delete ${row.name}? This action cannot be undone.`)) {
+                if(await confirm({
+                  title: 'Delete Company',
+                  description: `Are you sure you want to delete ${row.name}? This action cannot be undone.`,
+                  variant: 'destructive',
+                  confirmText: 'Delete'
+                })) {
                   deleteMutation.mutate(row.id);
                 }
               }}

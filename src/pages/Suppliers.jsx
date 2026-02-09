@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { rcas } from '@/api/rcasClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCompany } from '../context/CompanyContext';
+import { useConfirm } from '@/context/ConfirmContext';
 import PageHeader from '@/components/common/PageHeader';
 import DataTable from '@/components/common/DataTable';
 import FormField from '@/components/forms/FormField';
@@ -15,6 +16,7 @@ import { toast } from "sonner";
 import { Plus, Pencil, Trash2, Truck } from 'lucide-react';
 
 export default function Suppliers() {
+  const { confirm } = useConfirm();
   const { type, selectedCompanyId } = useCompany();
   const queryClient = useQueryClient();
 
@@ -254,8 +256,13 @@ export default function Suppliers() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => {
-              if (confirm('Are you sure you want to delete this supplier?')) {
+            onClick={async () => {
+              if (await confirm({
+                title: 'Delete Supplier',
+                description: 'Are you sure you want to delete this supplier? This action cannot be undone.',
+                variant: 'destructive',
+                confirmText: 'Delete'
+              })) {
                 deleteMutation.mutate(row.id);
               }
             }}

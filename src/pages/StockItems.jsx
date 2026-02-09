@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { rcas } from '@/api/rcasClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCompany } from '@/context/CompanyContext';
+import { useConfirm } from '@/context/ConfirmContext';
 import { formatCurrency } from '@/utils';
 import PageHeader from '@/components/common/PageHeader';
 import DataTable from '@/components/common/DataTable';
@@ -17,6 +18,7 @@ import { Package, Plus, Pencil, Trash2, Upload } from 'lucide-react';
 
 export default function StockItems() {
   const { company, selectedCompanyId } = useCompany();
+  const { confirm } = useConfirm();
   const type = company?.type || 'General';
 
   const getTerminology = () => {
@@ -283,9 +285,14 @@ export default function StockItems() {
           <Button 
             variant="ghost" 
             size="icon" 
-            onClick={(e) => { 
+            onClick={async (e) => { 
               e.stopPropagation(); 
-              if (confirm('Are you sure you want to delete this item?')) {
+              if (await confirm({
+                title: 'Delete Stock Item',
+                description: 'Are you sure you want to delete this item? This action cannot be undone.',
+                variant: 'destructive',
+                confirmText: 'Delete'
+              })) {
                 deleteMutation.mutate(row.id);
               }
             }}

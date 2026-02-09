@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { rcas } from '@/api/rcasClient';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCompany } from '@/context/CompanyContext';
+import { useConfirm } from '@/context/ConfirmContext';
 import { formatCurrency, exportToCSV } from '@/utils';
 import PageHeader from '@/components/common/PageHeader';
 import DataTable from '@/components/common/DataTable';
@@ -23,6 +24,7 @@ import { UpgradeDialog, AdWatchDialog, PremiumLock } from '@/components/monetiza
 export default function CustodyWallets() {
   
   const { selectedCompanyId } = useCompany();
+  const { confirm } = useConfirm();
 
   const { checkAccess, isPremium, unlockWithAd } = useFeatureAccess('custody_wallet');
   const [upgradeOpen, setUpgradeOpen] = useState(false);
@@ -258,7 +260,16 @@ export default function CustodyWallets() {
       <div className="flex gap-1">
         <Button variant="ghost" size="icon" onClick={() => openTransactionDialog(row)} title="Add Transaction"><RefreshCw className="h-4 w-4 text-blue-500" /></Button>
         <Button variant="ghost" size="icon" onClick={() => openDialog(row)}><Pencil className="h-4 w-4" /></Button>
-        <Button variant="ghost" size="icon" onClick={() => { if(window.confirm('Delete?')) deleteWalletMutation.mutate(row.id); }}><Trash2 className="h-4 w-4 text-red-500" /></Button>
+        <Button variant="ghost" size="icon" onClick={async () => { 
+          if (await confirm({
+            title: 'Delete Wallet',
+            description: 'Are you sure you want to delete this wallet? This action cannot be undone.',
+            variant: 'destructive',
+            confirmText: 'Delete'
+          })) {
+            deleteWalletMutation.mutate(row.id); 
+          }
+        }}><Trash2 className="h-4 w-4 text-red-500" /></Button>
       </div>
     )}
   ];

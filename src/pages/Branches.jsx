@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { rcas } from '@/api/rcasClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCompany } from '@/context/CompanyContext';
+import { useConfirm } from '@/context/ConfirmContext';
 import PageHeader from '@/components/common/PageHeader';
 import DataTable from '@/components/common/DataTable';
 import FormField from '@/components/forms/FormField';
@@ -16,6 +17,7 @@ import { Building, Plus, Pencil, Trash2, Star } from 'lucide-react';
 
 export default function Branches() {
   const queryClient = useQueryClient();
+  const { confirm } = useConfirm();
   const { selectedCompanyId, currentCompany } = useCompany();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingBranch, setEditingBranch] = useState(null);
@@ -97,7 +99,17 @@ export default function Branches() {
     { header: 'Actions', render: (row) => (
       <div className="flex gap-2">
         <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); openDialog(row); }}><Pencil className="h-4 w-4" /></Button>
-        <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); if(confirm('Delete?')) deleteMutation.mutate(row.id); }}><Trash2 className="h-4 w-4 text-red-500" /></Button>
+        <Button variant="ghost" size="icon" onClick={async (e) => { 
+          e.stopPropagation(); 
+          if (await confirm({
+            title: 'Delete Branch',
+            description: 'Are you sure you want to delete this branch? This action cannot be undone.',
+            variant: 'destructive',
+            confirmText: 'Delete'
+          })) {
+            deleteMutation.mutate(row.id); 
+          }
+        }}><Trash2 className="h-4 w-4 text-red-500" /></Button>
       </div>
     )}
   ];

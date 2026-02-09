@@ -5,6 +5,7 @@ import { useCurrency } from '@/context/CurrencyContext';
 import { useAuth, ROLES } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
 import { useSubscription, SUBSCRIPTION_PLANS, FEATURE_LIMITS } from '@/context/SubscriptionContext';
+import { useConfirm } from '@/context/ConfirmContext';
 import { formatCurrency } from '@/utils';
 import PageHeader from '@/components/common/PageHeader';
 import FormField from '@/components/forms/FormField';
@@ -25,6 +26,7 @@ import {
 
 export default function AppSettings() {
   const queryClient = useQueryClient();
+  const { confirm } = useConfirm();
   const { user, hasRole } = useAuth();
   const { plan, upgradeToPremium, downgradeToFree } = useSubscription();
   
@@ -232,7 +234,12 @@ export default function AppSettings() {
     const file = event.target.files[0];
     if (!file) return;
 
-    if (!confirm("⚠️ WARNING: Importing data will merge with existing records. IDs might conflict. \n\nIdeally, do this on a fresh/empty database.\n\nContinue?")) {
+    if (!await confirm({
+      title: 'Import Data Warning',
+      description: "Importing data will merge with existing records. IDs might conflict. Ideally, do this on a fresh/empty database. Continue?",
+      variant: 'destructive',
+      confirmText: 'Import Data'
+    })) {
       event.target.value = ''; // Reset input
       return;
     }

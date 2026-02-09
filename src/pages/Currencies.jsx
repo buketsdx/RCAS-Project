@@ -3,6 +3,7 @@ import { rcas } from '@/api/rcasClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCurrency } from '@/context/CurrencyContext';
 import { useCompany } from '@/context/CompanyContext';
+import { useConfirm } from '@/context/ConfirmContext';
 import PageHeader from '@/components/common/PageHeader';
 import DataTable from '@/components/common/DataTable';
 import FormField from '@/components/forms/FormField';
@@ -17,6 +18,7 @@ import { Coins, Plus, Pencil, Trash2, RefreshCw, Globe } from 'lucide-react';
 
 export default function Currencies() {
   const queryClient = useQueryClient();
+  const { confirm } = useConfirm();
   const { selectedCompanyId } = useCompany();
   const { baseCurrency, baseCurrencySymbol, setSelectedCurrency, CURRENCY_SYMBOLS } = useCurrency();
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -84,7 +86,17 @@ export default function Currencies() {
     { header: 'Actions', render: (row) => (
       <div className="flex gap-2">
         <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); openDialog(row); }}><Pencil className="h-4 w-4" /></Button>
-        {!row.is_base_currency && <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); if(confirm('Delete?')) deleteMutation.mutate(row.id); }}><Trash2 className="h-4 w-4 text-red-500" /></Button>}
+        {!row.is_base_currency && <Button variant="ghost" size="icon" onClick={async (e) => { 
+          e.stopPropagation(); 
+          if (await confirm({
+            title: 'Delete Currency',
+            description: 'Are you sure you want to delete this currency? This action cannot be undone.',
+            variant: 'destructive',
+            confirmText: 'Delete'
+          })) {
+            deleteMutation.mutate(row.id); 
+          }
+        }}><Trash2 className="h-4 w-4 text-red-500" /></Button>}
       </div>
     )}
   ];

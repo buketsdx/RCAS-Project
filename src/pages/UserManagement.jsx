@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { rcas } from '@/api/rcasClient';
 import { useAuth, ROLES } from '@/context/AuthContext';
+import { useConfirm } from '@/context/ConfirmContext';
 import PageHeader from '@/components/common/PageHeader';
 import DataTable from '@/components/common/DataTable';
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,7 @@ import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
 export default function UserManagement() {
+  const { confirm } = useConfirm();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -49,6 +51,12 @@ export default function UserManagement() {
     e.preventDefault();
     try {
       if (editingId) {
+        if (!await confirm({
+          title: 'Update User',
+          description: 'Are you sure you want to update this user details?',
+          confirmText: 'Update'
+        })) return;
+        
         await rcas.entities.User.update(editingId, formData);
         toast.success("User updated successfully");
       } else {
@@ -81,7 +89,13 @@ export default function UserManagement() {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this user?")) return;
+    if (!await confirm({
+      title: 'Delete User',
+      description: 'Are you sure you want to delete this user? This action cannot be undone.',
+      variant: 'destructive',
+      confirmText: 'Delete'
+    })) return;
+
     try {
       await rcas.entities.User.delete(id);
       toast.success("User deleted successfully");

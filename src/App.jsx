@@ -6,6 +6,7 @@ import { CurrencyProvider } from '@/context/CurrencyContext';
 import { CompanyProvider } from '@/context/CompanyContext';
 import { AuthProvider, ROLES } from '@/context/AuthContext';
 import { SubscriptionProvider } from '@/context/SubscriptionContext';
+import { ConfirmProvider } from '@/context/ConfirmContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { Toaster } from "@/components/ui/sonner";
 import { SpeedInsights } from '@vercel/speed-insights/react';
@@ -118,14 +119,15 @@ const LoadingSpinner = () => (
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <CurrencyProvider>
-        <ThemeProvider>
-          <AuthProvider>
-            <SubscriptionProvider>
-            <CompanyProvider>
-              <Router>
-                <Suspense fallback={<LoadingSpinner />}>
-                  <Routes>
+      <ThemeProvider>
+        <AuthProvider>
+          <CompanyProvider>
+            <CurrencyProvider>
+              <SubscriptionProvider>
+                <ConfirmProvider>
+                  <Router>
+                    <Suspense fallback={<LoadingSpinner />}>
+                      <Routes>
                     {/* Public Routes */}
                     <Route path="/Login" element={<Login />} />
                     <Route path="/Signup" element={<Signup />} />
@@ -254,13 +256,14 @@ function App() {
                   </Routes>
                 </Suspense>
               </Router>
-            </CompanyProvider>
-            </SubscriptionProvider>
-          </AuthProvider>
-          <Toaster />
-          <SpeedInsights />
-        </ThemeProvider>
-      </CurrencyProvider>
+                </ConfirmProvider>
+              </SubscriptionProvider>
+            </CurrencyProvider>
+          </CompanyProvider>
+        </AuthProvider>
+        <Toaster />
+        <SpeedInsights />
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }

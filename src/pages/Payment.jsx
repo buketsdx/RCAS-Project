@@ -2,6 +2,8 @@ import React from 'react';
 import { rcas } from '@/api/rcasClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
+import { useCompany } from '@/context/CompanyContext';
+import { useConfirm } from '@/context/ConfirmContext';
 import { createPageUrl, formatCurrency } from "@/utils";
 import PageHeader from '@/components/common/PageHeader';
 import DataTable from '@/components/common/DataTable';
@@ -16,6 +18,7 @@ import { CreditCard, Eye, Trash2 } from 'lucide-react';
 export default function Payment() {
   const queryClient = useQueryClient();
   const { selectedCompanyId } = useCompany();
+  const { confirm } = useConfirm();
 
   const { data: vouchers = [], isLoading } = useQuery({
     queryKey: ['paymentVouchers', selectedCompanyId],
@@ -44,8 +47,19 @@ export default function Payment() {
       header: 'Actions',
       render: (row) => (
         <div className="flex items-center gap-2">
-          <Link to={createPageUrl(`PaymentVoucher?id=${row.id}`)}><Button variant="ghost" size="icon"><Eye className="h-4 w-4" /></Button></Link>
-          <Button variant="ghost" size="icon" onClick={() => { if (confirm('Delete?')) deleteMutation.mutate(row.id); }}><Trash2 className="h-4 w-4 text-red-500" /></Button>
+          <Button variant="ghost" size="icon" asChild>
+            <Link to={createPageUrl("payment", row.id)}><Eye className="h-4 w-4" /></Link>
+          </Button>
+          <Button variant="ghost" size="icon" onClick={async () => { 
+            if (await confirm({
+              title: 'Delete Payment',
+              description: 'Are you sure you want to delete this payment? This action cannot be undone.',
+              variant: 'destructive',
+              confirmText: 'Delete'
+            })) {
+              deleteMutation.mutate(row.id); 
+            }
+          }}><Trash2 className="h-4 w-4 text-red-500" /></Button>
         </div>
       )
     }

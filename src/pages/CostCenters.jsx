@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { rcas } from '@/api/rcasClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCompany } from '@/context/CompanyContext';
+import { useConfirm } from '@/context/ConfirmContext';
 import PageHeader from '@/components/common/PageHeader';
 import DataTable from '@/components/common/DataTable';
 import FormField from '@/components/forms/FormField';
@@ -14,6 +15,7 @@ import { Calculator, Plus, Pencil, Trash2 } from 'lucide-react';
 
 export default function CostCenters() {
   const queryClient = useQueryClient();
+  const { confirm } = useConfirm();
   const { company, selectedCompanyId } = useCompany();
   const type = company?.type || 'General';
 
@@ -148,7 +150,21 @@ export default function CostCenters() {
           <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); openDialog(row); }}>
             <Pencil className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); if (confirm('Delete?')) deleteMutation.mutate(row.id); }}>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={async (e) => { 
+              e.stopPropagation(); 
+              if (await confirm({
+                title: `Delete ${terms.entity}`,
+                description: `Are you sure you want to delete this ${terms.entity.toLowerCase()}? This action cannot be undone.`,
+                variant: 'destructive',
+                confirmText: 'Delete'
+              })) {
+                deleteMutation.mutate(row.id);
+              }
+            }}
+          >
             <Trash2 className="h-4 w-4 text-red-500" />
           </Button>
         </div>

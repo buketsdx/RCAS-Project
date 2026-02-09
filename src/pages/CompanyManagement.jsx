@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { rcas } from '@/api/rcasClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useConfirm } from '@/context/ConfirmContext';
 import { useCompany } from '@/context/CompanyContext';
 import PageHeader from '@/components/common/PageHeader';
 import DataTable from '@/components/common/DataTable';
@@ -17,6 +18,7 @@ import { cn } from '@/lib/utils';
 
 export default function CompanyManagement() {
   const queryClient = useQueryClient();
+  const { confirm } = useConfirm();
   const { selectedCompanyId, setSelectedCompanyId } = useCompany();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingCompany, setEditingCompany] = useState(null);
@@ -260,9 +262,14 @@ export default function CompanyManagement() {
           <Button
             variant="ghost"
             size="icon"
-            onClick={(e) => {
+            onClick={async (e) => {
               e.stopPropagation();
-              if (confirm(`Delete ${row.name}? This action cannot be undone.`)) {
+              if (await confirm({
+                title: 'Delete Company',
+                description: `Are you sure you want to delete ${row.name}? This action cannot be undone.`,
+                variant: 'destructive',
+                confirmText: 'Delete'
+              })) {
                 deleteMutation.mutate(row.id);
               }
             }}

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { rcas } from '@/api/rcasClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCompany } from '@/context/CompanyContext';
+import { useConfirm } from '@/context/ConfirmContext';
 import { initializeSystemLedgers } from '@/utils';
 import PageHeader from '@/components/common/PageHeader';
 import DataTable from '@/components/common/DataTable';
@@ -17,6 +18,7 @@ import { BookOpen, Plus, Pencil, Trash2 } from 'lucide-react';
 
 export default function Ledgers() {
   const queryClient = useQueryClient();
+  const { confirm } = useConfirm();
   const { selectedCompanyId } = useCompany();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingLedger, setEditingLedger] = useState(null);
@@ -215,9 +217,14 @@ export default function Ledgers() {
             <Button 
               variant="ghost" 
               size="icon" 
-              onClick={(e) => { 
+              onClick={async (e) => { 
                 e.stopPropagation(); 
-                if (confirm('Are you sure you want to delete this ledger?')) {
+                if (await confirm({
+                  title: 'Delete Ledger',
+                  description: 'Are you sure you want to delete this ledger? This action cannot be undone.',
+                  variant: 'destructive',
+                  confirmText: 'Delete'
+                })) {
                   deleteMutation.mutate(row.id);
                 }
               }}

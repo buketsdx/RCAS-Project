@@ -3,6 +3,7 @@ import { rcas } from '@/api/rcasClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { useCompany } from '@/context/CompanyContext';
+import { useConfirm } from '@/context/ConfirmContext';
 import { createPageUrl, formatCurrency } from "@/utils";
 import PageHeader from '@/components/common/PageHeader';
 import DataTable from '@/components/common/DataTable';
@@ -16,6 +17,7 @@ import { TrendingUp, Plus, Eye, Printer, Trash2 } from 'lucide-react';
 
 export default function Sales() {
   const { company, selectedCompanyId } = useCompany();
+  const { confirm } = useConfirm();
   const type = company?.type || 'General';
 
   const getTerminology = () => {
@@ -108,7 +110,16 @@ export default function Sales() {
           <Link to={createPageUrl(`PrintInvoice?id=${row.id}&type=sales`)}>
             <Button variant="ghost" size="icon"><Printer className="h-4 w-4" /></Button>
           </Link>
-          <Button variant="ghost" size="icon" onClick={() => { if (confirm('Delete this invoice?')) deleteMutation.mutate(row.id); }}>
+          <Button variant="ghost" size="icon" onClick={async () => { 
+            if (await confirm({
+              title: `Delete ${terms.title.slice(0, -1)}`, // Remove 's' from title (Invoices -> Invoice)
+              description: `Are you sure you want to delete this invoice? This action cannot be undone.`,
+              variant: 'destructive',
+              confirmText: 'Delete'
+            })) {
+              deleteMutation.mutate(row.id); 
+            }
+          }}>
             <Trash2 className="h-4 w-4 text-red-500" />
           </Button>
         </div>
