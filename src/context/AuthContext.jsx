@@ -1,146 +1,140 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { rcas } from '@/api/rcasClient';
-import { toast } from 'sonner';
 
-const AuthContext = createContext(null);
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { supabase } from '@/lib/supabase';
+import { toast } from 'react-hot-toast';
+
+const AuthContext = createContext({});
 
 export const ROLES = {
-  SUPER_ADMIN: 'Super Admin',
-  ADMIN: 'Admin',
-  OWNER: 'Owner',
-  CASHIER: 'Cashier',
-  EMPLOYEE: 'Employee'
+  SUPER_ADMIN: 'super_admin',
+  ADMIN: 'admin',
+  OWNER: 'owner',
+  MANAGER: 'manager',
+  CASHIER: 'cashier',
+  SALON_MANAGER: 'salon_manager',
+  STYLIST: 'stylist'
 };
+
+export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check for persisted session
-    const checkAuth = async () => {
+    // Check active session
+    const getSession = async () => {
       try {
-        const savedUser = localStorage.getItem('rcas_user_session');
-        if (savedUser) {
-          setUser(JSON.parse(savedUser));
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) {
+          console.error("Error getting session:", error);
         }
-      } catch (error) {
-        console.error("Auth check failed", error);
+        setUser(session?.user ?? null);
+      } catch (err) {
+        console.error("Unexpected error checking session:", err);
       } finally {
         setLoading(false);
       }
     };
-    checkAuth();
+
+    getSession();
+
+    // Listen for changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
+
+    return () => {
+      subscription?.unsubscribe();
+    };
   }, []);
 
-  const login = async (username, password) => {
+  const signUp = async (email, password, options = {}) => {
     try {
-      const userData = await rcas.auth.login(username, password);
-      setUser(userData);
-      localStorage.setItem('rcas_user_session', JSON.stringify(userData));
-      toast.success(`Welcome back, ${userData.full_name}!`);
-      return userData;
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options,
+      });
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      toast.error(error.message || "Signup failed");
+      throw error;
+    }
+  };
+
+  const signIn = async (email, password) => {
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      if (error) throw error;
+      return data;
     } catch (error) {
       toast.error(error.message || "Login failed");
       throw error;
     }
   };
 
-  const loginWithGoogle = async (googleData) => {
+  const signInWithGoogle = async () => {
     try {
-      const userData = await rcas.auth.loginWithGoogle(googleData);
-      setUser(userData);
-      localStorage.setItem('rcas_user_session', JSON.stringify(userData));
-      toast.success(`Welcome back, ${userData.full_name}!`);
-      return userData;
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
+          redirectTo: window.location.origin,
+        },
+      });
+      if (error) throw error;
+      return data;
     } catch (error) {
-      toast.error(error.message || "Google Login failed");
+      toast.error(error.message || "Google login failed");
       throw error;
     }
   };
 
-  const register = async (userData) => {
+  const signOut = async () => {
     try {
-      const newUser = await rcas.auth.register(userData);
-      setUser(newUser);
-      localStorage.setItem('rcas_user_session', JSON.stringify(newUser));
-      toast.success(`Welcome, ${newUser.full_name}!`);
-      return newUser;
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      toast.success("Logged out successfully");
     } catch (error) {
-      toast.error(error.message || "Registration failed");
+      toast.error(error.message || "Logout failed");
+    }
+  };
+
+  const resetPassword = async (email) => {
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/update-password`,
+      });
+      if (error) throw error;
+      toast.success("Password reset link sent!");
+    } catch (error) {
+      toast.error(error.message || "Failed to send reset link");
       throw error;
     }
   };
 
-  const logout = () => {
-    rcas.auth.logout();
-    setUser(null);
-    localStorage.removeItem('rcas_user_session');
-    toast.info("Logged out successfully");
-  };
-
-  // --- Password Recovery ---
-  // Requests an OTP to be sent to the user's email
-  const requestPasswordReset = async (email) => {
-    try {
-      const result = await rcas.auth.requestPasswordReset(email);
-      if (result.success) {
-        toast.success(result.message);
-        // For development convenience, show OTP in toast too
-        if (result.dev_otp) toast.info(`DEV: OTP is ${result.dev_otp}`);
-      } else {
-        toast.info(result.message);
-      }
-      return result;
-    } catch (error) {
-      toast.error("Failed to request reset");
-      throw error;
-    }
-  };
-
-  // Resets the password using the OTP
-  const resetPassword = async (email, otp, newPassword) => {
-    try {
-      const result = await rcas.auth.resetPassword(email, otp, newPassword);
-      toast.success(result.message);
-      return result;
-    } catch (error) {
-      toast.error(error.message || "Failed to reset password");
-      throw error;
-    }
-  };
-
-  const hasRole = (roles) => {
-    if (!user) return false;
-    if (user.role === ROLES.SUPER_ADMIN) return true; // Super Admin has access to everything
-    
-    if (!roles) return true; // No specific roles required
-    if (!Array.isArray(roles)) return user.role === roles;
-    
-    return roles.includes(user.role);
+  const value = {
+    user,
+    loading,
+    signUp,
+    signIn,
+    signInWithGoogle,
+    signOut,
+    resetPassword,
   };
 
   return (
-    <AuthContext.Provider value={{ 
-      user, 
-      loading,
-      login, 
-      loginWithGoogle, 
-      register, 
-      logout, 
-      requestPasswordReset, 
-      resetPassword,
-      hasRole 
-    }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
-};
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
 };

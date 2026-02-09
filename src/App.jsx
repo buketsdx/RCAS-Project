@@ -8,10 +8,11 @@ import { AuthProvider, ROLES } from '@/context/AuthContext';
 import { SubscriptionProvider } from '@/context/SubscriptionContext';
 import { ConfirmProvider } from '@/context/ConfirmContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
-import { Toaster } from "@/components/ui/sonner";
+import { Toaster } from 'react-hot-toast';
 import { SpeedInsights } from '@vercel/speed-insights/react';
 import '@emran-alhaddad/saudi-riyal-font/index.css';
 import Layout from './Layout';
+import LoadingSpinner from '@/components/common/LoadingSpinner';
 
 // Lazy Load Pages
 const Dashboard = React.lazy(() => import('./pages/Dashboard'));
@@ -110,12 +111,6 @@ const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: false, refetchOnWindowFocus: false } }
 });
 
-const LoadingSpinner = () => (
-  <div className="flex items-center justify-center h-screen w-full bg-background/50 backdrop-blur-sm">
-    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-  </div>
-);
-
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
@@ -126,6 +121,8 @@ function App() {
               <SubscriptionProvider>
                 <ConfirmProvider>
                   <Router>
+                    <Toaster position="top-right" />
+                    <SonnerToaster />
                     <Suspense fallback={<LoadingSpinner />}>
                       <Routes>
                     {/* Public Routes */}
