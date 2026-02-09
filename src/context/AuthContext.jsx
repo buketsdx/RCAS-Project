@@ -29,7 +29,7 @@ export const AuthProvider = ({ children }) => {
         if (error) {
           console.error("Error getting session:", error);
         }
-        setUser(session?.user ?? null);
+        updateUserState(session?.user);
       } catch (err) {
         console.error("Unexpected error checking session:", err);
       } finally {
@@ -41,7 +41,7 @@ export const AuthProvider = ({ children }) => {
 
     // Listen for changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
+      updateUserState(session?.user);
       setLoading(false);
     });
 
@@ -49,6 +49,19 @@ export const AuthProvider = ({ children }) => {
       subscription?.unsubscribe();
     };
   }, []);
+
+  const updateUserState = (sessionUser) => {
+    if (!sessionUser) {
+      setUser(null);
+      return;
+    }
+    // Enhance user object with role from metadata
+    const enhancedUser = {
+      ...sessionUser,
+      role: sessionUser.user_metadata?.role || sessionUser.app_metadata?.role || 'user'
+    };
+    setUser(enhancedUser);
+  };
 
   const signUp = async (email, password, options = {}) => {
     try {

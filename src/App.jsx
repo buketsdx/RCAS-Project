@@ -9,6 +9,7 @@ import { SubscriptionProvider } from '@/context/SubscriptionContext';
 import { ConfirmProvider } from '@/context/ConfirmContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { Toaster } from 'react-hot-toast';
+import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 import { SpeedInsights } from '@vercel/speed-insights/react';
 import '@emran-alhaddad/saudi-riyal-font/index.css';
 import Layout from './Layout';

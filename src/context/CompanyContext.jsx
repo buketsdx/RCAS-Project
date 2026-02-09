@@ -28,13 +28,14 @@ export function CompanyProvider({ children }) {
     if (!user) return [];
     
     let accessibleCompanies = [];
-    if (user.role === 'Super Admin') {
+    // Check for super_admin (snake_case from AuthContext) or Super Admin (legacy)
+    if (user.role === 'super_admin' || user.role === 'Super Admin') {
       accessibleCompanies = allCompanies;
     } else if (user.allowed_companies && user.allowed_companies.length > 0) {
       accessibleCompanies = allCompanies.filter(c => user.allowed_companies.includes(c.id));
     } else {
       // Fix for demo: If user is admin/owner but has no array, give access to all (Legacy fix)
-      if (user.role === 'Admin' || user.role === 'Owner') {
+      if (user.role === 'admin' || user.role === 'Admin' || user.role === 'owner' || user.role === 'Owner') {
          accessibleCompanies = allCompanies;
       } else {
          accessibleCompanies = [];
