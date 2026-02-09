@@ -5,6 +5,60 @@ let supabase = null;
 
 const globalEntities = ['User', 'Company', 'Currency', 'Settings'];
 
+const tableMapping = {
+  Company: 'companies',
+  Branch: 'branches',
+  Currency: 'currencies',
+  AccountGroup: 'account_groups',
+  Ledger: 'ledgers',
+  StockGroup: 'stock_groups',
+  StockItem: 'stock_items',
+  Unit: 'units',
+  Godown: 'godowns',
+  CostCenter: 'cost_centers',
+  VoucherType: 'voucher_types',
+  Voucher: 'vouchers',
+  VoucherItem: 'voucher_items',
+  VoucherLedgerEntry: 'voucher_ledger_entries',
+  Employee: 'employees',
+  SalaryComponent: 'salary_components',
+  Payroll: 'payroll',
+  User: 'profiles', 
+  Settings: 'settings',
+  BranchDailyRecord: 'branch_daily_records',
+  CustodyWallet: 'custody_wallets',
+  CustodyTransaction: 'custody_transactions',
+  FlowerWaste: 'flower_waste',
+  BankReconciliation: 'bank_reconciliations',
+  ZATCAInvoice: 'zatca_invoices'
+};
+
+const getTableName = (entityName) => {
+  return tableMapping[entityName] || entityName;
+};
+
+// Helper to merge Auth User + Profile
+const normalizeUser = async (authUser) => {
+  if (!authUser) return null;
+  
+  // Fetch profile
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', authUser.id)
+    .single();
+
+  return {
+    ...authUser,
+    // Prefer profile data, fallback to metadata
+    full_name: profile?.full_name || authUser.user_metadata?.full_name || authUser.email?.split('@')[0],
+    role: profile?.role || authUser.user_metadata?.role || 'User',
+    allowed_companies: profile?.allowed_companies || [],
+    // Include profile ID as top-level ID if needed (Auth user id is UUID)
+    id: authUser.id 
+  };
+};
+
 export const supabaseAdapter = {
   name: 'supabase',
   
@@ -18,8 +72,9 @@ export const supabaseAdapter = {
 
   list: async (entityName, context) => {
     if (!supabase) throw new Error("Supabase not initialized");
+    const tableName = getTableName(entityName);
     
-    let query = supabase.from(entityName).select('*');
+    let query = supabase.from(tableName).select('*');
     
     // Filter by Company ID
     if (context?.companyId && !globalEntities.includes(entityName)) {
@@ -33,15 +88,19 @@ export const supabaseAdapter = {
 
   create: async (entityName, data, context) => {
     if (!supabase) throw new Error("Supabase not initialized");
+    const tableName = getTableName(entityName);
 
     const newRecord = { ...data };
-    // Auto-inject Company ID for non-global entities
+    // Auto-inject Company ID
     if (context?.companyId && !newRecord.company_id && !globalEntities.includes(entityName)) {
       newRecord.company_id = context.companyId;
     }
 
+    // Remove ID if it's auto-generated (unless UUID provided)
+    if (!newRecord.id || typeof newRecord.id === 'number') delete newRecord.id; 
+
     const { data: result, error } = await supabase
-      .from(entityName)
+      .from(tableName)
       .insert(newRecord)
       .select()
       .single();
@@ -52,9 +111,10 @@ export const supabaseAdapter = {
 
   update: async (entityName, id, data) => {
     if (!supabase) throw new Error("Supabase not initialized");
+    const tableName = getTableName(entityName);
 
     const { data: result, error } = await supabase
-      .from(entityName)
+      .from(tableName)
       .update(data)
       .eq('id', id)
       .select()
@@ -66,9 +126,10 @@ export const supabaseAdapter = {
 
   delete: async (entityName, id) => {
     if (!supabase) throw new Error("Supabase not initialized");
+    const tableName = getTableName(entityName);
 
     const { error } = await supabase
-      .from(entityName)
+      .from(tableName)
       .delete()
       .eq('id', id);
 
@@ -84,23 +145,21 @@ export const supabaseAdapter = {
         password: password,
       });
       if (error) throw error;
-      return data.user;
+      return await normalizeUser(data.user);
     },
 
     loginWithGoogle: async (data) => {
       if (!supabase) throw new Error("Supabase not initialized");
       
       if (data.token) {
-        // Exchange Google ID Token for Supabase Session
         const { data: result, error } = await supabase.auth.signInWithIdToken({
           provider: 'google',
           token: data.token,
         });
         if (error) throw error;
-        return result.user;
+        return await normalizeUser(result.user);
       } 
       
-      // Fallback: If no token (should not happen with updated Login.jsx), try OAuth flow (redirects)
       const { data: result, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -111,7 +170,6 @@ export const supabaseAdapter = {
         },
       });
       if (error) throw error;
-      // This path redirects, so it won't return immediately
       return null;
     },
     
@@ -125,18 +183,28 @@ export const supabaseAdapter = {
         }
       });
       if (error) throw error;
-      return data.user;
+      // Profile trigger will handle profile creation
+      return await normalizeUser(data.user);
     },
 
     me: async () => {
       if (!supabase) return null;
       const { data: { user } } = await supabase.auth.getUser();
-      return user;
+      return await normalizeUser(user);
     },
 
     logout: async () => {
       if (!supabase) return;
       await supabase.auth.signOut();
+    },
+
+    requestPasswordReset: async (email) => {
+      if (!supabase) throw new Error("Supabase not initialized");
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin + '/reset-password',
+      });
+      if (error) throw error;
+      return { success: true, message: "Password reset link sent to email" };
     }
   }
 };

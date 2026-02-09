@@ -61,10 +61,23 @@ export default function CompanyInfo() {
   const [showEditCompanyDialog, setShowEditCompanyDialog] = useState(false);
   const [defaultCompanyId, setDefaultCompanyId] = useState(localStorage.getItem('rcas_default_company_id'));
 
-  const { data: companies = [], isLoading, isRefetching } = useQuery({
+  const { data: companies = [], isLoading, isRefetching, refetch, dataUpdatedAt } = useQuery({
     queryKey: ['companies'],
     queryFn: () => rcas.entities.Company.list()
   });
+
+  const handleRefresh = async () => {
+    // Check if data is fresh (fetched within last 5 seconds)
+    if (Date.now() - dataUpdatedAt < 5000) {
+      toast.info("Already Fetched (Data is up to date)");
+      return;
+    }
+    
+    const { isSuccess } = await refetch();
+    if (isSuccess) {
+      toast.success("List refreshed successfully");
+    }
+  };
 
   const company = selectedCompanyId 
     ? companies.find(c => c.id === selectedCompanyId)
@@ -580,7 +593,7 @@ export default function CompanyInfo() {
         secondaryActions={
           <Button 
             variant="outline" 
-            onClick={() => queryClient.invalidateQueries({ queryKey: ['companies'] })}
+            onClick={handleRefresh}
             className="gap-2"
             disabled={isRefetching}
           >
