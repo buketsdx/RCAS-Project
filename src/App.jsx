@@ -127,9 +127,10 @@ function App() {
                     <Suspense fallback={<LoadingSpinner />}>
                       <Routes>
                     {/* Public Routes */}
-                    <Route path="/Login" element={<Login />} />
-                    <Route path="/Signup" element={<Signup />} />
-                    <Route path="/ForgotPassword" element={<ForgotPassword />} />
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/signup" element={<Signup />} />
+                    <Route path="/forgot-password" element={<ForgotPassword />} />
+                    <Route path="/update-password" element={<UpdatePassword />} />
 
                     {/* Protected Routes */}
                     <Route element={<ProtectedRoute />}>

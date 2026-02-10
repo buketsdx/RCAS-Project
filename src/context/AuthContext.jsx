@@ -87,6 +87,7 @@ export const AuthProvider = ({ children }) => {
       if (error) throw error;
       return data;
     } catch (error) {
+      console.error("Login error details:", error);
       toast.error(error.message || "Login failed");
       throw error;
     }
@@ -124,12 +125,15 @@ export const AuthProvider = ({ children }) => {
 
   const resetPassword = async (email) => {
     try {
+      console.log("Attempting to send password reset email to:", email);
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/update-password`,
       });
       if (error) throw error;
+      console.log("Password reset email sent successfully (API returned success)");
       toast.success("Password reset link sent!");
     } catch (error) {
+      console.error("Reset password error:", error);
       toast.error(error.message || "Failed to send reset link");
       throw error;
     }

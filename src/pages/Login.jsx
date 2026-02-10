@@ -38,11 +38,15 @@ export default function Login() {
   });
 
   const onSubmit = async (data) => {
+    console.log("Login form submitted:", data);
     setIsLoading(true);
     try {
+      console.log("Calling signIn...");
       await signIn(data.email, data.password);
+      console.log("SignIn success, navigating...");
       navigate(from, { replace: true });
     } catch (error) {
+      console.error("Login page caught error:", error);
       // Toast handled in AuthContext
     } finally {
       setIsLoading(false);

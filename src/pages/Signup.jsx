@@ -39,6 +39,7 @@ export default function Signup() {
   });
 
   const onSubmit = async (data) => {
+    console.log("Signup form submitted:", data);
     setIsLoading(true);
     try {
       await signUp(data.email, data.password, {
@@ -49,6 +50,7 @@ export default function Signup() {
       toast.success("Account created! Please verify your email.");
       navigate('/login');
     } catch (error) {
+      console.error("Signup page caught error:", error);
       // Toast handled in AuthContext
     } finally {
       setIsLoading(false);

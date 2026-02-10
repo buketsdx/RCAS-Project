@@ -539,7 +539,7 @@ export default function Layout() {
 
   const handleLogout = () => {
     logout();
-    navigate('/Login');
+    navigate('/login');
   };
 
   return (
