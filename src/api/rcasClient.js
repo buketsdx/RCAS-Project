@@ -1,6 +1,7 @@
 
 import { localStorageAdapter } from './adapters/localStorageAdapter';
 import { supabaseAdapter } from './adapters/supabaseAdapter';
+import { insforgeAdapter } from './adapters/insforgeAdapter';
 import { firebaseAdapter } from './adapters/firebaseAdapter';
 import { restApiAdapter } from './adapters/restApiAdapter';
 
@@ -24,6 +25,10 @@ const initializeClient = async () => {
       const config = JSON.parse(savedConfig);
       
       switch (config.provider) {
+        case 'insforge':
+          currentAdapter = insforgeAdapter;
+          await insforgeAdapter.initialize(config);
+          break;
         case 'supabase':
           currentAdapter = supabaseAdapter;
           await supabaseAdapter.initialize(config);
@@ -43,11 +48,22 @@ const initializeClient = async () => {
           break;
       }
     } else {
-      // Check for Environment Variables (Supabase Auto-Discovery)
+      // Check for Environment Variables (InsForge or Supabase)
+      const envInsforgeUrl = import.meta.env.VITE_INSFORGE_BASE_URL;
+      const envInsforgeKey = import.meta.env.VITE_INSFORGE_ANON_KEY;
+      
       const envSupabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const envSupabaseKey = import.meta.env.VITE_SUPABASE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-      if (envSupabaseUrl && envSupabaseKey) {
+      if (envInsforgeUrl && envInsforgeKey) {
+        console.log("Initializing InsForge from Environment Variables");
+        currentAdapter = insforgeAdapter;
+        await insforgeAdapter.initialize({
+          provider: 'insforge',
+          baseUrl: envInsforgeUrl,
+          anonKey: envInsforgeKey
+        });
+      } else if (envSupabaseUrl && envSupabaseKey) {
         console.log("Initializing Supabase from Environment Variables");
         currentAdapter = supabaseAdapter;
         await supabaseAdapter.initialize({
