@@ -666,15 +666,19 @@ export default function Layout() {
           {!sidebarCollapsed ? (
             <>
               <div className="flex items-center gap-3 mb-4 px-2">
-                <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                  <UserCircle className="h-5 w-5" />
+                <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary overflow-hidden">
+                  {user?.user_metadata?.avatar_url ? (
+                    <img src={user.user_metadata.avatar_url} alt="User" className="h-full w-full object-cover" />
+                  ) : (
+                    <UserCircle className="h-5 w-5" />
+                  )}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate text-foreground">
-                    {user?.full_name || 'User'}
+                    {user?.user_metadata?.full_name || user?.email || 'User'}
                   </p>
-                  <p className="text-xs text-muted-foreground truncate">
-                    {user?.role || 'Guest'}
+                  <p className="text-xs text-muted-foreground truncate" title={user?.id}>
+                    {user?.id ? `ID: ${user.id.substring(0, 8)}...` : (user?.role || 'Guest')}
                   </p>
                 </div>
               </div>
