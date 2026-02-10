@@ -1,5 +1,6 @@
 
 import { createClient } from '@supabase/supabase-js';
+import { supabase as defaultSupabase } from '../../lib/supabase';
 
 let supabase = null;
 
@@ -66,17 +67,7 @@ export const supabaseAdapter = {
     if (!config?.supabaseUrl || !config?.supabaseKey) {
       throw new Error("Supabase URL and Key are required");
     }
-
-    // Reuse default client if config matches environment variables to avoid multiple instances
-    const envUrl = import.meta.env.VITE_SUPABASE_URL;
-    const envKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-    if (config.supabaseUrl === envUrl && config.supabaseKey === envKey) {
-      supabase = defaultSupabase;
-    } else {
-      supabase = createClient(config.supabaseUrl, config.supabaseKey);
-    }
-    
+    supabase = createClient(config.supabaseUrl, config.supabaseKey);
     return Promise.resolve();
   },
 
