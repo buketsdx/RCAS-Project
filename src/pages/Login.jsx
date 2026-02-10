@@ -112,6 +112,7 @@ export default function Login() {
                 <Input
                   id="password"
                   type="password"
+                  autoComplete="current-password"
                   {...register('password')}
                 />
                 {errors.password && (
