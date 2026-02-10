@@ -184,6 +184,28 @@ export const SubscriptionProvider = ({ children }) => {
     }
   };
 
+  const buyPremium = async () => {
+    try {
+      // Simulate Payment Process
+      const { data, error } = await supabase.rpc('process_mock_payment', { payment_amount: 49.00 });
+      
+      if (error) throw error;
+
+      if (data?.success) {
+        setProductId(data.key);
+        setPlan(SUBSCRIPTION_PLANS.PREMIUM);
+        localStorage.setItem('rcas_product_id', data.key);
+        return { success: true, key: data.key };
+      } else {
+        throw new Error(data?.message || 'Payment failed');
+      }
+    } catch (err) {
+      console.error("Payment error:", err);
+      toast.error("Payment processing failed. Please try again.");
+      return { success: false };
+    }
+  };
+
   const removeProduct = () => {
     setProductId(null);
     setPlan(SUBSCRIPTION_PLANS.FREE);
@@ -213,6 +235,7 @@ export const SubscriptionProvider = ({ children }) => {
       upgradeToPremium, 
       downgradeToFree,
       activateProduct,
+      buyPremium,
       removeProduct,
       productId,
       unlockWithAd,

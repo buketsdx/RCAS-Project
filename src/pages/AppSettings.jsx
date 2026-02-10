@@ -29,12 +29,25 @@ export default function AppSettings() {
   const queryClient = useQueryClient();
   const { confirm } = useConfirm();
   const { user, hasRole } = useAuth();
-  const { plan, upgradeToPremium, downgradeToFree, activateProduct, removeProduct, productId } = useSubscription();
+  const { plan, upgradeToPremium, downgradeToFree, activateProduct, buyPremium, removeProduct, productId } = useSubscription();
   const [productKeyInput, setProductKeyInput] = useState('');
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
   const handleActivateProduct = async () => {
     if (await activateProduct(productKeyInput)) {
       setProductKeyInput('');
+    }
+  };
+
+  const handleBuyPremium = async () => {
+    setIsProcessingPayment(true);
+    const result = await buyPremium();
+    setIsProcessingPayment(false);
+    
+    if (result.success) {
+      toast.success("Payment Successful!", {
+        description: `Your Product Key: ${result.key} (Auto-activated)`
+      });
     }
   };
 
@@ -475,8 +488,12 @@ export default function AppSettings() {
                       <li className="flex items-center gap-2 text-sm"><Check className="h-4 w-4 text-emerald-500" /> No Ads</li>
                     </ul>
                     {currentPlan.id !== SUBSCRIPTION_PLANS.PREMIUM && (
-                      <Button className="w-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white border-0" onClick={() => upgradeToPremium()}>
-                        Upgrade to Premium
+                      <Button 
+                        className="w-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white border-0" 
+                        onClick={handleBuyPremium}
+                        disabled={isProcessingPayment}
+                      >
+                        {isProcessingPayment ? <LoadingSpinner size="sm" /> : 'Buy Premium ($49)'}
                       </Button>
                     )}
                  </div>
