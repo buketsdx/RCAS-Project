@@ -93,6 +93,7 @@ export default function Login() {
                   id="email"
                   type="email"
                   placeholder="name@example.com"
+                  autoComplete="email"
                   {...register('email')}
                 />
                 {errors.email && (

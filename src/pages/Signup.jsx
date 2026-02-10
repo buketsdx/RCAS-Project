@@ -95,6 +95,7 @@ export default function Signup() {
                 <Input
                   id="fullName"
                   placeholder="John Doe"
+                  autoComplete="name"
                   {...register('fullName')}
                 />
                 {errors.fullName && (
@@ -108,6 +109,7 @@ export default function Signup() {
                   id="email"
                   type="email"
                   placeholder="name@example.com"
+                  autoComplete="email"
                   {...register('email')}
                 />
                 {errors.email && (
@@ -120,6 +122,7 @@ export default function Signup() {
                 <Input
                   id="password"
                   type="password"
+                  autoComplete="new-password"
                   {...register('password')}
                 />
                 {errors.password && (
@@ -132,6 +135,7 @@ export default function Signup() {
                 <Input
                   id="confirmPassword"
                   type="password"
+                  autoComplete="new-password"
                   {...register('confirmPassword')}
                 />
                 {errors.confirmPassword && (
