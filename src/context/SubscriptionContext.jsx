@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { useAuth } from '@/context/AuthContext';
+import { supabase } from '@/lib/supabase';
 
 const SubscriptionContext = createContext(null);
 const BACKEND_URL = 'http://localhost:3001/api';
@@ -43,13 +44,33 @@ export const SubscriptionProvider = ({ children }) => {
     }
 
     const fetchSubscription = async () => {
-      // 1. Check Product ID (Priority over backend/local storage)
+      // 1. Check Backend for Claimed Keys (Secure Source of Truth)
+      if (user) {
+        try {
+          const { data, error } = await supabase
+            .from('subscription_keys')
+            .select('plan_type, key_code')
+            .eq('claimed_by', user.id)
+            .eq('status', 'used')
+            .maybeSingle();
+
+          if (data) {
+            setPlan(SUBSCRIPTION_PLANS.PREMIUM);
+            setProductId(data.key_code);
+            return;
+          }
+        } catch (err) {
+          console.error("Error fetching subscription from Supabase:", err);
+        }
+      }
+
+      // 2. Fallback: Check Local Product ID (Mock Database / Legacy)
       if (productId && VALID_PRODUCT_IDS.includes(productId)) {
         setPlan(SUBSCRIPTION_PLANS.PREMIUM);
         return;
       }
 
-      // 1. Try fetching from Backend (Only if configured)
+      // 3. Try fetching from Legacy Backend (Only if configured)
       // Check if backend URL is not localhost default or if explicitly enabled
       // For now, we disable backend fetch by default to avoid console errors in frontend-only mode
       const ENABLE_BACKEND = false; 
@@ -74,7 +95,7 @@ export const SubscriptionProvider = ({ children }) => {
         }
       }
 
-      // 2. Fallback to LocalStorage
+      // 4. Fallback to LocalStorage Preference
       const savedPlan = localStorage.getItem('rcas_subscription_plan');
       if (savedPlan) {
         setPlan(savedPlan);
@@ -82,7 +103,7 @@ export const SubscriptionProvider = ({ children }) => {
     };
 
     fetchSubscription();
-  }, [user]);
+  }, [user, productId]);
 
   const upgradeToPremium = async () => {
     // Optimistic Update
@@ -123,12 +144,39 @@ export const SubscriptionProvider = ({ children }) => {
     }
   };
 
-  const activateProduct = (key) => {
+  const activateProduct = async (key) => {
+    // 1. Try Backend RPC first (Secure)
+    try {
+      const { data, error } = await supabase.rpc('claim_subscription_key', { input_key: key });
+      
+      if (!error && data?.success) {
+        setProductId(key);
+        setPlan(SUBSCRIPTION_PLANS.PREMIUM);
+        localStorage.setItem('rcas_product_id', key);
+        toast.success(data.message || 'Product Key Activated! Welcome to Premium.');
+        return true;
+      }
+
+      // If specific error from backend
+      if (data?.success === false) {
+        toast.error(data.message);
+        // Don't fallback if backend explicitly rejected it
+        return false;
+      }
+      
+      if (error) {
+        console.warn("Supabase RPC failed or not found, falling back to local check (Dev only)", error);
+      }
+    } catch (err) {
+      console.error("Activation error:", err);
+    }
+
+    // 2. Fallback to Local (for development/demo/offline)
     if (VALID_PRODUCT_IDS.includes(key)) {
       setProductId(key);
       setPlan(SUBSCRIPTION_PLANS.PREMIUM);
       localStorage.setItem('rcas_product_id', key);
-      toast.success('Product Key Activated! Welcome to Premium.');
+      toast.success('Product Key Activated! Welcome to Premium (Local Mode).');
       return true;
     } else {
       toast.error('Invalid Product Key.');

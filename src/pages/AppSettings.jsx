@@ -32,8 +32,8 @@ export default function AppSettings() {
   const { plan, upgradeToPremium, downgradeToFree, activateProduct, removeProduct, productId } = useSubscription();
   const [productKeyInput, setProductKeyInput] = useState('');
 
-  const handleActivateProduct = () => {
-    if (activateProduct(productKeyInput)) {
+  const handleActivateProduct = async () => {
+    if (await activateProduct(productKeyInput)) {
       setProductKeyInput('');
     }
   };
