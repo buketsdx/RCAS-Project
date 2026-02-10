@@ -66,7 +66,17 @@ export const supabaseAdapter = {
     if (!config?.supabaseUrl || !config?.supabaseKey) {
       throw new Error("Supabase URL and Key are required");
     }
-    supabase = createClient(config.supabaseUrl, config.supabaseKey);
+
+    // Reuse default client if config matches environment variables to avoid multiple instances
+    const envUrl = import.meta.env.VITE_SUPABASE_URL;
+    const envKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+    if (config.supabaseUrl === envUrl && config.supabaseKey === envKey) {
+      supabase = defaultSupabase;
+    } else {
+      supabase = createClient(config.supabaseUrl, config.supabaseKey);
+    }
+    
     return Promise.resolve();
   },
 
