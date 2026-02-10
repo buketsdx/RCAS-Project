@@ -20,6 +20,7 @@ const Dashboard = React.lazy(() => import('./pages/Dashboard'));
 const Login = React.lazy(() => import('./pages/Login'));
 const Signup = React.lazy(() => import('./pages/Signup'));
 const ForgotPassword = React.lazy(() => import('./pages/ForgotPassword'));
+const UpdatePassword = React.lazy(() => import('./pages/UpdatePassword'));
 
 // Pages - Company Section
 const CompanyInfo = React.lazy(() => import('./pages/CompanyInfo'));

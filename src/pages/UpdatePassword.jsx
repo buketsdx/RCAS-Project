@@ -24,22 +24,43 @@ export default function UpdatePassword() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [session, setSession] = useState(null);
+  const [errorMsg, setErrorMsg] = useState(null);
 
   useEffect(() => {
+    // Check for errors in the URL hash (Supabase returns errors like #error=access_denied&error_code=otp_expired)
+    const hash = window.location.hash;
+    if (hash) {
+      const params = new URLSearchParams(hash.substring(1)); // remove #
+      const error = params.get('error');
+      const error_description = params.get('error_description');
+      
+      if (error) {
+        console.error("Supabase Auth Error from URL:", error, error_description);
+        setErrorMsg(error_description || "Invalid or expired password reset link.");
+        return; // Don't check session if we already have an error
+      }
+    }
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       if (!session) {
-        // If no session, they might have clicked a link that didn't log them in properly 
-        // or the link is invalid/expired.
-        // However, for password reset flow, Supabase usually logs the user in via the link.
         console.log("No session found in UpdatePassword");
+        // Only set error if we didn't find one in the hash already
+        if (!hash.includes('error=')) {
+           // Wait a bit, sometimes session restoration takes a moment.
+           // But if it's truly empty, the user might have come here directly without a link.
+        }
       }
     });
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("Auth state changed in UpdatePassword:", event, session);
       setSession(session);
+      if (event === 'PASSWORD_RECOVERY') {
+         setErrorMsg(null); // Clear errors if recovery flow starts successfully
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -72,6 +93,23 @@ export default function UpdatePassword() {
     }
   };
 
+  if (errorMsg) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950 p-4">
+        <div className="w-full max-w-md space-y-8 text-center">
+            <AppLogo size="lg" className="mb-4 mx-auto" />
+            <div className="p-6 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 rounded-lg">
+                <h3 className="text-lg font-semibold mb-2">Link Expired or Invalid</h3>
+                <p className="mb-4">{errorMsg.replace(/\+/g, ' ')}</p>
+                <Button onClick={() => navigate('/forgot-password')} variant="destructive">
+                    Request New Link
+                </Button>
+            </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950 p-4">
       <div className="w-full max-w-md space-y-8">
@@ -96,6 +134,7 @@ export default function UpdatePassword() {
                 <Input
                   id="password"
                   type="password"
+                  autoComplete="new-password"
                   {...register('password')}
                 />
                 {errors.password && (
@@ -108,6 +147,7 @@ export default function UpdatePassword() {
                 <Input
                   id="confirmPassword"
                   type="password"
+                  autoComplete="new-password"
                   {...register('confirmPassword')}
                 />
                 {errors.confirmPassword && (

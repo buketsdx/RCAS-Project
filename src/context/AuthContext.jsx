@@ -113,13 +113,16 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const signOut = async () => {
+  const logout = async () => {
     try {
-      const { error } = await supabase.auth.signOut();
+      const { error } = await supabase.auth.signOut({ scope: 'local' });
       if (error) throw error;
       toast.success("Logged out successfully");
     } catch (error) {
-      toast.error(error.message || "Logout failed");
+      console.error("Logout error:", error);
+      // Fallback: manually clear local storage if API call fails
+      localStorage.removeItem('sb-ymvqrqtbyxiclewnwhjk-auth-token');
+      toast.success("Logged out locally");
     }
   };
 
@@ -139,14 +142,23 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const hasRole = (requiredRoles) => {
+    if (!requiredRoles || requiredRoles.length === 0) return true;
+    if (!user) return false;
+    
+    const roles = Array.isArray(requiredRoles) ? requiredRoles : [requiredRoles];
+    return roles.includes(user.role);
+  };
+
   const value = {
     user,
     loading,
     signUp,
     signIn,
     signInWithGoogle,
-    signOut,
+    logout,
     resetPassword,
+    hasRole,
   };
 
   return (
