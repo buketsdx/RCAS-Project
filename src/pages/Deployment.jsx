@@ -15,6 +15,18 @@ export default function Deployment() {
 
   const deploymentOptions = [
     {
+      id: 'insforge',
+      name: 'InsForge Hosting',
+      description: 'One-click deployment to InsForge platform.',
+      steps: [
+        'Ensure you have the InsForge MCP server connected',
+        'Ask your AI assistant: "Deploy my app to InsForge"',
+        'The agent will use the create-deployment tool',
+        'Or use the InsForge Dashboard to upload your dist folder'
+      ],
+      link: 'https://insforge.dev'
+    },
+    {
       id: 'xampp',
       name: 'XAMPP / Apache (Windows/Linux)',
       description: 'Run locally or on a standard web server.',
