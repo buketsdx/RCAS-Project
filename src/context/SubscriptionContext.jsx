@@ -29,10 +29,26 @@ export const FEATURE_LIMITS = {
 export const SubscriptionProvider = ({ children }) => {
   const { user } = useAuth();
   const [plan, setPlan] = useState(SUBSCRIPTION_PLANS.FREE);
+  const [productId, setProductId] = useState(localStorage.getItem('rcas_product_id') || null);
   const [adUnlocks, setAdUnlocks] = useState({}); // { feature_action: timestamp }
 
+  // Valid Product IDs (Mock Database)
+  const VALID_PRODUCT_IDS = ['RCAS-PRO-2024', 'PREMIUM-KEY-123', 'RCAS-LIFETIME'];
+
   useEffect(() => {
+    // 0. Super Admin Bypass
+    if (user?.role === 'super_admin') {
+      setPlan(SUBSCRIPTION_PLANS.PREMIUM);
+      return;
+    }
+
     const fetchSubscription = async () => {
+      // 1. Check Product ID (Priority over backend/local storage)
+      if (productId && VALID_PRODUCT_IDS.includes(productId)) {
+        setPlan(SUBSCRIPTION_PLANS.PREMIUM);
+        return;
+      }
+
       // 1. Try fetching from Backend (Only if configured)
       // Check if backend URL is not localhost default or if explicitly enabled
       // For now, we disable backend fetch by default to avoid console errors in frontend-only mode
@@ -107,6 +123,26 @@ export const SubscriptionProvider = ({ children }) => {
     }
   };
 
+  const activateProduct = (key) => {
+    if (VALID_PRODUCT_IDS.includes(key)) {
+      setProductId(key);
+      setPlan(SUBSCRIPTION_PLANS.PREMIUM);
+      localStorage.setItem('rcas_product_id', key);
+      toast.success('Product Key Activated! Welcome to Premium.');
+      return true;
+    } else {
+      toast.error('Invalid Product Key.');
+      return false;
+    }
+  };
+
+  const removeProduct = () => {
+    setProductId(null);
+    setPlan(SUBSCRIPTION_PLANS.FREE);
+    localStorage.removeItem('rcas_product_id');
+    toast.info('Product Key removed. Reverted to Free plan.');
+  };
+
   const unlockWithAd = (actionKey) => {
     // Grant temporary access (e.g., 1 hour)
     setAdUnlocks(prev => ({
@@ -128,6 +164,9 @@ export const SubscriptionProvider = ({ children }) => {
       isPremium: plan === SUBSCRIPTION_PLANS.PREMIUM,
       upgradeToPremium, 
       downgradeToFree,
+      activateProduct,
+      removeProduct,
+      productId,
       unlockWithAd,
       hasAdAccess
     }}>

@@ -55,10 +55,18 @@ export const AuthProvider = ({ children }) => {
       setUser(null);
       return;
     }
-    // Enhance user object with role from metadata
+    // Enhance user object with role from metadata or Env Admin
+    const adminEmail = import.meta.env.VITE_ADMIN_EMAIL;
+    let role = sessionUser.user_metadata?.role || sessionUser.app_metadata?.role || 'user';
+    
+    // Super Admin Override
+    if (sessionUser.email === adminEmail || localStorage.getItem('rcas_super_admin') === 'true') {
+      role = ROLES.SUPER_ADMIN;
+    }
+
     const enhancedUser = {
       ...sessionUser,
-      role: sessionUser.user_metadata?.role || sessionUser.app_metadata?.role || 'user'
+      role: role
     };
     setUser(enhancedUser);
   };

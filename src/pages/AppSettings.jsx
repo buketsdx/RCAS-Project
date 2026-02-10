@@ -11,6 +11,7 @@ import PageHeader from '@/components/common/PageHeader';
 import FormField from '@/components/forms/FormField';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
@@ -28,8 +29,15 @@ export default function AppSettings() {
   const queryClient = useQueryClient();
   const { confirm } = useConfirm();
   const { user, hasRole } = useAuth();
-  const { plan, upgradeToPremium, downgradeToFree } = useSubscription();
-  
+  const { plan, upgradeToPremium, downgradeToFree, activateProduct, removeProduct, productId } = useSubscription();
+  const [productKeyInput, setProductKeyInput] = useState('');
+
+  const handleActivateProduct = () => {
+    if (activateProduct(productKeyInput)) {
+      setProductKeyInput('');
+    }
+  };
+
   const currentPlan = {
     id: plan,
     name: plan === SUBSCRIPTION_PLANS.PREMIUM ? 'Premium Plan' : 'Free Plan',
@@ -371,6 +379,36 @@ export default function AppSettings() {
               <CardDescription>Manage your subscription plan and billing details</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
+              {/* Product Key Activation */}
+              <div className="p-4 border rounded-lg bg-slate-50 dark:bg-slate-900/50 space-y-4">
+                 <div className="flex flex-col gap-2">
+                    <Label>Have a Product Key?</Label>
+                    <div className="flex gap-2">
+                        <Input 
+                          placeholder="Enter your Product ID (e.g. RCAS-PRO-2024)" 
+                          value={productKeyInput}
+                          onChange={(e) => setProductKeyInput(e.target.value)}
+                          className="max-w-md"
+                        />
+                        <Button onClick={handleActivateProduct}>Activate</Button>
+                    </div>
+                    <p className="text-xs text-slate-500">
+                      Enter a valid subscription product ID to unlock Premium features.
+                    </p>
+                 </div>
+                 {productId && (
+                    <div className="flex items-center justify-between bg-emerald-50 dark:bg-emerald-900/20 p-3 rounded border border-emerald-200 dark:border-emerald-900">
+                        <span className="text-sm text-emerald-700 dark:text-emerald-400 font-medium flex items-center gap-2">
+                            <Check className="h-4 w-4" />
+                            Active License: {productId}
+                        </span>
+                        <Button variant="ghost" size="sm" onClick={removeProduct} className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20">
+                            Remove
+                        </Button>
+                    </div>
+                 )}
+              </div>
+
               {/* Current Plan Status */}
               <div className="flex items-center justify-between p-4 border rounded-lg bg-slate-50 dark:bg-slate-900/50">
                 <div className="space-y-1">

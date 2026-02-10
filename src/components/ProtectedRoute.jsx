@@ -21,7 +21,8 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
   }
 
   // Role Based Access Control
-  if (allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {
+  // Super Admin has access to everything
+  if (allowedRoles.length > 0 && user.role !== 'super_admin' && !allowedRoles.includes(user.role)) {
     // If user has no role or wrong role, redirect to dashboard (or unauthorized page if you have one)
     // Preventing infinite redirect if they are already at root/dashboard
     if (location.pathname !== '/' && location.pathname !== '/Dashboard') {
