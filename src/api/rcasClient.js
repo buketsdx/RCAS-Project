@@ -124,7 +124,42 @@ export const rcas = {
 
   getProvider: () => currentAdapter.name,
 
+  // Raw query builder access (for complex queries)
+  from: (table) => {
+    // Note: This assumes synchronous access to client which might be risky if not initialized
+    // We'll try to auto-init if possible, but 'from' returns a builder synchronously usually.
+    if (!isInitialized) {
+       // We can't await here. This method assumes client is ready or we return a proxy/promise.
+       // For now, we'll assume initialization happened at app start.
+       // If strict safety needed, we might need a different pattern.
+       console.warn("RCAS Client accessed before async init complete. This may fail.");
+    }
+    return currentAdapter.from(table);
+  },
+
+  // Remote Procedure Call
+  rpc: async (fn, args) => {
+    if (!isInitialized) await initializeClient();
+    return currentAdapter.rpc(fn, args);
+  },
+
   auth: {
+    onAuthStateChange: (callback) => {
+       // This might need to handle async init internally
+       if (!isInitialized) {
+         initializeClient().then(() => {
+           return currentAdapter.auth.onAuthStateChange(callback);
+         });
+         // Return a dummy unsubscribe if init is pending? 
+         // Ideally we await init before calling this, but hooks like useEffect run sync-ish.
+         // We'll try to delegate immediately.
+       }
+       return currentAdapter.auth.onAuthStateChange(callback);
+    },
+    getSession: async () => {
+      if (!isInitialized) await initializeClient();
+      return currentAdapter.auth.getSession ? currentAdapter.auth.getSession() : { data: { session: null }, error: null };
+    },
     login: async (username, password) => {
       if (!isInitialized) await initializeClient();
       return currentAdapter.auth.login(username, password);

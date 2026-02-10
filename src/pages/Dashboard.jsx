@@ -204,6 +204,7 @@ export default function Dashboard() {
               {user?.role && <span className="text-[10px] px-1.5 py-0.5 bg-primary/10 text-primary rounded-full uppercase">{user.role.replace('_', ' ')}</span>}
             </p>
             <p className="text-xs text-slate-500">{user?.email}</p>
+            <p className="text-[10px] text-slate-400 font-mono mt-0.5">ID: {user?.id?.slice(0, 8)}...</p>
           </div>
           </div>
           

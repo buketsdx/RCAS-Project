@@ -683,12 +683,34 @@ export default function AppSettings() {
                   onChange={(e) => setDbConfig({...dbConfig, provider: e.target.value})}
                   options={[
                     { value: 'local_storage', label: 'Local Storage (Browser Only)' },
+                    { value: 'insforge', label: 'InsForge (Managed Backend)' },
                     { value: 'supabase', label: 'Supabase (PostgreSQL)' },
                     { value: 'firebase', label: 'Firebase (Firestore)' },
                     { value: 'rest_api', label: 'Custom REST API (MySQL/MSSQL/Mongo via Backend)' }
                   ]}
                   description="Choose where your data is stored. Changing this will reload the application."
                 />
+
+                {dbConfig.provider === 'insforge' && (
+                  <div className="space-y-4 border p-4 rounded-lg bg-slate-50">
+                    <FormField
+                      label="InsForge Base URL"
+                      value={dbConfig.baseUrl}
+                      onChange={(e) => setDbConfig({...dbConfig, baseUrl: e.target.value})}
+                      placeholder="https://your-app.region.insforge.app"
+                    />
+                    <FormField
+                      label="Anon Key"
+                      value={dbConfig.anonKey}
+                      onChange={(e) => setDbConfig({...dbConfig, anonKey: e.target.value})}
+                      type="password"
+                      placeholder="public-anon-key"
+                    />
+                    <p className="text-xs text-slate-500">
+                      You can find these details in your InsForge project settings.
+                    </p>
+                  </div>
+                )}
 
                 {dbConfig.provider === 'supabase' && (
                   <div className="space-y-4 border p-4 rounded-lg bg-slate-50">

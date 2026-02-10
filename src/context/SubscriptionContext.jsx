@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { useAuth } from '@/context/AuthContext';
-import { supabase } from '@/lib/supabase';
+import { rcas } from '@/api/rcasClient';
 
 const SubscriptionContext = createContext(null);
 const BACKEND_URL = 'http://localhost:3001/api';
@@ -47,7 +47,8 @@ export const SubscriptionProvider = ({ children }) => {
       // 1. Check Backend for Claimed Keys (Secure Source of Truth)
       if (user) {
         try {
-          const { data, error } = await supabase
+          // Using rcas.from for direct DB access
+          const { data, error } = await rcas
             .from('subscription_keys')
             .select('plan_type, key_code')
             .eq('claimed_by', user.id)
@@ -60,7 +61,7 @@ export const SubscriptionProvider = ({ children }) => {
             return;
           }
         } catch (err) {
-          console.error("Error fetching subscription from Supabase:", err);
+          console.error("Error fetching subscription from Backend:", err);
         }
       }
 
@@ -147,7 +148,7 @@ export const SubscriptionProvider = ({ children }) => {
   const activateProduct = async (key) => {
     // 1. Try Backend RPC first (Secure)
     try {
-      const { data, error } = await supabase.rpc('claim_subscription_key', { input_key: key });
+      const { data, error } = await rcas.rpc('claim_subscription_key', { input_key: key });
       
       if (!error && data?.success) {
         setProductId(key);
@@ -165,7 +166,7 @@ export const SubscriptionProvider = ({ children }) => {
       }
       
       if (error) {
-        console.warn("Supabase RPC failed or not found, falling back to local check (Dev only)", error);
+        console.warn("Backend RPC failed or not found, falling back to local check (Dev only)", error);
       }
     } catch (err) {
       console.error("Activation error:", err);
@@ -187,7 +188,7 @@ export const SubscriptionProvider = ({ children }) => {
   const buyPremium = async () => {
     try {
       // Simulate Payment Process
-      const { data, error } = await supabase.rpc('process_mock_payment', { payment_amount: 49.00 });
+      const { data, error } = await rcas.rpc('process_mock_payment', { payment_amount: 49.00 });
       
       if (error) throw error;
 

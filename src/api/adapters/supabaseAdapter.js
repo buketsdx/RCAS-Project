@@ -138,7 +138,27 @@ export const supabaseAdapter = {
     return { success: true };
   },
 
+  // Raw query builder
+  from: (tableName) => {
+    if (!supabase) throw new Error("Supabase not initialized");
+    return supabase.from(tableName);
+  },
+
+  // RPC
+  rpc: async (fn, args) => {
+    if (!supabase) throw new Error("Supabase not initialized");
+    return await supabase.rpc(fn, args);
+  },
+
   auth: {
+    onAuthStateChange: (callback) => {
+       if (!supabase) return { data: { subscription: { unsubscribe: () => {} } } };
+       return supabase.auth.onAuthStateChange(callback);
+    },
+    getSession: async () => {
+      if (!supabase) return { data: { session: null } };
+      return await supabase.auth.getSession();
+    },
     login: async (username, password) => {
       if (!supabase) throw new Error("Supabase not initialized");
       const { data, error } = await supabase.auth.signInWithPassword({

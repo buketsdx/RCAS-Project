@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
+import { rcas } from '@/api/rcasClient';
 import { toast } from 'react-hot-toast';
 
 const AuthContext = createContext({});
@@ -25,7 +25,7 @@ export const AuthProvider = ({ children }) => {
     // Check active session
     const getSession = async () => {
       try {
-        const { data: { session }, error } = await supabase.auth.getSession();
+        const { data: { session }, error } = await rcas.auth.getSession();
         if (error) {
           console.error("Error getting session:", error);
         }
@@ -40,13 +40,18 @@ export const AuthProvider = ({ children }) => {
     getSession();
 
     // Listen for changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    // rcas.auth.onAuthStateChange returns the subscription object directly or wrapped
+    const subscription = rcas.auth.onAuthStateChange((_event, session) => {
       updateUserState(session?.user);
       setLoading(false);
     });
 
     return () => {
-      subscription?.unsubscribe();
+      if (subscription && subscription.data && subscription.data.subscription) {
+          subscription.data.subscription.unsubscribe();
+      } else if (subscription && typeof subscription.unsubscribe === 'function') {
+          subscription.unsubscribe();
+      }
     };
   }, []);
 
@@ -57,7 +62,7 @@ export const AuthProvider = ({ children }) => {
     }
     // Enhance user object with role from metadata or Env Admin
     const adminEmail = import.meta.env.VITE_ADMIN_EMAIL;
-    let role = sessionUser.user_metadata?.role || sessionUser.app_metadata?.role || 'user';
+    let role = sessionUser.user_metadata?.role || sessionUser.app_metadata?.role || sessionUser.role || 'user';
     
     // Super Admin Override
     if (sessionUser.email === adminEmail || localStorage.getItem('rcas_super_admin') === 'true') {
@@ -73,13 +78,13 @@ export const AuthProvider = ({ children }) => {
 
   const signUp = async (email, password, options = {}) => {
     try {
-      const { data, error } = await supabase.auth.signUp({
+      const full_name = options?.data?.full_name;
+      const user = await rcas.auth.register({
         email,
         password,
-        options,
+        full_name
       });
-      if (error) throw error;
-      return data;
+      return { user };
     } catch (error) {
       toast.error(error.message || "Signup failed");
       throw error;
@@ -88,12 +93,8 @@ export const AuthProvider = ({ children }) => {
 
   const signIn = async (email, password) => {
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      if (error) throw error;
-      return data;
+      const user = await rcas.auth.login(email, password);
+      return { user };
     } catch (error) {
       console.error("Login error details:", error);
       toast.error(error.message || "Login failed");
@@ -103,18 +104,7 @@ export const AuthProvider = ({ children }) => {
 
   const signInWithGoogle = async () => {
     try {
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'consent',
-          },
-          redirectTo: window.location.origin,
-        },
-      });
-      if (error) throw error;
-      return data;
+      await rcas.auth.loginWithGoogle({});
     } catch (error) {
       toast.error(error.message || "Google login failed");
       throw error;
@@ -123,8 +113,7 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      const { error } = await supabase.auth.signOut({ scope: 'local' });
-      if (error) throw error;
+      await rcas.auth.logout();
       toast.success("Logged out successfully");
     } catch (error) {
       console.error("Logout error:", error);
@@ -137,11 +126,11 @@ export const AuthProvider = ({ children }) => {
   const resetPassword = async (email) => {
     try {
       console.log("Attempting to send password reset email to:", email);
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/update-password`,
-      });
-      if (error) throw error;
-      console.log("Password reset email sent successfully (API returned success)");
+      const result = await rcas.auth.requestPasswordReset(email);
+      // Adapter might return { error } or throw
+      if (result && result.error) throw result.error;
+      
+      console.log("Password reset email sent successfully");
       toast.success("Password reset link sent!");
     } catch (error) {
       console.error("Reset password error:", error);

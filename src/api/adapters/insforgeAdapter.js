@@ -147,7 +147,33 @@ export const insforgeAdapter = {
     return { success: true };
   },
 
+  // Raw query builder
+  from: (tableName) => {
+    if (!client) throw new Error("InsForge client not initialized");
+    const db = client.database || client;
+    return db.from(tableName);
+  },
+
+  // RPC
+  rpc: async (fn, args) => {
+    if (!client) throw new Error("InsForge client not initialized");
+    const db = client.database || client;
+    // Assume standard PostgREST rpc support
+    if (db.rpc) {
+      return await db.rpc(fn, args);
+    }
+    throw new Error("RPC not supported by this InsForge client version");
+  },
+
   auth: {
+    onAuthStateChange: (callback) => {
+       if (!client) return { data: { subscription: { unsubscribe: () => {} } } };
+       return client.auth.onAuthStateChange(callback);
+    },
+    getSession: async () => {
+      if (!client) return { data: { session: null } };
+      return await client.auth.getSession();
+    },
     login: async (username, password) => {
       if (!client) throw new Error("InsForge client not initialized");
       const { data, error } = await client.auth.signInWithPassword({
