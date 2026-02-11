@@ -14,40 +14,41 @@ import { SpeedInsights } from '@vercel/speed-insights/react';
 import '@emran-alhaddad/saudi-riyal-font/index.css';
 import Layout from './Layout';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
+import { lazyRetry } from '@/utils/lazyRetry';
 
 // Lazy Load Pages
-const Dashboard = React.lazy(() => import('./pages/Dashboard'));
-const Login = React.lazy(() => import('./pages/Login'));
-const Signup = React.lazy(() => import('./pages/Signup'));
-const ForgotPassword = React.lazy(() => import('./pages/ForgotPassword'));
-const UpdatePassword = React.lazy(() => import('./pages/UpdatePassword'));
+const Dashboard = lazyRetry(() => import('./pages/Dashboard'));
+const Login = lazyRetry(() => import('./pages/Login'));
+const Signup = lazyRetry(() => import('./pages/Signup'));
+const ForgotPassword = lazyRetry(() => import('./pages/ForgotPassword'));
+const UpdatePassword = lazyRetry(() => import('./pages/UpdatePassword'));
 
 // Pages - Company Section
-const CompanyInfo = React.lazy(() => import('./pages/CompanyInfo'));
+const CompanyInfo = lazyRetry(() => import('./pages/CompanyInfo'));
 import CompanyManagement from './pages/CompanyManagement';
-const Branches = React.lazy(() => import('./pages/Branches'));
-const Currencies = React.lazy(() => import('./pages/Currencies'));
+const Branches = lazyRetry(() => import('./pages/Branches'));
+const Currencies = lazyRetry(() => import('./pages/Currencies'));
 
 // Pages - Masters Section
-const AccountGroups = React.lazy(() => import('./pages/AccountGroups'));
-const Ledgers = React.lazy(() => import('./pages/Ledgers'));
-const Customers = React.lazy(() => import('./pages/Customers'));
-const Suppliers = React.lazy(() => import('./pages/Suppliers'));
+import AccountGroups from './pages/AccountGroups';
+import Ledgers from './pages/Ledgers';
+import Customers from './pages/Customers';
+import Suppliers from './pages/Suppliers';
 const SupplierComparison = React.lazy(() => import('./pages/SupplierComparison'));
-const StockGroups = React.lazy(() => import('./pages/StockGroups'));
-const StockItems = React.lazy(() => import('./pages/StockItems'));
-const Units = React.lazy(() => import('./pages/Units'));
-const Godowns = React.lazy(() => import('./pages/Godowns'));
+import StockGroups from './pages/StockGroups';
+import StockItems from './pages/StockItems';
+import Units from './pages/Units';
+import Godowns from './pages/Godowns';
 const CostCenters = React.lazy(() => import('./pages/CostCenters'));
-const VoucherTypes = React.lazy(() => import('./pages/VoucherTypes'));
+import VoucherTypes from './pages/VoucherTypes';
 
 // Pages - Transactions Section
-const Sales = React.lazy(() => import('./pages/Sales'));
-const Purchase = React.lazy(() => import('./pages/Purchase'));
-const ReceiptVoucher = React.lazy(() => import('./pages/ReceiptVoucher'));
-const PaymentVoucher = React.lazy(() => import('./pages/PaymentVoucher'));
-const ContraVoucher = React.lazy(() => import('./pages/ContraVoucher'));
-const JournalVoucher = React.lazy(() => import('./pages/JournalVoucher'));
+const Sales = lazyRetry(() => import('./pages/Sales'));
+const Purchase = lazyRetry(() => import('./pages/Purchase'));
+const ReceiptVoucher = lazyRetry(() => import('./pages/ReceiptVoucher'));
+const PaymentVoucher = lazyRetry(() => import('./pages/PaymentVoucher'));
+const ContraVoucher = lazyRetry(() => import('./pages/ContraVoucher'));
+const JournalVoucher = lazyRetry(() => import('./pages/JournalVoucher'));
 const CreditNote = React.lazy(() => import('./pages/CreditNote'));
 const CreditNoteForm = React.lazy(() => import('./pages/CreditNoteForm'));
 const DebitNote = React.lazy(() => import('./pages/DebitNote'));
