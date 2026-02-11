@@ -1,6 +1,10 @@
 {
   "rewrites": [
     {
+      "source": "/_vercel/speed-insights/vitals",
+      "destination": "https://vitals.vercel-insights.com/v1/vitals"
+    },
+    {
       "source": "/api/(.*)",
       "destination": "https://your-api-url.com/api/$1"
     },
