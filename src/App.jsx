@@ -24,7 +24,7 @@ const UpdatePassword = React.lazy(() => import('./pages/UpdatePassword'));
 
 // Pages - Company Section
 const CompanyInfo = React.lazy(() => import('./pages/CompanyInfo'));
-const CompanyManagement = React.lazy(() => import('./pages/CompanyManagement'));
+import CompanyManagement from './pages/CompanyManagement';
 const Branches = React.lazy(() => import('./pages/Branches'));
 const Currencies = React.lazy(() => import('./pages/Currencies'));
 
