@@ -169,34 +169,43 @@ export default function Dashboard() {
    }
  
    if (!selectedCompanyId) {
-     const hasCompanies = companies && companies.length > 0;
-     const canCreate = hasRole([ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.OWNER]);
- 
-     return (
-       <div className="flex flex-col items-center justify-center h-[80vh] text-center space-y-4">
-         <div className="p-4 rounded-full bg-slate-100 dark:bg-slate-800">
-           <BarChart3 className="h-12 w-12 text-slate-400" />
-         </div>
-         <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
-           {hasCompanies ? "Select a Company" : "No Company Found"}
-         </h2>
-         <p className="text-slate-500 dark:text-slate-400 max-w-md">
-           {hasCompanies 
-             ? "Please select a company from the sidebar to view its dashboard and manage your business."
-             : "You haven't created any company yet. Create your first company to get started."
-           }
-         </p>
-         
-         {!hasCompanies && canCreate && (
-           <Button asChild size="lg" className="mt-4">
-             <Link to="/CompanyManagement">
-               Create New Company
-             </Link>
-           </Button>
-         )}
-       </div>
-     );
-   }
+      const hasCompanies = Array.isArray(companies) && companies.length > 0;
+      const canCreate = hasRole([ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.OWNER]);
+  
+      return (
+        <div className="flex flex-col items-center justify-center h-[80vh] text-center space-y-6 animate-in fade-in zoom-in duration-300">
+          <div className="p-6 rounded-full bg-slate-100 dark:bg-slate-800 shadow-inner">
+            <BarChart3 className="h-16 w-16 text-slate-400" />
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-3xl font-bold text-slate-900 dark:text-white">
+              {hasCompanies ? "Select a Company" : "Get Started with RCAS"}
+            </h2>
+            <p className="text-slate-500 dark:text-slate-400 max-w-md mx-auto">
+              {hasCompanies 
+                ? "Please select a company from the sidebar to access your dashboard and manage operations."
+                : "Welcome! You haven't created a company yet. Create your first company to start managing your business."
+              }
+            </p>
+          </div>
+          
+          {(!hasCompanies && canCreate) && (
+            <Button asChild size="lg" className="px-8 py-6 text-lg shadow-lg hover:shadow-xl transition-all">
+              <Link to="/CompanyManagement" state={{ openCreate: true }}>
+                <Building2 className="mr-2 h-5 w-5" />
+                Create Your First Company
+              </Link>
+            </Button>
+          )}
+
+          {hasCompanies && (
+            <p className="text-sm text-slate-400 italic">
+              Use the sidebar to switch between your companies
+            </p>
+          )}
+        </div>
+      );
+    }
 
   return (
     <div className="space-y-6">

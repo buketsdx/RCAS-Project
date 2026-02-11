@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { rcas } from '@/api/rcasClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useConfirm } from '@/context/ConfirmContext';
 import { useCompany } from '@/context/CompanyContext';
+import { useLocation } from 'react-router-dom';
 import PageHeader from '@/components/common/PageHeader';
 import DataTable from '@/components/common/DataTable';
 import FormField from '@/components/forms/FormField';
@@ -18,12 +19,22 @@ import { cn } from '@/lib/utils';
 
 export default function CompanyManagement() {
   const queryClient = useQueryClient();
+  const location = useLocation();
   const { confirm } = useConfirm();
   const { selectedCompanyId, setSelectedCompanyId } = useCompany();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingCompany, setEditingCompany] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
   
+  // Auto-open create dialog if state passed from Dashboard
+  useEffect(() => {
+    if (location.state?.openCreate) {
+      openDialog();
+      // Clear state to avoid reopening on refresh
+      window.history.replaceState({}, document.title);
+    }
+  }, [location]);
+
   // User Management State
   const [usersDialogOpen, setUsersDialogOpen] = useState(false);
   const [selectedCompanyForUsers, setSelectedCompanyForUsers] = useState(null);
