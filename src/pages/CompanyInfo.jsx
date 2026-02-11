@@ -169,8 +169,18 @@ export default function CompanyInfo() {
         throw error;
       }
     },
-    onSuccess: (newCompany) => {
+    onSuccess: async (newCompany) => {
       console.log('Create mutation success, new company:', newCompany);
+      
+      try {
+        // Seed default master data for the new company
+        if (newCompany && newCompany.id) {
+          await rcas.rpc('seed_company_defaults', { target_company_id: newCompany.id });
+        }
+      } catch (error) {
+        console.error('Error seeding defaults:', error);
+      }
+
       queryClient.invalidateQueries({ queryKey: ['companies'] });
       toast.success('✅ Company created successfully');
       setShowNewCompanyDialog(false);

@@ -69,11 +69,25 @@ export default function CompanyManagement() {
 
   const createMutation = useMutation({
     mutationFn: (data) => rcas.entities.Company.create(data),
-    onSuccess: (newCompany) => {
-      queryClient.invalidateQueries({ queryKey: ['companies'] });
-      setSelectedCompanyId(newCompany.id);
-      toast.success('Company created successfully');
-      closeDialog();
+    onSuccess: async (newCompany) => {
+      try {
+        // Seed default master data for the new company
+        if (newCompany && newCompany.id) {
+          await rcas.rpc('seed_company_defaults', { target_company_id: newCompany.id });
+        }
+        
+        queryClient.invalidateQueries({ queryKey: ['companies'] });
+        setSelectedCompanyId(newCompany.id);
+        toast.success('Company created and initialized with default masters');
+        closeDialog();
+      } catch (error) {
+        console.error('Error seeding defaults:', error);
+        // Even if seeding fails, we show company as created but warn user
+        queryClient.invalidateQueries({ queryKey: ['companies'] });
+        setSelectedCompanyId(newCompany.id);
+        toast.success('Company created, but failed to load default settings');
+        closeDialog();
+      }
     },
     onError: (error) => {
       toast.error(`Failed to create company: ${error.message}`);
