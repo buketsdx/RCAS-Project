@@ -33,6 +33,17 @@ CREATE TABLE IF NOT EXISTS companies (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Ensure user_id column exists if table was created by an older script
+DO $$ 
+BEGIN 
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='companies' AND column_name='user_id') THEN
+        ALTER TABLE companies ADD COLUMN user_id UUID REFERENCES auth.users(id);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='companies' AND column_name='name_arabic') THEN
+        ALTER TABLE companies ADD COLUMN name_arabic TEXT;
+    END IF;
+END $$;
+
 CREATE TABLE IF NOT EXISTS branches (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     company_id UUID REFERENCES companies(id) ON DELETE CASCADE,
@@ -44,6 +55,16 @@ CREATE TABLE IF NOT EXISTS branches (
     is_main BOOLEAN DEFAULT false,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
+DO $$ 
+BEGIN 
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='branches' AND column_name='name_arabic') THEN
+        ALTER TABLE branches ADD COLUMN name_arabic TEXT;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='branches' AND column_name='is_main') THEN
+        ALTER TABLE branches ADD COLUMN is_main BOOLEAN DEFAULT false;
+    END IF;
+END $$;
 
 -------------------------------------------------------------------------------
 -- 2. ACCOUNTING: GROUPS AND LEDGERS
@@ -59,6 +80,16 @@ CREATE TABLE IF NOT EXISTS account_groups (
     is_system BOOLEAN DEFAULT false,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
+DO $$ 
+BEGIN 
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='account_groups' AND column_name='name_arabic') THEN
+        ALTER TABLE account_groups ADD COLUMN name_arabic TEXT;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='account_groups' AND column_name='is_system') THEN
+        ALTER TABLE account_groups ADD COLUMN is_system BOOLEAN DEFAULT false;
+    END IF;
+END $$;
 
 CREATE TABLE IF NOT EXISTS ledgers (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -89,6 +120,16 @@ CREATE TABLE IF NOT EXISTS ledgers (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+DO $$ 
+BEGIN 
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='ledgers' AND column_name='name_arabic') THEN
+        ALTER TABLE ledgers ADD COLUMN name_arabic TEXT;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='ledgers' AND column_name='is_system') THEN
+        ALTER TABLE ledgers ADD COLUMN is_system BOOLEAN DEFAULT false;
+    END IF;
+END $$;
+
 -------------------------------------------------------------------------------
 -- 3. INVENTORY: GROUPS, UNITS, ITEMS
 -------------------------------------------------------------------------------
@@ -101,6 +142,13 @@ CREATE TABLE IF NOT EXISTS stock_groups (
     parent_id UUID REFERENCES stock_groups(id),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
+DO $$ 
+BEGIN 
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='stock_groups' AND column_name='name_arabic') THEN
+        ALTER TABLE stock_groups ADD COLUMN name_arabic TEXT;
+    END IF;
+END $$;
 
 CREATE TABLE IF NOT EXISTS units (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -142,6 +190,13 @@ CREATE TABLE IF NOT EXISTS stock_items (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+DO $$ 
+BEGIN 
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='stock_items' AND column_name='name_arabic') THEN
+        ALTER TABLE stock_items ADD COLUMN name_arabic TEXT;
+    END IF;
+END $$;
+
 -------------------------------------------------------------------------------
 -- 4. VOUCHERS AND TRANSACTIONS
 -------------------------------------------------------------------------------
@@ -174,6 +229,16 @@ CREATE TABLE IF NOT EXISTS vouchers (
     is_posted BOOLEAN DEFAULT true,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
+DO $$ 
+BEGIN 
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='vouchers' AND column_name='branch_id') THEN
+        ALTER TABLE vouchers ADD COLUMN branch_id UUID REFERENCES branches(id);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='vouchers' AND column_name='voucher_type_id') THEN
+        ALTER TABLE vouchers ADD COLUMN voucher_type_id UUID REFERENCES voucher_types(id);
+    END IF;
+END $$;
 
 CREATE TABLE IF NOT EXISTS voucher_items (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
