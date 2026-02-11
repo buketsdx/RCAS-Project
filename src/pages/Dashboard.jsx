@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { rcas } from '@/api/rcasClient';
 import { useQuery } from '@tanstack/react-query';
 import { useCompany } from '@/context/CompanyContext';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth, ROLES } from '@/context/AuthContext';
 import { formatCurrency } from '@/utils';
 import StatCard from '@/components/common/StatCard';
 import QuickAccessCard from '@/components/dashboard/QuickAccessCard';
@@ -10,6 +10,7 @@ import RecentVouchers from '@/components/dashboard/RecentVouchers';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import EmailVerificationBanner from '@/components/EmailVerificationBanner';
 import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
 import { 
   Select,
   SelectContent,
@@ -36,8 +37,8 @@ import {
 import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 
 export default function Dashboard() {
-  const { selectedCompanyId, currentCompany: company } = useCompany();
-  const { user, signOut } = useAuth();
+  const { selectedCompanyId, currentCompany: company, companies, isLoading: loadingCompanies } = useCompany();
+  const { user, signOut, hasRole } = useAuth();
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
 
   const type = company?.type || 'General';
@@ -163,23 +164,39 @@ export default function Dashboard() {
     }
   ];
 
-  if (!selectedCompanyId) {
-    return (
-      <div className="flex flex-col items-center justify-center h-[80vh] text-center space-y-4">
-        <div className="p-4 rounded-full bg-slate-100 dark:bg-slate-800">
-          <BarChart3 className="h-12 w-12 text-slate-400" />
-        </div>
-        <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Select a Company</h2>
-        <p className="text-slate-500 dark:text-slate-400 max-w-md">
-          Please select a company from the sidebar to view its dashboard and manage your business.
-        </p>
-      </div>
-    );
-  }
-
-  if (loadingVouchers) {
-    return <LoadingSpinner />;
-  }
+  if (loadingCompanies || (selectedCompanyId && loadingVouchers)) {
+     return <LoadingSpinner />;
+   }
+ 
+   if (!selectedCompanyId) {
+     const hasCompanies = companies && companies.length > 0;
+     const canCreate = hasRole([ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.OWNER]);
+ 
+     return (
+       <div className="flex flex-col items-center justify-center h-[80vh] text-center space-y-4">
+         <div className="p-4 rounded-full bg-slate-100 dark:bg-slate-800">
+           <BarChart3 className="h-12 w-12 text-slate-400" />
+         </div>
+         <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+           {hasCompanies ? "Select a Company" : "No Company Found"}
+         </h2>
+         <p className="text-slate-500 dark:text-slate-400 max-w-md">
+           {hasCompanies 
+             ? "Please select a company from the sidebar to view its dashboard and manage your business."
+             : "You haven't created any company yet. Create your first company to get started."
+           }
+         </p>
+         
+         {!hasCompanies && canCreate && (
+           <Button asChild size="lg" className="mt-4">
+             <Link to="/CompanyManagement">
+               Create New Company
+             </Link>
+           </Button>
+         )}
+       </div>
+     );
+   }
 
   return (
     <div className="space-y-6">
