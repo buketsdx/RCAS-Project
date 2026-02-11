@@ -32,7 +32,8 @@ import {
   Calculator,
   BarChart3,
   LogOut,
-  User
+  User,
+  Building2
 } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 
