@@ -2,6 +2,9 @@ export const VoucherLedgerEntry = {
   "name": "VoucherLedgerEntry",
   "type": "object",
   "properties": {
+    "company_id": {
+      "type": "string"
+    },
     "voucher_id": {
       "type": "string"
     },
@@ -24,6 +27,7 @@ export const VoucherLedgerEntry = {
     }
   },
   "required": [
+    "company_id",
     "voucher_id",
     "ledger_id"
   ],

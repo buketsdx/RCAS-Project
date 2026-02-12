@@ -5,6 +5,9 @@ export const CustodyTransaction = {
     "transaction_id": {
       "type": "string"
     },
+    "company_id": {
+      "type": "string"
+    },
     "wallet_id": {
       "type": "string"
     },
@@ -38,6 +41,7 @@ export const CustodyTransaction = {
     }
   },
   "required": [
+    "company_id",
     "wallet_id",
     "date",
     "type",

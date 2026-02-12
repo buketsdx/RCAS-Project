@@ -2,6 +2,9 @@ export const VoucherItem = {
   "name": "VoucherItem",
   "type": "object",
   "properties": {
+    "company_id": {
+      "type": "string"
+    },
     "voucher_id": {
       "type": "string"
     },
@@ -50,6 +53,7 @@ export const VoucherItem = {
     }
   },
   "required": [
+    "company_id",
     "voucher_id"
   ],
   "rls": {
