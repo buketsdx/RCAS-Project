@@ -16,6 +16,8 @@ import Layout from './Layout';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import { lazyRetry } from '@/utils/lazyRetry';
 
+const ENABLE_SPEED_INSIGHTS = (import.meta.env.VITE_ENABLE_SPEED_INSIGHTS === 'true');
+
 // Lazy Load Pages
 const Dashboard = lazyRetry(() => import('./pages/Dashboard'));
 const Login = lazyRetry(() => import('./pages/Login'));
@@ -263,7 +265,7 @@ function App() {
           </CompanyProvider>
         </AuthProvider>
         <Toaster />
-        <SpeedInsights />
+        {ENABLE_SPEED_INSIGHTS && <SpeedInsights />}
       </ThemeProvider>
     </QueryClientProvider>
   );

@@ -31,7 +31,11 @@ export const AuthProvider = ({ children }) => {
         }
         updateUserState(session?.user);
       } catch (err) {
-        console.error("Unexpected error checking session:", err);
+        if (err?.name === 'AbortError' || String(err).includes('AbortError')) {
+          // Ignore aborted fetches (navigation or unmount scenarios)
+        } else {
+          console.error("Unexpected error checking session:", err);
+        }
       } finally {
         setLoading(false);
       }
