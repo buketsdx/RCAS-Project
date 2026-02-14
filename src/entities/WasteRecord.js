@@ -2,6 +2,9 @@ export const FlowerWaste = {
   "name": "FlowerWaste",
   "type": "object",
   "properties": {
+    "company_id": {
+      "type": "string"
+    },
     "waste_id": {
       "type": "string",
       "description": "Auto-generated unique waste ID"
@@ -61,6 +64,7 @@ export const FlowerWaste = {
     }
   },
   "required": [
+    "company_id",
     "date",
     "stock_item_id",
     "quantity",

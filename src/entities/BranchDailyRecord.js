@@ -2,6 +2,9 @@ export const BranchDailyRecord = {
   "name": "BranchDailyRecord",
   "type": "object",
   "properties": {
+    "company_id": {
+      "type": "string"
+    },
     "branch_id": {
       "type": "string"
     },
@@ -87,6 +90,7 @@ export const BranchDailyRecord = {
     }
   },
   "required": [
+    "company_id",
     "branch_id",
     "date",
     "status"
