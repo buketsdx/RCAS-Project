@@ -42,6 +42,9 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='companies' AND column_name='name_arabic') THEN
         ALTER TABLE companies ADD COLUMN name_arabic TEXT;
     END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='companies' AND column_name='currency') THEN
+        ALTER TABLE companies ADD COLUMN currency TEXT DEFAULT 'SAR';
+    END IF;
 END $$;
 
 CREATE TABLE IF NOT EXISTS branches (
@@ -295,6 +298,7 @@ ALTER TABLE voucher_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE voucher_ledger_entries ENABLE ROW LEVEL SECURITY;
 
 -- 1. Companies: User can access only their own companies
+DROP POLICY IF EXISTS "Users can manage their own companies" ON companies;
 CREATE POLICY "Users can manage their own companies" ON companies
     FOR ALL USING (user_id = auth.uid());
 
@@ -305,20 +309,31 @@ RETURNS BOOLEAN AS $$
     SELECT EXISTS (SELECT 1 FROM companies WHERE id = cid AND user_id = auth.uid());
 $$ LANGUAGE sql SECURITY DEFINER;
 
+DROP POLICY IF EXISTS "Access branches by company ownership" ON branches;
 CREATE POLICY "Access branches by company ownership" ON branches FOR ALL USING (is_company_owner(company_id));
+DROP POLICY IF EXISTS "Access account_groups by company ownership" ON account_groups;
 CREATE POLICY "Access account_groups by company ownership" ON account_groups FOR ALL USING (is_company_owner(company_id));
+DROP POLICY IF EXISTS "Access ledgers by company ownership" ON ledgers;
 CREATE POLICY "Access ledgers by company ownership" ON ledgers FOR ALL USING (is_company_owner(company_id));
+DROP POLICY IF EXISTS "Access stock_groups by company ownership" ON stock_groups;
 CREATE POLICY "Access stock_groups by company ownership" ON stock_groups FOR ALL USING (is_company_owner(company_id));
+DROP POLICY IF EXISTS "Access units by company ownership" ON units;
 CREATE POLICY "Access units by company ownership" ON units FOR ALL USING (is_company_owner(company_id));
+DROP POLICY IF EXISTS "Access godowns by company ownership" ON godowns;
 CREATE POLICY "Access godowns by company ownership" ON godowns FOR ALL USING (is_company_owner(company_id));
+DROP POLICY IF EXISTS "Access stock_items by company ownership" ON stock_items;
 CREATE POLICY "Access stock_items by company ownership" ON stock_items FOR ALL USING (is_company_owner(company_id));
+DROP POLICY IF EXISTS "Access voucher_types by company ownership" ON voucher_types;
 CREATE POLICY "Access voucher_types by company ownership" ON voucher_types FOR ALL USING (is_company_owner(company_id));
+DROP POLICY IF EXISTS "Access vouchers by company ownership" ON vouchers;
 CREATE POLICY "Access vouchers by company ownership" ON vouchers FOR ALL USING (is_company_owner(company_id));
 
 -- 3. Nested Cascading (Voucher Items and Ledger Entries)
+DROP POLICY IF EXISTS "Access voucher_items via voucher ownership" ON voucher_items;
 CREATE POLICY "Access voucher_items via voucher ownership" ON voucher_items 
     FOR ALL USING (EXISTS (SELECT 1 FROM vouchers WHERE id = voucher_id AND is_company_owner(company_id)));
 
+DROP POLICY IF EXISTS "Access voucher_ledger_entries via voucher ownership" ON voucher_ledger_entries;
 CREATE POLICY "Access voucher_ledger_entries via voucher ownership" ON voucher_ledger_entries 
     FOR ALL USING (EXISTS (SELECT 1 FROM vouchers WHERE id = voucher_id AND is_company_owner(company_id)));
 
