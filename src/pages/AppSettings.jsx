@@ -110,33 +110,55 @@ export default function AppSettings() {
   const [settings, setSettings] = useState(defaultSettings);
   const [settingsId, setSettingsId] = useState(null);
 
-  // Load Settings
-  const { data: existingSettings, isLoading } = useQuery({
-    queryKey: ['settings'],
+  // Load Settings (stored as single JSON blob in Settings entity)
+  const { data: settingsRow, isLoading } = useQuery({
+    queryKey: ['settings', 'app_settings'],
     queryFn: async () => {
       const list = await rcas.entities.Settings.list();
-      return list.length > 0 ? list[0] : null;
+      const row = Array.isArray(list)
+        ? list.find(s => s.setting_key === 'app_settings')
+        : null;
+      return row || null;
     }
   });
 
   useEffect(() => {
-    if (existingSettings) {
-      setSettings(prev => ({ ...prev, ...existingSettings }));
-      setSettingsId(existingSettings.id);
-      
-      // Sync currency context if needed
-      if (existingSettings.base_currency && existingSettings.base_currency !== baseCurrency) {
-        setSelectedCurrency(existingSettings.base_currency, existingSettings.currency_symbol || CURRENCY_SYMBOLS[existingSettings.base_currency]);
+    if (settingsRow) {
+      let parsedSettings = {};
+      if (settingsRow.setting_value) {
+        try {
+          parsedSettings = JSON.parse(settingsRow.setting_value);
+        } catch {
+          parsedSettings = {};
+        }
+      }
+
+      setSettings(prev => ({ ...prev, ...parsedSettings }));
+      setSettingsId(settingsRow.id);
+
+      const baseFromSettings = parsedSettings.base_currency || baseCurrency;
+      const symbolFromSettings =
+        parsedSettings.currency_symbol ||
+        CURRENCY_SYMBOLS[baseFromSettings] ||
+        baseCurrencySymbol;
+
+      if (baseFromSettings && baseFromSettings !== baseCurrency) {
+        setSelectedCurrency(baseFromSettings, symbolFromSettings);
       }
     }
-  }, [existingSettings, baseCurrency, setSelectedCurrency, CURRENCY_SYMBOLS]);
+  }, [settingsRow, baseCurrency, baseCurrencySymbol, setSelectedCurrency, CURRENCY_SYMBOLS]);
 
   const saveMutation = useMutation({
     mutationFn: async (newSettings) => {
+      const payload = {
+        setting_key: 'app_settings',
+        setting_value: JSON.stringify(newSettings),
+        category: 'system'
+      };
       if (settingsId) {
-        return rcas.entities.Settings.update(settingsId, newSettings);
+        return rcas.entities.Settings.update(settingsId, payload);
       } else {
-        return rcas.entities.Settings.create(newSettings);
+        return rcas.entities.Settings.create(payload);
       }
     },
     onSuccess: (data) => {
