@@ -2,6 +2,11 @@
 let apiUrl = '';
 let apiKey = '';
 
+const mapEntityToResource = (entityName) => {
+  if (entityName === 'IDCounter') return 'id_counters';
+  return entityName;
+};
+
 export const restApiAdapter = {
   name: 'rest_api',
   
@@ -17,10 +22,12 @@ export const restApiAdapter = {
   list: async (entityName, context) => {
     if (!apiUrl) throw new Error("API not initialized");
     
+    const resource = mapEntityToResource(entityName);
+
     const params = new URLSearchParams();
     if (context?.companyId) params.append('company_id', context.companyId);
 
-    const response = await fetch(`${apiUrl}/${entityName}?${params.toString()}`, {
+    const response = await fetch(`${apiUrl}/${resource}?${params.toString()}`, {
       headers: {
         'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json'
@@ -34,10 +41,12 @@ export const restApiAdapter = {
   create: async (entityName, data, context) => {
     if (!apiUrl) throw new Error("API not initialized");
 
+    const resource = mapEntityToResource(entityName);
+
     const payload = { ...data };
     if (context?.companyId) payload.company_id = context.companyId;
 
-    const response = await fetch(`${apiUrl}/${entityName}`, {
+    const response = await fetch(`${apiUrl}/${resource}`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${apiKey}`,
@@ -53,7 +62,9 @@ export const restApiAdapter = {
   update: async (entityName, id, data) => {
     if (!apiUrl) throw new Error("API not initialized");
 
-    const response = await fetch(`${apiUrl}/${entityName}/${id}`, {
+    const resource = mapEntityToResource(entityName);
+
+    const response = await fetch(`${apiUrl}/${resource}/${id}`, {
       method: 'PUT',
       headers: {
         'Authorization': `Bearer ${apiKey}`,
@@ -69,7 +80,9 @@ export const restApiAdapter = {
   delete: async (entityName, id) => {
     if (!apiUrl) throw new Error("API not initialized");
 
-    const response = await fetch(`${apiUrl}/${entityName}/${id}`, {
+    const resource = mapEntityToResource(entityName);
+
+    const response = await fetch(`${apiUrl}/${resource}/${id}`, {
       method: 'DELETE',
       headers: {
         'Authorization': `Bearer ${apiKey}`,
