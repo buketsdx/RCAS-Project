@@ -692,7 +692,7 @@ export default function AppSettings() {
                 />
 
                 {dbConfig.provider === 'insforge' && (
-                  <div className="space-y-4 border p-4 rounded-lg bg-slate-50">
+                  <div className="space-y-4 border p-4 rounded-lg bg-slate-50 dark:bg-slate-900/50 dark:border-slate-800">
                     <FormField
                       label="InsForge Base URL"
                       value={dbConfig.baseUrl}
@@ -713,7 +713,7 @@ export default function AppSettings() {
                 )}
 
                 {dbConfig.provider === 'supabase' && (
-                  <div className="space-y-4 border p-4 rounded-lg bg-slate-50">
+                  <div className="space-y-4 border p-4 rounded-lg bg-slate-50 dark:bg-slate-900/50 dark:border-slate-800">
                     <FormField
                       label="Supabase URL"
                       value={dbConfig.supabaseUrl}
@@ -736,7 +736,7 @@ export default function AppSettings() {
                 )}
 
                 {dbConfig.provider === 'firebase' && (
-                  <div className="space-y-4 border p-4 rounded-lg bg-slate-50">
+                  <div className="space-y-4 border p-4 rounded-lg bg-slate-50 dark:bg-slate-900/50 dark:border-slate-800">
                     <FormField
                       label="Firebase API Key"
                       value={dbConfig.apiKey}
@@ -757,7 +757,7 @@ export default function AppSettings() {
                 )}
 
                 {dbConfig.provider === 'rest_api' && (
-                  <div className="space-y-4 border p-4 rounded-lg bg-slate-50">
+                  <div className="space-y-4 border p-4 rounded-lg bg-slate-50 dark:bg-slate-900/50 dark:border-slate-800">
                     <FormField
                       label="API Base URL"
                       value={dbConfig.apiUrl}

@@ -336,7 +336,7 @@ export default function SalesInvoice() {
   if (isLoading && voucherId) return <LoadingSpinner text="Loading invoice..." />;
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50">
+    <div className="min-h-screen flex flex-col bg-background">
       <PageHeader
         title={voucherId ? 'Edit Sales Invoice' : 'New Sales Invoice'}
         subtitle="Create or edit sales invoice"

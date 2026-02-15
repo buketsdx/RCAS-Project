@@ -238,7 +238,7 @@ export default function PurchaseInvoice() {
   if (isLoading && voucherId) return <LoadingSpinner text="Loading..." />;
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50">
+    <div className="min-h-screen flex flex-col bg-background">
       <PageHeader title={voucherId ? 'Edit Purchase Invoice' : 'New Purchase Invoice'} subtitle="Create or edit purchase invoice" backUrl="Purchase" />
       <form onSubmit={(e) => { e.preventDefault(); saveMutation.mutate(); }} className="flex-1 flex flex-col">
         <div className="flex-1 overflow-y-auto px-4 md:px-8 py-6">
