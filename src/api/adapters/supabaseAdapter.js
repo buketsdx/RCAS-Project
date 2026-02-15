@@ -31,7 +31,8 @@ const tableMapping = {
   CustodyTransaction: 'custody_transactions',
   FlowerWaste: 'flower_waste',
   BankReconciliation: 'bank_reconciliations',
-  ZATCAInvoice: 'zatca_invoices'
+  ZATCAInvoice: 'zatca_invoices',
+  IDCounter: 'id_counters'
 };
 
 const getTableName = (entityName) => {
