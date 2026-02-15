@@ -202,8 +202,8 @@ export default function Suppliers() {
       accessor: 'name',
       render: (row) => (
         <div>
-          <p className="font-medium text-slate-800">{row.name}</p>
-          {row.contact_person && <p className="text-xs text-slate-500">{row.contact_person}</p>}
+          <p className="font-medium text-slate-900 dark:text-slate-100">{row.name}</p>
+          {row.contact_person && <p className="text-xs text-slate-600 dark:text-slate-400">{row.contact_person}</p>}
         </div>
       )
     },
@@ -227,7 +227,7 @@ export default function Suppliers() {
       render: (row) => (
         <div className="text-sm">
           {row.phone && <p>{row.phone}</p>}
-          {row.email && <p className="text-slate-500">{row.email}</p>}
+          {row.email && <p className="text-slate-600 dark:text-slate-400">{row.email}</p>}
         </div>
       )
     },

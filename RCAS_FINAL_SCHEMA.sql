@@ -53,6 +53,35 @@ CREATE TABLE IF NOT EXISTS companies (
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Automatically set company owner to current authenticated user if not provided
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_proc 
+        WHERE proname = 'set_company_owner'
+    ) THEN
+        CREATE OR REPLACE FUNCTION set_company_owner()
+        RETURNS trigger
+        LANGUAGE plpgsql
+        SECURITY DEFINER
+        SET search_path = public
+        AS $func$
+        BEGIN
+            IF NEW.user_id IS NULL THEN
+                NEW.user_id := auth.uid();
+            END IF;
+            RETURN NEW;
+        END;
+        $func$;
+    END IF;
+END $$;
+
+DROP TRIGGER IF EXISTS trg_set_company_owner ON companies;
+CREATE TRIGGER trg_set_company_owner
+BEFORE INSERT ON companies
+FOR EACH ROW
+EXECUTE FUNCTION set_company_owner();
+
 -- BRANCHES: Multiple branches per company
 CREATE TABLE IF NOT EXISTS branches (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -853,6 +882,7 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- SECTION 14: TRIGGERS
 -- =============================================================================
 
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
     AFTER INSERT ON auth.users
     FOR EACH ROW EXECUTE FUNCTION handle_new_user();
