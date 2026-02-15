@@ -4,6 +4,7 @@ let apiKey = '';
 
 const mapEntityToResource = (entityName) => {
   if (entityName === 'IDCounter') return 'id_counters';
+  if (entityName === 'Settings') return 'settings';
   return entityName;
 };
 

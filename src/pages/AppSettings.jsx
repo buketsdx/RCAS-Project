@@ -169,8 +169,9 @@ export default function AppSettings() {
       // Update global context
       setSelectedCurrency(settings.base_currency, settings.currency_symbol);
     },
-    onError: () => {
-      toast.error('Failed to save settings');
+    onError: (error) => {
+      console.error('Failed to save settings:', error);
+      toast.error(error?.message || 'Failed to save settings');
     }
   });
 
