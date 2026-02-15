@@ -627,8 +627,7 @@ CREATE TABLE IF NOT EXISTS payments (
 -- SECTION 13: DATABASE FUNCTIONS
 -- =============================================================================
 
--- Helper function to check company ownership
-CREATE OR REPLACE FUNCTION is_company_owner(company_uuid UUID)
+CREATE OR REPLACE FUNCTION is_company_owner(cid UUID)
 RETURNS BOOLEAN
 LANGUAGE sql
 SECURITY DEFINER
@@ -636,7 +635,7 @@ SET search_path = public
 AS $$
     SELECT EXISTS (
         SELECT 1 FROM companies 
-        WHERE id = company_uuid 
+        WHERE id = cid 
         AND user_id = auth.uid()
     );
 $$;
@@ -1106,6 +1105,16 @@ CREATE POLICY "Service role full access to subscription_keys" ON subscription_ke
     FOR ALL TO service_role USING (true);
 
 -- PAYMENTS: Users see their own payments, company owners see company payments
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = 'payments' AND column_name = 'company_id'
+    ) THEN
+        ALTER TABLE payments ADD COLUMN company_id UUID REFERENCES companies(id);
+    END IF;
+END $$;
+
 DROP POLICY IF EXISTS "Access payments by user or company" ON payments;
 CREATE POLICY "Access payments by user or company" ON payments
     FOR ALL TO authenticated
