@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { rcas } from '@/api/rcasClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import PageHeader from '@/components/common/PageHeader';
@@ -92,13 +92,17 @@ export default function BranchDailyClose() {
       const list = await rcas.entities.Branch.list();
       return list.filter(b => String(b.company_id) === String(selectedCompanyId));
     },
-    enabled: !!selectedCompanyId
+    enabled: !!selectedCompanyId,
+    onSuccess: (list) => {
+      setSelectedBranchId(prev => {
+        if (prev) {
+          const stillExists = list.some(b => String(b.id) === String(prev));
+          if (stillExists) return prev;
+        }
+        return list.length > 0 ? list[0].id : '';
+      });
+    }
   });
-
-  // Reset selected branch when company changes
-  useEffect(() => {
-    setSelectedBranchId('');
-  }, [selectedCompanyId]);
 
   const activeBranches = useMemo(() => 
     branches.filter(b => b.status !== 'Permanently Closed'),
@@ -106,7 +110,7 @@ export default function BranchDailyClose() {
   );
 
   // Fetch Today's Record
-  const { data: rawDailyRecords = [], isLoading: isLoadingRecords } = useQuery({
+  const { data: rawDailyRecords = [] } = useQuery({
     queryKey: ['branchDailyRecords', selectedCompanyId],
     queryFn: async () => {
       const list = await rcas.entities.BranchDailyRecord.list();
@@ -157,7 +161,7 @@ export default function BranchDailyClose() {
   const activeEmployees = employees.filter(e => e.is_active !== false);
 
   // Fetch Stylist Entries (New - for Salon)
-  const { data: savedStylistEntries = [] } = useQuery({
+  useQuery({
     queryKey: ['stylistEntries', selectedCompanyId, selectedBranchId, selectedDate],
     queryFn: async () => {
       if (!selectedBranchId) return [];
@@ -167,28 +171,25 @@ export default function BranchDailyClose() {
         e.date === selectedDate
       );
     },
-    enabled: !!selectedBranchId && !!selectedDate && type === 'Salon'
+    enabled: !!selectedBranchId && !!selectedDate && type === 'Salon',
+    onSuccess: (entries) => {
+      if (entries && entries.length > 0) {
+        setStylistServices(prev => {
+          const isSame = prev.length === entries.length &&
+            prev.every((p, i) =>
+              p.stylist_id === entries[i].stylist_id &&
+              p.service_count === entries[i].service_count
+            );
+          return isSame ? prev : entries;
+        });
+      } else {
+        setStylistServices(prev => (prev.length === 0 ? prev : []));
+      }
+    }
   });
-
+ 
   // Local state for stylist services
   const [stylistServices, setStylistServices] = useState([]);
-
-  // Sync state with fetched data
-  useEffect(() => {
-    if (savedStylistEntries.length > 0) {
-      setStylistServices(prev => {
-        // Prevent infinite loop by checking deep equality
-        const isSame = prev.length === savedStylistEntries.length && 
-          prev.every((p, i) => 
-            p.stylist_id === savedStylistEntries[i].stylist_id && 
-            p.service_count === savedStylistEntries[i].service_count
-          );
-        return isSame ? prev : savedStylistEntries;
-      });
-    } else {
-      setStylistServices(prev => prev.length === 0 ? prev : []);
-    }
-  }, [savedStylistEntries, selectedDate, selectedBranchId]);
 
   // Stylist Entry Handlers
   const [newStylistEntry, setNewStylistEntry] = useState({ stylist_id: '', service_count: '' });
@@ -272,15 +273,6 @@ export default function BranchDailyClose() {
     .filter(c => c.isPayableToday)
     .reduce((sum, c) => sum + c.commissionAmount, 0);
 
-  // Derived State
-  const currentRecord = dailyRecords.find(
-    r => r.branch_id === selectedBranchId && r.date === selectedDate
-  );
-
-  const previousRecord = dailyRecords
-    .filter(r => r.branch_id === selectedBranchId && r.date < selectedDate)
-    .sort((a, b) => new Date(b.date) - new Date(a.date))[0];
-
   // Filter for history
   const historyRecords = dailyRecords.filter(r => {
     const rDate = new Date(r.date);
@@ -292,44 +284,57 @@ export default function BranchDailyClose() {
     const branchMatch = !selectedBranchId || r.branch_id === selectedBranchId;
     return branchMatch && rDate >= start && rDate <= end;
   }).sort((a, b) => new Date(b.date) - new Date(a.date));
-
-  // Auto-select first active branch or validate current selection
-  useEffect(() => {
-    if (activeBranches.length > 0) {
-      const isValid = activeBranches.find(b => b.id === selectedBranchId);
-      if (!selectedBranchId || !isValid) {
-        setSelectedBranchId(activeBranches[0].id);
+ 
+  // Load current record into form when available
+  const { data: currentRecord } = useQuery({
+    queryKey: ['branchDailyRecord', selectedCompanyId, selectedBranchId, selectedDate],
+    queryFn: async () => {
+      if (!selectedCompanyId || !selectedBranchId || !selectedDate) return null;
+      const list = await rcas.entities.BranchDailyRecord.list();
+      return list.find(
+        (r) =>
+          r.branch_id === selectedBranchId &&
+          r.date === selectedDate
+      ) || null;
+    },
+    enabled: !!selectedCompanyId && !!selectedBranchId && !!selectedDate,
+    onSuccess: (record) => {
+      if (record) {
+        setFormData({
+          opening_cash: record.opening_cash || '',
+          deposited_by: record.deposited_by || '',
+          cash_received: record.cash_received || '',
+          cash_sales: record.cash_sales || '',
+          expenses: record.expenses || '',
+          drawings: record.drawings || '',
+          purchases: record.purchases || '',
+          employee_expenses: record.employee_expenses || '',
+          bank_transfer: record.bank_transfer || '',
+          mada_pos: record.mada_pos || '',
+          online_order_sales: record.online_order_sales || '',
+          closing_cash_actual: record.closing_cash_actual || '',
+          notes: record.notes || ''
+        });
+      } else {
+        setFormData(prev => ({
+          ...prev,
+          opening_cash: '',
+          deposited_by: '',
+          cash_received: '',
+          cash_sales: '',
+          expenses: '',
+          drawings: '',
+          purchases: '',
+          employee_expenses: '',
+          bank_transfer: '',
+          mada_pos: '',
+          online_order_sales: '',
+          closing_cash_actual: '',
+          notes: ''
+        }));
       }
-    } else {
-      setSelectedBranchId('');
     }
-  }, [activeBranches, selectedBranchId]);
-
-  // Load data into form
-  useEffect(() => {
-    if (currentRecord) {
-      setFormData({
-        opening_cash: currentRecord.opening_cash || '',
-        deposited_by: currentRecord.deposited_by || '',
-        cash_received: currentRecord.cash_received || '',
-        cash_sales: currentRecord.cash_sales || '',
-        expenses: currentRecord.expenses || '',
-        drawings: currentRecord.drawings || '',
-        purchases: currentRecord.purchases || '',
-        employee_expenses: currentRecord.employee_expenses || '',
-        bank_transfer: currentRecord.bank_transfer || '',
-        mada_pos: currentRecord.mada_pos || '',
-        online_order_sales: currentRecord.online_order_sales || '',
-        closing_cash_actual: currentRecord.closing_cash_actual || '',
-        notes: currentRecord.notes || ''
-      });
-    } else if (previousRecord) {
-      setFormData(prev => ({
-        ...prev,
-        opening_cash: previousRecord.closing_cash_actual || ''
-      }));
-    }
-  }, [currentRecord, previousRecord]);
+  });
 
   // Calculate totals from vouchers
   const calculateSystemTotals = () => {

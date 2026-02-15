@@ -62,7 +62,7 @@ export default function Signup() {
     try {
       await signInWithGoogle();
     } catch (error) {
-       // Toast handled in AuthContext
+      console.error("Google signup error:", error);
     } finally {
       setIsLoading(false);
     }

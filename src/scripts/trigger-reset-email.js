@@ -1,3 +1,4 @@
+/* eslint-env node */
 const fs = require('fs');
 const path = require('path');
 const { createClient } = require('@supabase/supabase-js');
@@ -5,7 +6,7 @@ const { createClient } = require('@supabase/supabase-js');
 // Function to load .env file manually since dotenv might not be installed
 function loadEnv() {
   try {
-    const envPath = path.resolve(__dirname, '../../.env');
+  const envPath = path.resolve(process.cwd(), '.env');
     if (!fs.existsSync(envPath)) {
       console.error('Error: .env file not found at', envPath);
       process.exit(1);
@@ -49,7 +50,7 @@ async function sendResetEmail() {
   console.log(`Attempting to send password reset email to: ${email}`);
   console.log(`Using Supabase URL: ${supabaseUrl}`);
 
-  const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
     redirectTo: 'http://localhost:5173/update-password',
   });
 

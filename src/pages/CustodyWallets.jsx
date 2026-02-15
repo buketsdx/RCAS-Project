@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
 import { rcas } from '@/api/rcasClient';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCompany } from '@/context/CompanyContext';
 import { useConfirm } from '@/context/ConfirmContext';
 import { formatCurrency, exportToCSV } from '@/utils';
@@ -30,8 +29,6 @@ export default function CustodyWallets() {
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [adWatchOpen, setAdWatchOpen] = useState(false);
   const [pendingAction, setPendingAction] = useState(null);
-
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [transactionDialogOpen, setTransactionDialogOpen] = useState(false);
@@ -39,21 +36,8 @@ export default function CustodyWallets() {
   const [selectedWallet, setSelectedWallet] = useState(null);
   const [showTypeDialog, setShowTypeDialog] = useState(false);
   const [newTypeData, setNewTypeData] = useState({ name: '', nature: 'Withdrawal' });
-  
-  // Safe initialization of availableTypes
-  const [availableTypes, setAvailableTypes] = useState([]);
 
-  useEffect(() => {
-    try {
-      if (typeof getAllTypes === 'function') {
-        setAvailableTypes(getAllTypes());
-      } else {
-        console.error("getAllTypes is not a function");
-      }
-    } catch (e) {
-      console.error("Error loading types:", e);
-    }
-  }, []);
+  const availableTypes = typeof getAllTypes === 'function' ? getAllTypes() : [];
 
   const [formData, setFormData] = useState({
     name: '', holder_name: '', holder_type: 'Employee', currency: 'SAR', purpose: '', contact_phone: '', notes: ''
@@ -221,7 +205,6 @@ export default function CustodyWallets() {
     
     const newType = { value: newTypeData.name, label: newTypeData.name, nature: newTypeData.nature };
     addStoredType(newType);
-    setAvailableTypes(getAllTypes());
     setTransactionData(prev => ({ ...prev, type: newType.value }));
     setShowTypeDialog(false);
     setNewTypeData({ name: '', nature: 'Withdrawal' });

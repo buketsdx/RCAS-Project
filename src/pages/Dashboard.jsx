@@ -35,7 +35,6 @@ import {
   User,
   Building2
 } from 'lucide-react';
-import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 
 export default function Dashboard() {
   const { selectedCompanyId, currentCompany: company, companies, isLoading: loadingCompanies } = useCompany();
@@ -84,16 +83,6 @@ export default function Dashboard() {
       if (!selectedCompanyId) return [];
       const list = await rcas.entities.Voucher.list('-created_date', 1000);
       return list.filter(v => String(v.company_id) === String(selectedCompanyId));
-    },
-    enabled: !!selectedCompanyId
-  });
-
-  const { data: ledgers = [] } = useQuery({
-    queryKey: ['ledgers', selectedCompanyId],
-    queryFn: async () => {
-      if (!selectedCompanyId) return [];
-      const list = await rcas.entities.Ledger.list();
-      return list.filter(l => String(l.company_id) === String(selectedCompanyId));
     },
     enabled: !!selectedCompanyId
   });

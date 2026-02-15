@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { rcas } from '@/api/rcasClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCompany } from '@/context/CompanyContext';
@@ -21,7 +21,7 @@ export default function CompanyInfo() {
   console.log("Rendering CompanyInfo Component");
   const queryClient = useQueryClient();
   const { confirm } = useConfirm();
-  const { selectedCompanyId, setSelectedCompanyId, companies: contextCompanies, isLoading: contextLoading } = useCompany();
+  const { selectedCompanyId, setSelectedCompanyId } = useCompany();
   const canvasRef = useRef(null);
   const previewRef = useRef(null);
   const [formData, setFormData] = useState({
@@ -82,48 +82,6 @@ export default function CompanyInfo() {
   const company = selectedCompanyId 
     ? companies.find(c => c.id === selectedCompanyId)
     : companies[0];
-
-  useEffect(() => {
-    if (company) {
-      setFormData({
-        name: company.name || '',
-        name_arabic: company.name_arabic || '',
-        address: company.address || '',
-        city: company.city || '',
-        country: company.country || 'Saudi Arabia',
-        postal_code: company.postal_code || '',
-        phone: company.phone || '',
-        email: company.email || '',
-        website: company.website || '',
-        vat_number: company.vat_number || '',
-        cr_number: company.cr_number || '',
-        financial_year_start: company.financial_year_start || '',
-        financial_year_end: company.financial_year_end || '',
-        currency: company.currency || 'SAR',
-        logo_url: company.logo_url || '',
-        business_type: company.business_type || 'Retail'
-      });
-    } else {
-      setFormData({
-        name: '',
-        name_arabic: '',
-        address: '',
-        city: '',
-        country: 'Saudi Arabia',
-        postal_code: '',
-        phone: '',
-        email: '',
-        website: '',
-        vat_number: '',
-        cr_number: '',
-        financial_year_start: '',
-        financial_year_end: '',
-        currency: 'SAR',
-        logo_url: '',
-        business_type: 'Retail'
-      });
-    }
-  }, [company]);
 
   const saveMutation = useMutation({
     mutationFn: async (data) => {
@@ -288,6 +246,24 @@ export default function CompanyInfo() {
               onClick={(e) => {
                 e.stopPropagation();
                 setSelectedCompanyId(row.id);
+                setFormData({
+                  name: row.name || '',
+                  name_arabic: row.name_arabic || '',
+                  address: row.address || '',
+                  city: row.city || '',
+                  country: row.country || 'Saudi Arabia',
+                  postal_code: row.postal_code || '',
+                  phone: row.phone || '',
+                  email: row.email || '',
+                  website: row.website || '',
+                  vat_number: row.vat_number || '',
+                  cr_number: row.cr_number || '',
+                  financial_year_start: row.financial_year_start || '',
+                  financial_year_end: row.financial_year_end || '',
+                  currency: row.currency || 'SAR',
+                  logo_url: row.logo_url || '',
+                  business_type: row.business_type || 'Retail'
+                });
                 setShowEditCompanyDialog(true);
               }}
             >
@@ -440,8 +416,6 @@ export default function CompanyInfo() {
     if (!imgElement) return;
 
     const imgRect = imgElement.getBoundingClientRect();
-    const relX = e.clientX - imgRect.left;
-    const relY = e.clientY - imgRect.top;
 
     const offsetX = imgRect.left - rect.left;
     const offsetY = imgRect.top - rect.top;

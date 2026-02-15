@@ -102,14 +102,24 @@ export default function StockItemReport() {
     })
     .sort((a, b) => new Date(a.voucher?.date) - new Date(b.voucher?.date));
 
-  let runningQty = parseFloat(stockItem?.opening_qty || 0);
-  const transactionsWithBalance = itemTransactions.map(t => {
+  const openingQty = parseFloat(stockItem?.opening_qty || 0);
+  const transactionsWithBalance = itemTransactions.reduce((acc, t) => {
     const qty = parseFloat(t.quantity) || 0;
     const isInward = ['Purchase', 'Credit Note', 'Receipt Note', 'Stock Increase'].includes(t.voucher?.voucher_type);
-    if (isInward) runningQty += qty;
-    else runningQty -= qty;
-    return { ...t, inward: isInward ? qty : 0, outward: !isInward ? qty : 0, balance: runningQty };
-  });
+    const previousBalance = acc.length > 0 ? acc[acc.length - 1].balance : openingQty;
+    const balance = isInward ? previousBalance + qty : previousBalance - qty;
+    acc.push({
+      ...t,
+      inward: isInward ? qty : 0,
+      outward: !isInward ? qty : 0,
+      balance
+    });
+    return acc;
+  }, []);
+
+  const closingQty = transactionsWithBalance.length > 0
+    ? transactionsWithBalance[transactionsWithBalance.length - 1].balance
+    : openingQty;
 
   const totalInward = transactionsWithBalance.reduce((sum, t) => sum + t.inward, 0);
   const totalOutward = transactionsWithBalance.reduce((sum, t) => sum + t.outward, 0);
@@ -157,11 +167,11 @@ export default function StockItemReport() {
                 </div>
                 <div className="p-4 bg-blue-50 rounded-lg">
                   <p className="text-sm text-slate-500">Closing {terms.stock}</p>
-                  <p className="text-xl font-bold text-blue-600">{runningQty.toFixed(2)} {unit?.name}</p>
+                  <p className="text-xl font-bold text-blue-600">{closingQty.toFixed(2)} {unit?.name}</p>
                 </div>
                 <div className="p-4 bg-purple-50 rounded-lg">
                   <p className="text-sm text-slate-500">Value</p>
-                  <p className="text-xl font-bold text-purple-600">{formatCurrency(runningQty * parseFloat(stockItem.cost_price || 0), 'SAR')}</p>
+                  <p className="text-xl font-bold text-purple-600">{formatCurrency(closingQty * parseFloat(stockItem.cost_price || 0), 'SAR')}</p>
                 </div>
               </div>
             </CardContent>

@@ -118,7 +118,7 @@ export const parseJWT = (token) => {
         .join('')
     );
     return JSON.parse(jsonPayload);
-  } catch (e) {
+  } catch {
     return null;
   }
 };
@@ -192,9 +192,7 @@ export const initializeSystemLedgers = async (accountGroups) => {
 
     // Find group IDs
     const cashGroup = accountGroups.find(g => g.name === 'Bank Accounts' || g.name === 'Cash');
-    const receivableGroup = accountGroups.find(g => g.name === 'Accounts Receivable');
     const payableGroup = accountGroups.find(g => g.name === 'Accounts Payable');
-    const expenseGroup = accountGroups.find(g => g.name === 'Expenses');
 
     const inbuiltLedgers = [
       {

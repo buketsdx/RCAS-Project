@@ -48,7 +48,19 @@ export default function PaymentVoucher() {
       const list = await rcas.entities.Voucher.list();
       return list.find(v => v.id === voucherId && String(v.company_id) === String(selectedCompanyId));
     },
-    enabled: !!voucherId && !!selectedCompanyId
+    enabled: !!voucherId && !!selectedCompanyId,
+    onSuccess: (voucher) => {
+      if (voucher) {
+        setFormData({
+          voucher_type: 'Payment',
+          voucher_number: voucher.voucher_number || '',
+          date: voucher.date || format(new Date(), 'yyyy-MM-dd'),
+          party_name: voucher.party_name || '',
+          narration: voucher.narration || '',
+          net_amount: voucher.net_amount || 0
+        });
+      }
+    }
   });
 
   const { data: existingEntries = [] } = useQuery({
@@ -57,23 +69,20 @@ export default function PaymentVoucher() {
       const all = await rcas.entities.VoucherLedgerEntry.list();
       return all.filter(e => e.voucher_id === voucherId);
     },
-    enabled: !!voucherId && !!existingVoucher
+    enabled: !!voucherId && !!existingVoucher,
+    onSuccess: (entriesFromServer) => {
+      if (entriesFromServer && entriesFromServer.length > 0) {
+        setEntries(entriesFromServer.map(e => ({
+          id: e.id,
+          ledger_id: e.ledger_id,
+          ledger_name: e.ledger_name,
+          debit_amount: e.debit_amount || 0,
+          credit_amount: e.credit_amount || 0
+        })));
+      }
+    }
   });
 
-  useEffect(() => {
-    if (existingVoucher) {
-      setFormData({
-        voucher_type: 'Payment',
-        voucher_number: existingVoucher.voucher_number || '',
-        date: existingVoucher.date || format(new Date(), 'yyyy-MM-dd'),
-        party_name: existingVoucher.party_name || '',
-        narration: existingVoucher.narration || '',
-        net_amount: existingVoucher.net_amount || 0
-      });
-    }
-  }, [existingVoucher]);
-
-  // Auto-generate voucher code on mount if creating new voucher
   useEffect(() => {
     if (!voucherId && !formData.voucher_number) {
       generateVoucherCode('Payment').then(code => {
@@ -83,16 +92,7 @@ export default function PaymentVoucher() {
         }));
       });
     }
-  }, [voucherId]);
-
-  useEffect(() => {
-    if (existingEntries.length > 0) {
-      setEntries(existingEntries.map(e => ({
-        id: e.id, ledger_id: e.ledger_id, ledger_name: e.ledger_name,
-        debit_amount: e.debit_amount || 0, credit_amount: e.credit_amount || 0
-      })));
-    }
-  }, [existingEntries]);
+  }, [voucherId, formData.voucher_number]);
 
   const saveMutation = useMutation({
     mutationFn: async () => {

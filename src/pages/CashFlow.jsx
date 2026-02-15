@@ -41,7 +41,6 @@ export default function CashFlow() {
   const totalPurchases = purchases.reduce((sum, v) => sum + (parseFloat(v.net_amount) || 0), 0);
 
   const netCashFlow = totalReceipts - totalPayments;
-  const netOperating = totalSales - totalPurchases;
 
   // Monthly chart data
   const months = eachMonthOfInterval({

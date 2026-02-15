@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
 import { rcas } from '@/api/rcasClient';
 import { useQuery } from '@tanstack/react-query';
-import { formatCurrency } from '@/utils';
 import PageHeader from '@/components/common/PageHeader';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import FormField from '@/components/forms/FormField';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { format, endOfMonth } from 'date-fns';
-import { Scale, Printer, Download } from 'lucide-react';
+import { Scale, Printer } from 'lucide-react';
 import { useCompany } from '@/context/CompanyContext';
 import { Button } from "@/components/ui/button";
 

@@ -23,7 +23,6 @@ const updatePasswordSchema = z.object({
 export default function UpdatePassword() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
-  const [session, setSession] = useState(null);
   const [errorMsg, setErrorMsg] = useState(null);
 
   useEffect(() => {
@@ -42,7 +41,6 @@ export default function UpdatePassword() {
     }
 
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
       if (!session) {
         console.log("No session found in UpdatePassword");
         // Only set error if we didn't find one in the hash already
@@ -57,7 +55,6 @@ export default function UpdatePassword() {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
       console.log("Auth state changed in UpdatePassword:", event, session);
-      setSession(session);
       if (event === 'PASSWORD_RECOVERY') {
          setErrorMsg(null); // Clear errors if recovery flow starts successfully
       }

@@ -13,7 +13,6 @@ import { Button } from "@/components/ui/button";
 
 export default function ProfitAndLoss() {
   const { selectedCompanyId } = useCompany();
-  const currentYear = new Date().getFullYear();
   const [filters, setFilters] = useState({
     fromDate: format(startOfYear(new Date()), 'yyyy-MM-dd'),
     toDate: format(endOfYear(new Date()), 'yyyy-MM-dd')

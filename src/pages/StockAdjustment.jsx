@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { rcas } from '@/api/rcasClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCompany } from '../context/CompanyContext';
@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { format } from 'date-fns';
 import { Save, RefreshCw } from 'lucide-react';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
+import { generateVoucherCode } from '@/utils';
 
 export default function StockAdjustment() {
   const { type, selectedCompanyId } = useCompany();
@@ -66,23 +67,13 @@ export default function StockAdjustment() {
 
   const selectedItem = items.find(i => i.id === formData.item_id);
 
-  // Auto-fill rate when item changes
-  useEffect(() => {
-    if (selectedItem && !formData.rate) {
-      setFormData(prev => ({
-        ...prev,
-        rate: selectedItem.cost_price || selectedItem.opening_rate || ''
-      }));
-    }
-  }, [selectedItem?.id]);
-
   const createMutation = useMutation({
     mutationFn: async (data) => {
       // 1. Create Voucher
       const voucher = await rcas.entities.Voucher.create({
         voucher_type: data.type,
         date: data.date,
-        voucher_number: `SA-${Date.now()}`,
+        voucher_number: data.voucher_number,
         reference_number: data.reference_number,
         narration: data.narration,
         status: 'Confirmed',
@@ -132,18 +123,28 @@ export default function StockAdjustment() {
     }
   });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.item_id || !formData.quantity) {
       toast.error(`Please select an ${terms.item.toLowerCase()} and enter quantity`);
       return;
     }
-    createMutation.mutate(formData);
+    const voucher_number = await generateVoucherCode('Stock Adjustment');
+    createMutation.mutate({ ...formData, voucher_number });
   };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData(prev => {
+      const updated = { ...prev, [name]: value };
+      if (name === 'item_id') {
+        const item = items.find(i => i.id === value);
+        if (item) {
+          updated.rate = item.cost_price || item.opening_rate || '';
+        }
+      }
+      return updated;
+    });
   };
 
   if (isLoading) return <LoadingSpinner text={`Loading ${terms.item.toLowerCase()}s...`} />;

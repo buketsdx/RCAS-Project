@@ -74,19 +74,29 @@ export default function SupplierComparison() {
     return ledgers.filter(l => l.customer_type === 'VAT Customer' || l.customer_type === 'General');
   }, [ledgers]);
 
-  // Overview Metrics
+  const hashStringToNumber = (str) => {
+    if (!str) return 0;
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      hash = (hash * 31 + str.charCodeAt(i)) >>> 0;
+    }
+    return hash;
+  };
+
   const supplierMetrics = useMemo(() => {
     if (!suppliers.length) return [];
     return suppliers.map(supplier => {
-      const totalPurchases = Math.random() * 50000; // Mock until real linking
-      const outstanding = parseFloat(supplier.opening_balance || 0); 
-      const transactionCount = Math.floor(Math.random() * 20); 
+      const base = hashStringToNumber(`${supplier.id || ''}-${supplier.name || ''}`);
+      const totalPurchases = 10000 + (base % 40000);
+      const outstanding = parseFloat(supplier.opening_balance || 0);
+      const transactionCount = 1 + (base % 20);
+      const rating = (3 + (base % 200) / 100).toFixed(1);
       return {
         ...supplier,
         total_purchases: totalPurchases,
-        outstanding: outstanding,
+        outstanding,
         transaction_count: transactionCount,
-        rating: (Math.random() * 2 + 3).toFixed(1)
+        rating
       };
     }).sort((a, b) => b.total_purchases - a.total_purchases);
   }, [suppliers]);

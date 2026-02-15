@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { rcas } from '@/api/rcasClient';
-import { useAuth, ROLES } from '@/context/AuthContext';
+import { ROLES } from '@/context/AuthContext';
 import { useConfirm } from '@/context/ConfirmContext';
 import PageHeader from '@/components/common/PageHeader';
 import DataTable from '@/components/common/DataTable';
@@ -72,6 +72,7 @@ export default function UserManagement() {
       setDialogOpen(false);
       loadUsers();
     } catch (error) {
+      console.error("Failed to save user", error);
       toast.error("Operation failed");
     }
   };
@@ -101,6 +102,7 @@ export default function UserManagement() {
       toast.success("User deleted successfully");
       loadUsers();
     } catch (error) {
+      console.error("Failed to delete user", error);
       toast.error("Failed to delete user");
     }
   };

@@ -29,7 +29,7 @@ export default function AppSettings() {
   const queryClient = useQueryClient();
   const { confirm } = useConfirm();
   const { user, hasRole } = useAuth();
-  const { plan, upgradeToPremium, downgradeToFree, activateProduct, buyPremium, removeProduct, productId } = useSubscription();
+  const { plan, downgradeToFree, activateProduct, buyPremium, removeProduct, productId } = useSubscription();
   const [productKeyInput, setProductKeyInput] = useState('');
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
@@ -114,11 +114,20 @@ export default function AppSettings() {
   const { data: settingsRow, isLoading } = useQuery({
     queryKey: ['settings', 'app_settings'],
     queryFn: async () => {
-      const list = await rcas.entities.Settings.list();
-      const row = Array.isArray(list)
-        ? list.find(s => s.setting_key === 'app_settings')
-        : null;
-      return row || null;
+      try {
+        const list = await rcas.entities.Settings.list();
+        const row = Array.isArray(list)
+          ? list.find(s => s.setting_key === 'app_settings')
+          : null;
+        return row || null;
+      } catch (error) {
+        console.error('Failed to load settings from backend:', error);
+        const fallback = localStorage.getItem('rcas_app_settings_fallback');
+        if (fallback) {
+          return { id: null, setting_value: fallback };
+        }
+        return null;
+      }
     }
   });
 
@@ -171,7 +180,7 @@ export default function AppSettings() {
     },
     onError: (error) => {
       console.error('Failed to save settings:', error);
-      toast.error(error?.message || 'Failed to save settings');
+      toast.warning('Settings saved locally. Backend error while saving to server.');
     }
   });
 
@@ -181,6 +190,11 @@ export default function AppSettings() {
 
   const handleSave = () => {
     console.log("Saving settings...", settings);
+    try {
+      localStorage.setItem('rcas_app_settings_fallback', JSON.stringify(settings));
+    } catch (e) {
+      console.error('Failed to persist settings locally:', e);
+    }
     saveMutation.mutate(settings);
   };
 
@@ -238,6 +252,7 @@ export default function AppSettings() {
       toast.success("Database configuration updated. App will reload.");
       setTimeout(() => window.location.reload(), 1500);
     } catch (error) {
+      console.error(error);
       toast.error("Failed to update database config");
     }
   };
@@ -328,6 +343,7 @@ export default function AppSettings() {
                 await rcas.entities[entityName].create(record);
                 successCount++;
               } catch (err) {
+                console.error(err);
                 // If create fails, maybe ID exists. Try update?
                 try {
                   if (record.id) {
@@ -337,6 +353,7 @@ export default function AppSettings() {
                     errorCount++;
                   }
                 } catch (updateErr) {
+                  console.error(updateErr);
                   errorCount++;
                 }
               }

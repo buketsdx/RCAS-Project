@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { rcas } from '@/api/rcasClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { createPageUrl, formatCurrency } from "@/utils";
@@ -70,7 +70,22 @@ export default function PurchaseInvoice() {
       const list = await rcas.entities.Voucher.list();
       return list.find(v => v.id === voucherId && String(v.company_id) === String(selectedCompanyId));
     },
-    enabled: !!voucherId && !!selectedCompanyId
+    enabled: !!voucherId && !!selectedCompanyId,
+    onSuccess: (voucher) => {
+      if (voucher) {
+        setFormData({
+          voucher_type: 'Purchase',
+          voucher_number: voucher.voucher_number || '',
+          date: voucher.date || format(new Date(), 'yyyy-MM-dd'),
+          party_ledger_id: voucher.party_ledger_id || '',
+          party_name: voucher.party_name || '',
+          reference_number: voucher.reference_number || '',
+          billing_address: voucher.billing_address || '',
+          narration: voucher.narration || '',
+          status: voucher.status || 'Confirmed'
+        });
+      }
+    }
   });
 
   const { data: existingItems = [] } = useQuery({
@@ -79,35 +94,25 @@ export default function PurchaseInvoice() {
       const allItems = await rcas.entities.VoucherItem.list();
       return allItems.filter(item => item.voucher_id === voucherId);
     },
-    enabled: !!voucherId && !!existingVoucher
+    enabled: !!voucherId && !!existingVoucher,
+    onSuccess: (itemsFromServer) => {
+      if (itemsFromServer && itemsFromServer.length > 0) {
+        setItems(itemsFromServer.map(item => ({
+          id: item.id,
+          stock_item_id: item.stock_item_id,
+          stock_item_name: item.stock_item_name,
+          quantity: item.quantity,
+          rate: item.rate,
+          discount_percent: item.discount_percent || 0,
+          discount_amount: item.discount_amount || 0,
+          vat_rate: item.vat_rate || 15,
+          vat_amount: item.vat_amount || 0,
+          amount: item.amount,
+          total_amount: item.total_amount
+        })));
+      }
+    }
   });
-
-  useEffect(() => {
-    if (existingVoucher) {
-      setFormData({
-        voucher_type: 'Purchase',
-        voucher_number: existingVoucher.voucher_number || '',
-        date: existingVoucher.date || format(new Date(), 'yyyy-MM-dd'),
-        party_ledger_id: existingVoucher.party_ledger_id || '',
-        party_name: existingVoucher.party_name || '',
-        reference_number: existingVoucher.reference_number || '',
-        billing_address: existingVoucher.billing_address || '',
-        narration: existingVoucher.narration || '',
-        status: existingVoucher.status || 'Confirmed'
-      });
-    }
-  }, [existingVoucher]);
-
-  useEffect(() => {
-    if (existingItems.length > 0) {
-      setItems(existingItems.map(item => ({
-        id: item.id, stock_item_id: item.stock_item_id, stock_item_name: item.stock_item_name,
-        quantity: item.quantity, rate: item.rate, discount_percent: item.discount_percent || 0,
-        discount_amount: item.discount_amount || 0, vat_rate: item.vat_rate || 15,
-        vat_amount: item.vat_amount || 0, amount: item.amount, total_amount: item.total_amount
-      })));
-    }
-  }, [existingItems]);
 
   const partyLedgers = ledgers.filter(l => {
     return l.customer_type === supplierType;

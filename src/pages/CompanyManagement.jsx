@@ -15,7 +15,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Building2, Plus, Pencil, Trash2, Eye, EyeOff, UserPlus, Users } from 'lucide-react';
-import { cn } from '@/lib/utils';
 
 export default function CompanyManagement() {
   const queryClient = useQueryClient();
@@ -24,7 +23,6 @@ export default function CompanyManagement() {
   const { selectedCompanyId, setSelectedCompanyId } = useCompany();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingCompany, setEditingCompany] = useState(null);
-  const [showPassword, setShowPassword] = useState(false);
   
   // Auto-open create dialog if state passed from Dashboard
   useEffect(() => {
@@ -124,7 +122,7 @@ export default function CompanyManagement() {
     try {
       const users = await rcas.auth.getCompanyUsers(company.id);
       setCompanyUsers(users);
-    } catch (error) {
+    } catch {
       toast.error("Failed to load users");
     } finally {
       setUserLoading(false);
@@ -181,7 +179,6 @@ export default function CompanyManagement() {
   const closeDialog = () => {
     setDialogOpen(false);
     setEditingCompany(null);
-    setShowPassword(false);
   };
 
   const handleChange = (e) => {

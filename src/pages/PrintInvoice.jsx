@@ -6,7 +6,6 @@ import LoadingSpinner from '@/components/common/LoadingSpinner';
 import { Button } from "@/components/ui/button";
 import { format } from 'date-fns';
 import { Printer, ArrowLeft } from 'lucide-react';
-import { createPageUrl } from "@/utils";
 import { useCompany } from '@/context/CompanyContext';
 
 export default function PrintInvoice() {

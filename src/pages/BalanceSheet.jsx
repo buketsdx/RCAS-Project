@@ -11,6 +11,37 @@ import { FileSpreadsheet, Printer } from 'lucide-react';
 import { useCompany } from '@/context/CompanyContext';
 import { Button } from "@/components/ui/button";
 
+function ReportSection({ title, data, total, color }) {
+  return (
+    <Card>
+      <CardHeader className={`bg-${color}-50`}>
+        <CardTitle className={`text-${color}-700`}>{title}</CardTitle>
+      </CardHeader>
+      <CardContent className="pt-4">
+        <div className="space-y-2">
+          {data.length === 0 ? (
+            <p className="text-slate-500 text-center py-4">No data</p>
+          ) : (
+            data.map((item, idx) => (
+              <div key={idx} className="flex justify-between py-2 border-b border-slate-100">
+                <div>
+                  <p className="font-medium">{item.name}</p>
+                  <p className="text-xs text-slate-500">{item.group}</p>
+                </div>
+                <span className="font-medium">{item.amount.toFixed(2)}</span>
+              </div>
+            ))
+          )}
+          <div className={`flex justify-between py-3 bg-${color}-50 px-3 rounded-lg font-bold mt-4`}>
+            <span>Total {title}</span>
+            <span>{formatCurrency(total, 'SAR')}</span>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function BalanceSheet() {
   const { selectedCompanyId } = useCompany();
   const [asOnDate, setAsOnDate] = useState(format(endOfMonth(new Date()), 'yyyy-MM-dd'));
@@ -105,35 +136,6 @@ export default function BalanceSheet() {
   const totalCapital = capitalData.reduce((sum, item) => sum + item.amount, 0);
 
   if (isLoading) return <LoadingSpinner text="Generating balance sheet..." />;
-
-  const ReportSection = ({ title, data, total, color }) => (
-    <Card>
-      <CardHeader className={`bg-${color}-50`}>
-        <CardTitle className={`text-${color}-700`}>{title}</CardTitle>
-      </CardHeader>
-      <CardContent className="pt-4">
-        <div className="space-y-2">
-          {data.length === 0 ? (
-            <p className="text-slate-500 text-center py-4">No data</p>
-          ) : (
-            data.map((item, idx) => (
-              <div key={idx} className="flex justify-between py-2 border-b border-slate-100">
-                <div>
-                  <p className="font-medium">{item.name}</p>
-                  <p className="text-xs text-slate-500">{item.group}</p>
-                </div>
-                <span className="font-medium">{item.amount.toFixed(2)}</span>
-              </div>
-            ))
-          )}
-          <div className={`flex justify-between py-3 bg-${color}-50 px-3 rounded-lg font-bold mt-4`}>
-            <span>Total {title}</span>
-            <span>{formatCurrency(total, 'SAR')}</span>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
 
   return (
     <div>

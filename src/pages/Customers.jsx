@@ -300,8 +300,8 @@ export default function Customers() {
   return (
     <div className="max-w-7xl mx-auto">
       <PageHeader
-        title="Customers"
-        subtitle="Manage your customer list"
+        title={terms.title}
+        subtitle={terms.subtitle}
         icon={Users}
       />
 
@@ -312,7 +312,7 @@ export default function Customers() {
             <CardContent className="pt-6">
               <div className="text-center">
                 <div className="text-3xl font-bold text-slate-800">{customers.length}</div>
-                <p className="text-sm text-slate-600 mt-1">Total Customers</p>
+                <p className="text-sm text-slate-600 mt-1">{terms.total}</p>
               </div>
             </CardContent>
           </Card>
@@ -371,8 +371,8 @@ export default function Customers() {
         {/* Data Table */}
         {customers.length === 0 ? (
           <EmptyState
-            title="No customers found"
-            description="Start by adding your first customer"
+            title={terms.noItems}
+            description={terms.start}
             icon={Users}
           />
         ) : (

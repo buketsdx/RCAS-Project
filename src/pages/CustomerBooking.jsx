@@ -70,7 +70,7 @@ export default function CustomerBooking() {
   };
 
   const bookMutation = useMutation({
-    mutationFn: async (payload) => {
+    mutationFn: async () => {
       // Handle Group Booking
       if (bookingMode === 'group') {
         const tickets = [];

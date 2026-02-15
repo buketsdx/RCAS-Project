@@ -171,9 +171,9 @@ export default function ZakatCalc() {
         subtitle="Calculate your Zakat obligations (2.5% of Zakatable Assets)"
         icon={Calculator}
         secondaryActions={
-          <Button variant="outline" onClick={fetchFromBooks}>
+          <Button variant="outline" onClick={fetchFromBooks} disabled={isLoading}>
             <Database className="h-4 w-4 mr-2" />
-            Fetch from Books
+            {isLoading ? 'Fetching from Books...' : 'Fetch from Books'}
           </Button>
         }
       />

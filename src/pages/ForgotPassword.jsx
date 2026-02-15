@@ -34,7 +34,7 @@ export default function ForgotPassword() {
       await resetPassword(data.email);
       setIsSent(true);
     } catch (error) {
-       // Toast handled in AuthContext
+      console.error(error);
     } finally {
       setIsLoading(false);
     }

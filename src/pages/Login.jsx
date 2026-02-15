@@ -47,7 +47,7 @@ export default function Login() {
       navigate(from, { replace: true });
     } catch (error) {
       console.error("Login page caught error:", error);
-      // Toast handled in AuthContext
+      toast.error(error?.message || "Login failed. Please check your credentials.");
     } finally {
       setIsLoading(false);
     }
@@ -59,7 +59,8 @@ export default function Login() {
       await signInWithGoogle();
       // Redirect happens automatically via Supabase OAuth
     } catch (error) {
-       // Toast handled in AuthContext
+      console.error("Google login error:", error);
+      toast.error(error?.message || "Google sign-in failed. Please try again.");
     } finally {
       setIsLoading(false);
     }

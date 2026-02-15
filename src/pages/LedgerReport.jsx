@@ -67,16 +67,21 @@ export default function LedgerReport() {
     })
     .sort((a, b) => new Date(a.voucher?.date) - new Date(b.voucher?.date));
 
-  let runningBalance = parseFloat(ledger?.opening_balance || 0);
+  const openingBalanceRaw = parseFloat(ledger?.opening_balance || 0);
   const openingType = ledger?.opening_balance_type || 'Dr';
-  if (openingType === 'Cr') runningBalance = -runningBalance;
+  const normalizedOpeningBalance = openingType === 'Cr' ? -openingBalanceRaw : openingBalanceRaw;
 
-  const entriesWithBalance = ledgerEntries.map(e => {
-    const debit = parseFloat(e.debit_amount) || 0;
-    const credit = parseFloat(e.credit_amount) || 0;
-    runningBalance = runningBalance + debit - credit;
-    return { ...e, balance: runningBalance };
-  });
+  const { entriesWithBalance, closingBalance } = ledgerEntries.reduce(
+    (acc, e) => {
+      const debit = parseFloat(e.debit_amount) || 0;
+      const credit = parseFloat(e.credit_amount) || 0;
+      const nextBalance = acc.currentBalance + debit - credit;
+      acc.entries.push({ ...e, balance: nextBalance });
+      acc.currentBalance = nextBalance;
+      return acc;
+    },
+    { currentBalance: normalizedOpeningBalance, entries: [] }
+  );
 
   const totalDebit = ledgerEntries.reduce((sum, e) => sum + (parseFloat(e.debit_amount) || 0), 0);
   const totalCredit = ledgerEntries.reduce((sum, e) => sum + (parseFloat(e.credit_amount) || 0), 0);
@@ -125,7 +130,7 @@ export default function LedgerReport() {
                 <div className="p-4 bg-emerald-50 rounded-lg">
                   <p className="text-sm text-slate-500">Closing Balance</p>
                   <p className="text-xl font-bold text-emerald-600">
-                    {Math.abs(runningBalance).toFixed(2)} {runningBalance >= 0 ? 'Dr' : 'Cr'}
+                    {Math.abs(closingBalance).toFixed(2)} {closingBalance >= 0 ? 'Dr' : 'Cr'}
                   </p>
                 </div>
               </div>

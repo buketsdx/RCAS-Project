@@ -87,7 +87,27 @@ export default function SalesInvoice() {
       const list = await rcas.entities.Voucher.list();
       return list.find(v => v.id === voucherId && String(v.company_id) === String(selectedCompanyId));
     },
-    enabled: !!voucherId && !!selectedCompanyId
+    enabled: !!voucherId && !!selectedCompanyId,
+    onSuccess: (voucher) => {
+      if (voucher) {
+        setFormData({
+          voucher_type: 'Sales',
+          voucher_number: voucher.voucher_number || '',
+          date: voucher.date || format(new Date(), 'yyyy-MM-dd'),
+          party_ledger_id: voucher.party_ledger_id || '',
+          party_name: voucher.party_name || '',
+          reference_number: voucher.reference_number || '',
+          billing_address: voucher.billing_address || '',
+          narration: voucher.narration || '',
+          status: voucher.status || 'Confirmed',
+          customer_vat_number: voucher.customer_vat_number || '',
+          customer_business_name: voucher.customer_business_name || '',
+          customer_cr_number: voucher.customer_cr_number || '',
+          customer_address_proof: voucher.customer_address_proof || '',
+          customer_type: voucher.customer_type || 'General'
+        });
+      }
+    }
   });
 
   const { data: existingItems = [] } = useQuery({
@@ -96,31 +116,26 @@ export default function SalesInvoice() {
       const allItems = await rcas.entities.VoucherItem.list();
       return allItems.filter(item => item.voucher_id === voucherId);
     },
-    enabled: !!voucherId && !!existingVoucher // Only fetch items if voucher is valid and belongs to company
+    enabled: !!voucherId && !!existingVoucher,
+    onSuccess: (itemsFromServer) => {
+      if (itemsFromServer && itemsFromServer.length > 0) {
+        setItems(itemsFromServer.map(item => ({
+          id: item.id,
+          stock_item_id: item.stock_item_id,
+          stock_item_name: item.stock_item_name,
+          quantity: item.quantity,
+          rate: item.rate,
+          discount_percent: item.discount_percent || 0,
+          discount_amount: item.discount_amount || 0,
+          vat_rate: item.vat_rate || 15,
+          vat_amount: item.vat_amount || 0,
+          amount: item.amount,
+          total_amount: item.total_amount
+        })));
+      }
+    }
   });
 
-  useEffect(() => {
-    if (existingVoucher) {
-      setFormData({
-        voucher_type: 'Sales',
-        voucher_number: existingVoucher.voucher_number || '',
-        date: existingVoucher.date || format(new Date(), 'yyyy-MM-dd'),
-        party_ledger_id: existingVoucher.party_ledger_id || '',
-        party_name: existingVoucher.party_name || '',
-        reference_number: existingVoucher.reference_number || '',
-        billing_address: existingVoucher.billing_address || '',
-        narration: existingVoucher.narration || '',
-        status: existingVoucher.status || 'Confirmed',
-        customer_vat_number: existingVoucher.customer_vat_number || '',
-        customer_business_name: existingVoucher.customer_business_name || '',
-        customer_cr_number: existingVoucher.customer_cr_number || '',
-        customer_address_proof: existingVoucher.customer_address_proof || '',
-        customer_type: existingVoucher.customer_type || 'General'
-      });
-    }
-  }, [existingVoucher]);
-
-  // Auto-generate voucher code on mount if creating new voucher
   useEffect(() => {
     if (!voucherId && !formData.voucher_number) {
       generateVoucherCode('Sales').then(code => {
@@ -130,25 +145,7 @@ export default function SalesInvoice() {
         }));
       });
     }
-  }, [voucherId]);
-
-  useEffect(() => {
-    if (existingItems.length > 0) {
-      setItems(existingItems.map(item => ({
-        id: item.id,
-        stock_item_id: item.stock_item_id,
-        stock_item_name: item.stock_item_name,
-        quantity: item.quantity,
-        rate: item.rate,
-        discount_percent: item.discount_percent || 0,
-        discount_amount: item.discount_amount || 0,
-        vat_rate: item.vat_rate || 15,
-        vat_amount: item.vat_amount || 0,
-        amount: item.amount,
-        total_amount: item.total_amount
-      })));
-    }
-  }, [existingItems]);
+  }, [voucherId, formData.voucher_number]);
 
   const partyLedgers = ledgers.filter(l => {
     return l.customer_type === customerType;
@@ -209,7 +206,7 @@ export default function SalesInvoice() {
   });
 
   const saveMutation = useMutation({
-    mutationFn: async (data) => {
+    mutationFn: async () => {
       try {
         const grossAmount = items.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
         const vatAmount = items.reduce((sum, item) => sum + (parseFloat(item.vat_amount) || 0), 0);
@@ -267,7 +264,7 @@ export default function SalesInvoice() {
         throw new Error(error.message || 'Failed to save invoice');
       }
     },
-    onSuccess: (voucher) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['salesVouchers', selectedCompanyId] });
       queryClient.invalidateQueries({ queryKey: ['vouchers', selectedCompanyId] });
       toast.success('Invoice saved successfully');

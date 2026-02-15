@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { rcas } from '@/api/rcasClient';
 import { useQuery } from '@tanstack/react-query';
 import { formatCurrency } from '@/utils';
@@ -8,7 +8,6 @@ import LoadingSpinner from '@/components/common/LoadingSpinner';
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { format } from 'date-fns';
 import { Receipt, Users } from 'lucide-react';
 import { useCompany } from '@/context/CompanyContext';
 import { Button } from "@/components/ui/button";
@@ -37,24 +36,6 @@ export default function Outstanding() {
           .map(v => v.id)
       );
       return list.filter(e => companyVoucherIds.has(e.voucher_id));
-    },
-    enabled: !!selectedCompanyId
-  });
-
-  const { data: vouchers = [] } = useQuery({ 
-    queryKey: ['vouchers', selectedCompanyId], 
-    queryFn: async () => {
-      const list = await rcas.entities.Voucher.list();
-      return list.filter(v => String(v.company_id) === String(selectedCompanyId));
-    },
-    enabled: !!selectedCompanyId
-  });
-
-  const { data: groups = [] } = useQuery({ 
-    queryKey: ['accountGroups', selectedCompanyId], 
-    queryFn: async () => {
-      const list = await rcas.entities.AccountGroup.list();
-      return list.filter(g => String(g.company_id) === String(selectedCompanyId));
     },
     enabled: !!selectedCompanyId
   });

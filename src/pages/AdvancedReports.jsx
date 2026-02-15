@@ -8,7 +8,7 @@ import LoadingSpinner from '@/components/common/LoadingSpinner';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { format, startOfYear, endOfYear, startOfMonth, endOfMonth, eachMonthOfInterval, parseISO, subMonths } from 'date-fns';
+import { format, startOfYear, endOfYear, startOfMonth, endOfMonth, eachMonthOfInterval, parseISO } from 'date-fns';
 import { BarChart3, TrendingUp, PieChart, Download, Printer, FileSpreadsheet, Users, Package, Wallet } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, LineChart, Line, PieChart as RechartsPie, Pie, Cell, AreaChart, Area } from 'recharts';
 
@@ -27,42 +27,6 @@ export default function AdvancedReports() {
     queryFn: async () => {
       const all = await rcas.entities.Voucher.list();
       return all.filter(v => String(v.company_id) === String(selectedCompanyId));
-    },
-    enabled: !!selectedCompanyId
-  });
-
-  const { data: ledgers = [] } = useQuery({ 
-    queryKey: ['ledgers', selectedCompanyId], 
-    queryFn: async () => {
-      const all = await rcas.entities.Ledger.list();
-      return all.filter(l => String(l.company_id) === String(selectedCompanyId));
-    },
-    enabled: !!selectedCompanyId
-  });
-
-  const { data: stockItems = [] } = useQuery({ 
-    queryKey: ['stockItems', selectedCompanyId], 
-    queryFn: async () => {
-      const all = await rcas.entities.StockItem.list();
-      return all.filter(i => String(i.company_id) === String(selectedCompanyId));
-    },
-    enabled: !!selectedCompanyId
-  });
-
-  const { data: employees = [] } = useQuery({ 
-    queryKey: ['employees', selectedCompanyId], 
-    queryFn: async () => {
-      const all = await rcas.entities.Employee.list();
-      return all.filter(e => String(e.company_id) === String(selectedCompanyId));
-    },
-    enabled: !!selectedCompanyId
-  });
-
-  const { data: branches = [] } = useQuery({ 
-    queryKey: ['branches', selectedCompanyId], 
-    queryFn: async () => {
-      const all = await rcas.entities.Branch.list();
-      return all.filter(b => String(b.company_id) === String(selectedCompanyId));
     },
     enabled: !!selectedCompanyId
   });
@@ -122,12 +86,6 @@ export default function AdvancedReports() {
   const totalPurchases = filteredVouchers.filter(v => v.voucher_type === 'Purchase').reduce((sum, v) => sum + (parseFloat(v.net_amount) || 0), 0);
   const grossProfit = totalSales - totalPurchases;
   const profitMargin = totalSales > 0 ? ((grossProfit / totalSales) * 100).toFixed(2) : 0;
-
-  // Expense Breakdown (simplified)
-  const expenseData = [
-    { name: 'Purchases', value: totalPurchases },
-    { name: 'Payments', value: filteredVouchers.filter(v => v.voucher_type === 'Payment').reduce((sum, v) => sum + (parseFloat(v.net_amount) || 0), 0) }
-  ];
 
   if (loadingVouchers) return <LoadingSpinner text="Loading reports..." />;
 

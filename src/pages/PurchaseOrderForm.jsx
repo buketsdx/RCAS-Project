@@ -56,7 +56,21 @@ export default function PurchaseOrderForm() {
       const list = await rcas.entities.Voucher.list();
       return list.find(v => v.id === voucherId && String(v.company_id) === String(selectedCompanyId));
     },
-    enabled: !!voucherId && !!selectedCompanyId
+    enabled: !!voucherId && !!selectedCompanyId,
+    onSuccess: (voucher) => {
+      if (voucher) {
+        setFormData({
+          voucher_type: 'Purchase Order',
+          voucher_number: voucher.voucher_number || '',
+          date: voucher.date || format(new Date(), 'yyyy-MM-dd'),
+          due_date: voucher.due_date || '',
+          party_ledger_id: voucher.party_ledger_id || '',
+          party_name: voucher.party_name || '',
+          narration: voucher.narration || '',
+          status: voucher.status || 'Draft'
+        });
+      }
+    }
   });
 
   const { data: existingItems = [] } = useQuery({
@@ -65,25 +79,19 @@ export default function PurchaseOrderForm() {
       const all = await rcas.entities.VoucherItem.list();
       return all.filter(item => item.voucher_id === voucherId);
     },
-    enabled: !!voucherId && !!existingVoucher
+    enabled: !!voucherId && !!existingVoucher,
+    onSuccess: (itemsFromServer) => {
+      if (itemsFromServer && itemsFromServer.length > 0) {
+        setItems(itemsFromServer.map(item => ({
+          stock_item_id: item.stock_item_id, stock_item_name: item.stock_item_name,
+          quantity: item.quantity, rate: item.rate, discount_percent: item.discount_percent || 0,
+          vat_rate: item.vat_rate || 15, vat_amount: item.vat_amount || 0,
+          amount: item.amount, total_amount: item.total_amount
+        })));
+      }
+    }
   });
 
-  useEffect(() => {
-    if (existingVoucher) {
-      setFormData({
-        voucher_type: 'Purchase Order',
-        voucher_number: existingVoucher.voucher_number || '',
-        date: existingVoucher.date || format(new Date(), 'yyyy-MM-dd'),
-        due_date: existingVoucher.due_date || '',
-        party_ledger_id: existingVoucher.party_ledger_id || '',
-        party_name: existingVoucher.party_name || '',
-        narration: existingVoucher.narration || '',
-        status: existingVoucher.status || 'Draft'
-      });
-    }
-  }, [existingVoucher]);
-
-  // Auto-generate voucher code on mount if creating new voucher
   useEffect(() => {
     if (!voucherId && !formData.voucher_number) {
       generateVoucherCode('Purchase Order').then(code => {
@@ -93,18 +101,7 @@ export default function PurchaseOrderForm() {
         }));
       });
     }
-  }, [voucherId]);
-
-  useEffect(() => {
-    if (existingItems.length > 0) {
-      setItems(existingItems.map(item => ({
-        stock_item_id: item.stock_item_id, stock_item_name: item.stock_item_name,
-        quantity: item.quantity, rate: item.rate, discount_percent: item.discount_percent || 0,
-        vat_rate: item.vat_rate || 15, vat_amount: item.vat_amount || 0,
-        amount: item.amount, total_amount: item.total_amount
-      })));
-    }
-  }, [existingItems]);
+  }, [voucherId, formData.voucher_number]);
 
   const saveMutation = useMutation({
     mutationFn: async () => {

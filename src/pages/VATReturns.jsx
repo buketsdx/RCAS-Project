@@ -1,7 +1,6 @@
 import React from 'react';
 import { rcas } from '@/api/rcasClient';
 import { useQuery } from '@tanstack/react-query';
-import { formatCurrency } from '@/utils';
 import PageHeader from '@/components/common/PageHeader';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,6 +10,7 @@ import { format, startOfQuarter, endOfQuarter, subQuarters } from 'date-fns';
 import { BadgePercent, FileText, Download } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { useCompany } from '@/context/CompanyContext';
+import { formatCurrency } from '@/utils';
 
 export default function VATReturns() {
   const { company, selectedCompanyId } = useCompany();
@@ -106,10 +106,10 @@ export default function VATReturns() {
               {quarterlyData.map((q, idx) => (
                 <TableRow key={idx}>
                   <TableCell className="font-medium">{q.label}</TableCell>
-                  <TableCell className="text-right">{q.salesAmount.toFixed(2)}</TableCell>
-                  <TableCell className="text-right text-blue-600">{q.salesVAT.toFixed(2)}</TableCell>
-                  <TableCell className="text-right">{q.purchaseAmount.toFixed(2)}</TableCell>
-                  <TableCell className="text-right text-emerald-600">{q.purchaseVAT.toFixed(2)}</TableCell>
+                  <TableCell className="text-right">{formatCurrency(q.salesAmount)}</TableCell>
+                  <TableCell className="text-right text-blue-600">{formatCurrency(q.salesVAT)}</TableCell>
+                  <TableCell className="text-right">{formatCurrency(q.purchaseAmount)}</TableCell>
+                  <TableCell className="text-right text-emerald-600">{formatCurrency(q.purchaseVAT)}</TableCell>
                   <TableCell className={`text-right font-semibold ${q.netVAT >= 0 ? 'text-red-600' : 'text-emerald-600'}`}>
                     {q.netVAT >= 0 ? '' : '('}{Math.abs(q.netVAT).toFixed(2)}{q.netVAT >= 0 ? '' : ')'}
                   </TableCell>
