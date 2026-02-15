@@ -111,7 +111,7 @@ export default function ReorderStatus() {
       />
 
       {itemsWithReorder.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-slate-100 p-12 text-center">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-12 text-center">
           <Package className="h-12 w-12 mx-auto text-slate-300 mb-4" />
           <p className="text-slate-500">No items have reorder levels set</p>
           <p className="text-sm text-slate-400 mt-1">Set reorder levels in Stock Items to track inventory alerts</p>

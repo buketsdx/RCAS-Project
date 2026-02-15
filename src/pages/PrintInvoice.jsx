@@ -74,7 +74,7 @@ export default function PrintInvoice() {
       </div>
 
       {/* Invoice Content */}
-      <div ref={printRef} className="bg-white p-8 max-w-4xl mx-auto shadow-lg print:shadow-none">
+      <div ref={printRef} className="bg-white dark:bg-slate-950 print:bg-white p-8 max-w-4xl mx-auto shadow-lg print:shadow-none">
         {/* Header with Company Info */}
         <div className="border-b-4 border-primary pb-6 mb-6">
           <div className="flex justify-between items-start">

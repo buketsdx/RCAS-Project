@@ -122,8 +122,8 @@ export default function AccountGroups() {
       accessor: 'name',
       render: (row) => (
         <div>
-          <p className="font-medium text-slate-800">{row.name}</p>
-          {row.name_arabic && <p className="text-xs text-slate-500">{row.name_arabic}</p>}
+          <p className="font-medium text-slate-900 dark:text-slate-100">{row.name}</p>
+          {row.name_arabic && <p className="text-xs text-slate-600 dark:text-slate-400">{row.name_arabic}</p>}
         </div>
       )
     },

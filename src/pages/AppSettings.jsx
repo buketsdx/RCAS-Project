@@ -871,7 +871,7 @@ export default function AppSettings() {
                   <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 text-sm text-blue-800">
                     <p className="font-bold mb-2">💡 Want to access your data from multiple devices?</p>
                     <p className="mb-2">
-                      Switch to an <strong>Online Provider</strong> (Supabase or Firebase) in the <span className="font-mono bg-white px-1 rounded">Database</span> tab.
+                      Switch to an <strong>Online Provider</strong> (Supabase or Firebase) in the <span className="font-mono bg-white dark:bg-slate-900 px-1 rounded">Database</span> tab.
                     </p>
                     <p>
                       <strong>How to migrate:</strong>

@@ -287,7 +287,7 @@ export default function CustomerBooking() {
                     </div>
                     
                     {groupData.guests.map((guest, index) => (
-                      <div key={guest.id} className="p-3 border dark:border-slate-800 rounded-lg bg-white dark:bg-slate-900 relative group">
+                      <div key={guest.id} className="p-3 border border-slate-200 dark:border-slate-800 rounded-lg bg-white dark:bg-slate-900 relative group">
                         <div className="absolute top-2 right-2">
                            {groupData.guests.length > 1 && (
                              <button onClick={() => removeGuest(guest.id)} className="text-slate-400 hover:text-red-500">
@@ -295,7 +295,7 @@ export default function CustomerBooking() {
                              </button>
                            )}
                         </div>
-                        <div className="space-y-3">
+                     <div className="space-y-3">
                            <FormField 
                              label={`Guest ${index + 1} Name`}
                              value={guest.name}
@@ -392,21 +392,21 @@ export default function CustomerBooking() {
                 {queue.map((item, index) => {
                    const stylist = stylists.find(s => String(s.id) === String(item.stylist_id));
                    return (
-                     <div key={item.id} className="p-3 border rounded-lg flex justify-between items-center bg-white shadow-sm">
+                     <div key={item.id} className="p-3 border border-slate-200 dark:border-slate-700 rounded-lg flex justify-between items-center bg-white dark:bg-slate-900 shadow-sm">
                        <div className="flex items-center gap-3">
                          <div className="h-10 w-10 rounded-full bg-blue-100 flex flex-col items-center justify-center text-blue-700">
                            <span className="text-xs font-bold">#{index + 1}</span>
                          </div>
                          <div>
                            <div className="flex items-center gap-2">
-                             <p className="font-bold text-slate-800">{item.customer_name}</p>
+                             <p className="font-bold text-slate-800 dark:text-slate-100">{item.customer_name}</p>
                              {item.ticket_number && (
                                <span className="text-xs font-mono bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200 text-slate-600">
                                  {item.ticket_number}
                                </span>
                              )}
                            </div>
-                           <p className="text-xs text-slate-500">
+                           <p className="text-xs text-slate-500 dark:text-slate-400">
                              {item.service_type} {stylist ? `with ${stylist.name}` : ''}
                            </p>
                          </div>

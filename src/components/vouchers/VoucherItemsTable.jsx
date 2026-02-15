@@ -85,7 +85,7 @@ export default function VoucherItemsTable({
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+    <div className="bg-white dark:bg-card rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead className="bg-slate-50">
@@ -112,7 +112,7 @@ export default function VoucherItemsTable({
                     value={item.stock_item_id || ''} 
                     onValueChange={(v) => handleItemChange(index, 'stock_item_id', v)}
                   >
-                    <SelectTrigger className="min-w-[200px] bg-white">
+                    <SelectTrigger className="min-w-[200px]">
                       <SelectValue placeholder={terms.selectItem} />
                     </SelectTrigger>
                     <SelectContent>
@@ -128,7 +128,7 @@ export default function VoucherItemsTable({
                       value={item.salesman_id || ''} 
                       onValueChange={(v) => handleItemChange(index, 'salesman_id', v)}
                     >
-                      <SelectTrigger className="min-w-[150px] bg-white">
+                      <SelectTrigger className="min-w-[150px]">
                         <SelectValue placeholder="Select Stylist" />
                       </SelectTrigger>
                       <SelectContent>
@@ -144,7 +144,7 @@ export default function VoucherItemsTable({
                     type="number"
                     value={item.quantity || ''}
                     onChange={(e) => handleItemChange(index, 'quantity', e.target.value)}
-                    className="w-20 bg-white"
+                    className="w-20"
                   />
                 </td>
                 <td className="px-4 py-2">
@@ -152,7 +152,7 @@ export default function VoucherItemsTable({
                     type="number"
                     value={item.rate || ''}
                     onChange={(e) => handleItemChange(index, 'rate', e.target.value)}
-                    className="w-24 bg-white"
+                    className="w-24"
                   />
                 </td>
                 <td className="px-4 py-2">
@@ -160,7 +160,7 @@ export default function VoucherItemsTable({
                     type="number"
                     value={item.discount_percent || ''}
                     onChange={(e) => handleItemChange(index, 'discount_percent', e.target.value)}
-                    className="w-16 bg-white"
+                    className="w-16"
                   />
                 </td>
                 {showVAT && (
@@ -169,7 +169,7 @@ export default function VoucherItemsTable({
                       type="number"
                       value={item.vat_rate || 15}
                       onChange={(e) => handleItemChange(index, 'vat_rate', e.target.value)}
-                      className="w-16 bg-white"
+                      className="w-16"
                     />
                   </td>
                 )}
