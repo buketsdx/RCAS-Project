@@ -293,23 +293,31 @@ export default function Dashboard() {
         </div>
 
         {/* Recent Transactions / Lists */}
-        <div className="col-span-3 space-y-6">
-          <div className="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+        <div className="col-span-3 space-y-6 h-full">
+          <div className="bg-card rounded-2xl p-5 border border-border shadow-sm h-full">
             <h3 className="font-semibold mb-4">Stock Overview</h3>
             <div className="space-y-4">
-               {stockItems.slice(0, 5).map(item => (
-                 <div key={item.id} className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium text-sm">{item.item_name}</p>
-                      <p className="text-xs text-slate-500">{item.stock_category}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-medium text-sm">{item.quantity} {item.unit}</p>
-                      <p className="text-xs text-slate-500">{formatCurrency(item.purchase_price)}</p>
-                    </div>
-                 </div>
-               ))}
-               {stockItems.length === 0 && <p className="text-sm text-slate-500 text-center py-4">No stock items found</p>}
+              {stockItems.slice(0, 5).map(item => (
+                <div key={item.id} className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium text-sm">{item.item_name}</p>
+                    <p className="text-xs text-slate-500">{item.stock_category}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-medium text-sm">
+                      {item.quantity} {item.unit}
+                    </p>
+                    <p className="text-xs text-slate-500">
+                      {formatCurrency(item.purchase_price)}
+                    </p>
+                  </div>
+                </div>
+              ))}
+              {stockItems.length === 0 && (
+                <p className="text-sm text-slate-500 text-center py-4">
+                  No stock items found
+                </p>
+              )}
             </div>
           </div>
         </div>
