@@ -294,8 +294,8 @@ export default function Dashboard() {
 
         {/* Recent Transactions / Lists */}
         <div className="col-span-3 space-y-6 h-full">
+          <h2 className="text-lg font-semibold">Stock Overview</h2>
           <div className="bg-card rounded-2xl p-5 border border-border shadow-sm h-full">
-            <h3 className="font-semibold mb-4">Stock Overview</h3>
             <div className="space-y-4">
               {stockItems.slice(0, 5).map(item => (
                 <div key={item.id} className="flex items-center justify-between">
