@@ -113,3 +113,27 @@
     @apply text-foreground;
   }
 }
+
+/* Global scrollbar styling */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--border)) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  border-radius: 9999px;
+  background-color: hsl(var(--border));
+}
+
+.dark *::-webkit-scrollbar-thumb {
+  background-color: hsl(var(--muted-foreground));
+}
