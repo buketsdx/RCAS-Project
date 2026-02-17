@@ -173,6 +173,10 @@ export default function PurchaseInvoice() {
           company_id: selectedCompanyId 
         };
 
+        if (!voucherData.party_ledger_id) {
+          voucherData.party_ledger_id = null;
+        }
+
         let voucher;
         if (voucherId) {
           voucher = await rcas.entities.Voucher.update(voucherId, voucherData);
@@ -240,12 +244,21 @@ export default function PurchaseInvoice() {
     net: items.reduce((sum, item) => sum + (parseFloat(item.total_amount) || 0), 0)
   };
 
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!formData.party_ledger_id) {
+      toast.error('Please select a supplier');
+      return;
+    }
+    saveMutation.mutate();
+  };
+
   if (isLoading && voucherId) return <LoadingSpinner text="Loading..." />;
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <PageHeader title={voucherId ? 'Edit Purchase Invoice' : 'New Purchase Invoice'} subtitle="Create or edit purchase invoice" backUrl="Purchase" />
-      <form onSubmit={(e) => { e.preventDefault(); saveMutation.mutate(); }} className="flex-1 flex flex-col">
+      <form onSubmit={handleSubmit} className="flex-1 flex flex-col">
         <div className="flex-1 overflow-y-auto px-4 md:px-8 py-6">
           <div className="max-w-6xl mx-auto space-y-6">
             <Card>
