@@ -250,6 +250,10 @@ export default function PurchaseInvoice() {
       toast.error('Please select a supplier');
       return;
     }
+    if (!formData.reference_number || String(formData.reference_number).trim() === '') {
+      toast.error('Please enter Supplier Invoice Number');
+      return;
+    }
     saveMutation.mutate();
   };
 
@@ -267,7 +271,7 @@ export default function PurchaseInvoice() {
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <FormField label="Invoice Number" name="voucher_number" value={formData.voucher_number} onChange={handleChange} placeholder="Auto" />
                   <FormField label="Date" name="date" type="date" value={formData.date} onChange={handleChange} required />
-                  <FormField label="Supplier Inv No" name="reference_number" value={formData.reference_number} onChange={handleChange} />
+                  <FormField label="Supplier Inv No" name="reference_number" value={formData.reference_number} onChange={handleChange} required />
                   <FormField label="Status" name="status" type="select" value={formData.status} onChange={handleChange} options={[{ value: 'Draft', label: 'Draft' }, { value: 'Confirmed', label: 'Confirmed' }]} />
                 </div>
               </CardContent>
