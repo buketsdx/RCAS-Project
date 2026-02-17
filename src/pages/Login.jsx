@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import AppLogo from '@/components/ui/AppLogo';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 const loginSchema = z.object({
@@ -24,6 +24,8 @@ export default function Login() {
   const { signIn, signInWithGoogle } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [showPassword, setShowPassword] = useState(false);
+  const [passwordStrength, setPasswordStrength] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const from = location.state?.from?.pathname || '/Dashboard';
@@ -36,6 +38,19 @@ export default function Login() {
       rememberMe: false,
     },
   });
+
+  const evaluatePasswordStrength = (value) => {
+    if (!value) return null;
+    let score = 0;
+    if (value.length >= 8) score += 1;
+    if (/[A-Z]/.test(value)) score += 1;
+    if (/[0-9]/.test(value)) score += 1;
+    if (/[^A-Za-z0-9]/.test(value)) score += 1;
+
+    if (score <= 1) return { label: "Weak", color: "bg-red-500/10 text-red-600 dark:text-red-400" };
+    if (score === 2) return { label: "Medium", color: "bg-amber-500/10 text-amber-600 dark:text-amber-400" };
+    return { label: "Strong", color: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" };
+  };
 
   const onSubmit = async (data) => {
     console.log("Login form submitted:", data);
@@ -111,12 +126,42 @@ export default function Login() {
                     Forgot password?
                   </Link>
                 </div>
-                <Input
-                  id="password"
-                  type="password"
-                  autoComplete="current-password"
-                  {...register('password')}
-                />
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    autoComplete="current-password"
+                    {...register('password', {
+                      onChange: (e) => {
+                        const value = e.target.value;
+                        const result = evaluatePasswordStrength(value);
+                        setPasswordStrength(result);
+                      }
+                    })}
+                    className="pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
+                {passwordStrength && (
+                  <div className="flex items-center justify-between text-xs mt-1">
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full font-medium ${passwordStrength.color}`}>
+                      Password strength: {passwordStrength.label}
+                    </span>
+                    <span className="text-slate-400 hidden md:inline">
+                      Use 8+ chars, mix letters, numbers, symbols
+                    </span>
+                  </div>
+                )}
                 {errors.password && (
                   <p className="text-sm text-red-500">{errors.password.message}</p>
                 )}
