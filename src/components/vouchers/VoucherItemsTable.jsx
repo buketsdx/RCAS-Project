@@ -88,7 +88,7 @@ export default function VoucherItemsTable({
     <div className="bg-white dark:bg-card rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full">
-          <thead className="bg-slate-50 dark:bg-slate-800">
+          <thead className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
             <tr>
               <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-200 uppercase tracking-wider">{terms.item}</th>
               {type === 'Salon' && (
@@ -106,8 +106,8 @@ export default function VoucherItemsTable({
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
             {items.map((item, index) => (
-              <tr key={index} className="hover:bg-slate-50 dark:hover:bg-slate-800">
-                <td className="px-4 py-2">
+              <tr key={index}>
+                <td className="px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-700">
                   <Select 
                     value={item.stock_item_id || ''} 
                     onValueChange={(v) => handleItemChange(index, 'stock_item_id', v)}
@@ -123,7 +123,7 @@ export default function VoucherItemsTable({
                   </Select>
                 </td>
                 {type === 'Salon' && (
-                  <td className="px-4 py-2">
+                  <td className="px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-700">
                     <Select 
                       value={item.salesman_id || ''} 
                       onValueChange={(v) => handleItemChange(index, 'salesman_id', v)}
@@ -139,7 +139,7 @@ export default function VoucherItemsTable({
                     </Select>
                   </td>
                 )}
-                <td className="px-4 py-2">
+                <td className="px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-700">
                   <Input
                     type="number"
                     value={item.quantity || ''}
@@ -147,7 +147,7 @@ export default function VoucherItemsTable({
                     className="w-20"
                   />
                 </td>
-                <td className="px-4 py-2">
+                <td className="px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-700">
                   <Input
                     type="number"
                     value={item.rate || ''}
@@ -155,7 +155,7 @@ export default function VoucherItemsTable({
                     className="w-24"
                   />
                 </td>
-                <td className="px-4 py-2">
+                <td className="px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-700">
                   <Input
                     type="number"
                     value={item.discount_percent || ''}
@@ -173,10 +173,10 @@ export default function VoucherItemsTable({
                     />
                   </td>
                 )}
-                <td className="px-4 py-2 text-right font-semibold text-slate-700 dark:text-slate-100">
+                <td className="px-4 py-2 text-right font-semibold text-slate-700 dark:text-slate-100 hover:bg-slate-50 dark:hover:bg-slate-700">
                   {(item.total_amount || 0).toFixed(2)}
                 </td>
-                <td className="px-4 py-2">
+                <td className="px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-700">
                   <Button
                     variant="ghost"
                     size="icon"
