@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { createPageUrl, cn } from "@/lib/utils"; // <-- Yahan maine 'lib' jod diya hai
+import { createPageUrl } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { format } from 'date-fns';
 import { FileText, ArrowRight } from 'lucide-react';
@@ -38,7 +38,9 @@ export default function RecentVouchers({ vouchers = [] }) {
                     {voucher.voucher_type}
                   </Badge>
                   <div>
-                    <p className="font-medium text-foreground">{voucher.voucher_number || `#${voucher.id?.slice(-6)}`}</p>
+                    <p className="font-medium text-foreground">
+                      {voucher.reference_number || voucher.voucher_number || `#${voucher.id?.slice(-6)}`}
+                    </p>
                     <p className="text-xs text-muted-foreground">{voucher.party_name || 'No party'}</p>
                   </div>
                 </div>
