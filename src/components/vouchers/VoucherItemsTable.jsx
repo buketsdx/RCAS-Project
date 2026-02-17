@@ -90,29 +90,29 @@ export default function VoucherItemsTable({
         <table className="w-full text-[11px] md:text-sm">
           <thead className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
             <tr>
-              <th className="px-2 py-2 md:px-4 md:py-3 text-left text-[10px] md:text-xs font-semibold text-slate-600 dark:text-slate-200 uppercase tracking-wider">{terms.item}</th>
+              <th className="px-1.5 py-2 md:px-3 md:py-3 text-left text-[10px] md:text-xs font-semibold text-slate-600 dark:text-slate-200 uppercase tracking-wider">{terms.item}</th>
               {type === 'Salon' && (
-                <th className="px-2 py-2 md:px-4 md:py-3 text-left text-[10px] md:text-xs font-semibold text-slate-600 dark:text-slate-200 uppercase tracking-wider">{terms.stylist}</th>
+                <th className="px-1.5 py-2 md:px-3 md:py-3 text-left text-[10px] md:text-xs font-semibold text-slate-600 dark:text-slate-200 uppercase tracking-wider">{terms.stylist}</th>
               )}
-              <th className="px-2 py-2 md:px-4 md:py-3 text-left text-[10px] md:text-xs font-semibold text-slate-600 dark:text-slate-200 uppercase tracking-wider">Qty</th>
-              <th className="px-2 py-2 md:px-4 md:py-3 text-left text-[10px] md:text-xs font-semibold text-slate-600 dark:text-slate-200 uppercase tracking-wider">Rate</th>
-              <th className="px-2 py-2 md:px-4 md:py-3 text-left text-[10px] md:text-xs font-semibold text-slate-600 dark:text-slate-200 uppercase tracking-wider">Disc %</th>
+              <th className="px-1.5 py-2 md:px-3 md:py-3 text-left text-[10px] md:text-xs font-semibold text-slate-600 dark:text-slate-200 uppercase tracking-wider">Qty</th>
+              <th className="px-1.5 py-2 md:px-3 md:py-3 text-left text-[10px] md:text-xs font-semibold text-slate-600 dark:text-slate-200 uppercase tracking-wider">Rate</th>
+              <th className="px-1.5 py-2 md:px-3 md:py-3 text-left text-[10px] md:text-xs font-semibold text-slate-600 dark:text-slate-200 uppercase tracking-wider">Disc %</th>
               {showVAT && (
-                <th className="px-2 py-2 md:px-4 md:py-3 text-left text-[10px] md:text-xs font-semibold text-slate-600 dark:text-slate-200 uppercase tracking-wider">VAT %</th>
+                <th className="px-1.5 py-2 md:px-3 md:py-3 text-left text-[10px] md:text-xs font-semibold text-slate-600 dark:text-slate-200 uppercase tracking-wider">VAT %</th>
               )}
-              <th className="px-2 py-2 md:px-4 md:py-3 text-right text-[10px] md:text-xs font-semibold text-slate-600 dark:text-slate-200 uppercase tracking-wider">Amount</th>
-              <th className="px-2 py-2 md:px-4 md:py-3 w-10 md:w-12"></th>
+              <th className="px-1.5 py-2 md:px-3 md:py-3 text-right text-[10px] md:text-xs font-semibold text-slate-600 dark:text-slate-200 uppercase tracking-wider">Amount</th>
+              <th className="px-1.5 py-2 md:px-3 md:py-3 w-10 md:w-12"></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
             {items.map((item, index) => (
               <tr key={index}>
-                <td className="px-2 py-1.5 md:px-4 md:py-2 hover:bg-slate-50 dark:hover:bg-slate-700">
+                <td className="px-1.5 py-1.5 md:px-3 md:py-2 hover:bg-slate-50 dark:hover:bg-slate-700">
                   <Select 
                     value={item.stock_item_id || ''} 
                     onValueChange={(v) => handleItemChange(index, 'stock_item_id', v)}
                   >
-                    <SelectTrigger className="min-w-[140px] md:min-w-[200px] text-xs md:text-sm">
+                    <SelectTrigger className="min-w-[120px] md:min-w-[180px] text-xs md:text-sm">
                       <SelectValue placeholder={terms.selectItem} />
                     </SelectTrigger>
                     <SelectContent>
@@ -123,12 +123,12 @@ export default function VoucherItemsTable({
                   </Select>
                 </td>
                 {type === 'Salon' && (
-                  <td className="px-2 py-1.5 md:px-4 md:py-2 hover:bg-slate-50 dark:hover:bg-slate-700">
+                  <td className="px-1.5 py-1.5 md:px-3 md:py-2 hover:bg-slate-50 dark:hover:bg-slate-700">
                     <Select 
                       value={item.salesman_id || ''} 
                       onValueChange={(v) => handleItemChange(index, 'salesman_id', v)}
                     >
-                      <SelectTrigger className="min-w-[120px] md:min-w-[150px] text-xs md:text-sm">
+                      <SelectTrigger className="min-w-[110px] md:min-w-[140px] text-xs md:text-sm">
                         <SelectValue placeholder="Select Stylist" />
                       </SelectTrigger>
                       <SelectContent>
@@ -139,7 +139,7 @@ export default function VoucherItemsTable({
                     </Select>
                   </td>
                 )}
-                <td className="px-2 py-1.5 md:px-4 md:py-2 hover:bg-slate-50 dark:hover:bg-slate-700">
+                <td className="px-1.5 py-1.5 md:px-3 md:py-2 hover:bg-slate-50 dark:hover:bg-slate-700">
                   <Input
                     type="number"
                     value={item.quantity || ''}
@@ -147,7 +147,7 @@ export default function VoucherItemsTable({
                     className="w-16 md:w-20 text-xs md:text-sm"
                   />
                 </td>
-                <td className="px-2 py-1.5 md:px-4 md:py-2 hover:bg-slate-50 dark:hover:bg-slate-700">
+                <td className="px-1.5 py-1.5 md:px-3 md:py-2 hover:bg-slate-50 dark:hover:bg-slate-700">
                   <Input
                     type="number"
                     value={item.rate || ''}
@@ -155,7 +155,7 @@ export default function VoucherItemsTable({
                     className="w-20 md:w-24 text-xs md:text-sm"
                   />
                 </td>
-                <td className="px-2 py-1.5 md:px-4 md:py-2 hover:bg-slate-50 dark:hover:bg-slate-700">
+                <td className="px-1.5 py-1.5 md:px-3 md:py-2 hover:bg-slate-50 dark:hover:bg-slate-700">
                   <Input
                     type="number"
                     value={item.discount_percent || ''}
@@ -164,7 +164,7 @@ export default function VoucherItemsTable({
                   />
                 </td>
                 {showVAT && (
-                  <td className="px-2 py-1.5 md:px-4 md:py-2">
+                  <td className="px-1.5 py-1.5 md:px-3 md:py-2">
                     <Input
                       type="number"
                       value={item.vat_rate || 15}
@@ -173,10 +173,10 @@ export default function VoucherItemsTable({
                     />
                   </td>
                 )}
-                <td className="px-2 py-1.5 md:px-4 md:py-2 text-right font-semibold text-slate-700 dark:text-slate-100 hover:bg-slate-50 dark:hover:bg-slate-700">
+                <td className="px-1.5 py-1.5 md:px-3 md:py-2 text-right font-semibold text-slate-700 dark:text-slate-100 hover:bg-slate-50 dark:hover:bg-slate-700">
                   {(item.total_amount || 0).toFixed(2)}
                 </td>
-                <td className="px-2 py-1.5 md:px-4 md:py-2 hover:bg-slate-50 dark:hover:bg-slate-700">
+                <td className="px-1.5 py-1.5 md:px-3 md:py-2 hover:bg-slate-50 dark:hover:bg-slate-700">
                   <Button
                     variant="ghost"
                     size="icon"
