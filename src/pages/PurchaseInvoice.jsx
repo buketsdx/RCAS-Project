@@ -317,7 +317,23 @@ export default function PurchaseInvoice() {
           <Card>
             <CardHeader><CardTitle>Invoice Items</CardTitle></CardHeader>
             <CardContent>
-              <VoucherItemsTable items={items} stockItems={stockItems} onItemChange={(i, item) => setItems(prev => prev.map((it, idx) => idx === i ? item : it))} onAddItem={() => setItems(prev => [...prev, { stock_item_id: '', quantity: 1, rate: 0, discount_percent: 0, vat_rate: 15 }])} onRemoveItem={(i) => setItems(prev => prev.filter((_, idx) => idx !== i))} />
+              <VoucherItemsTable
+                items={items}
+                stockItems={stockItems}
+                useCostPrice
+                onItemChange={(i, item) =>
+                  setItems(prev => prev.map((it, idx) => idx === i ? item : it))
+                }
+                onAddItem={() =>
+                  setItems(prev => [
+                    ...prev,
+                    { stock_item_id: '', quantity: 1, rate: 0, discount_percent: 0, vat_rate: 15 }
+                  ])
+                }
+                onRemoveItem={(i) =>
+                  setItems(prev => prev.filter((_, idx) => idx !== i))
+                }
+              />
             </CardContent>
           </Card>
 

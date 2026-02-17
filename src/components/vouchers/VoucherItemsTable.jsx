@@ -12,7 +12,8 @@ export default function VoucherItemsTable({
   onItemChange,
   onAddItem,
   onRemoveItem,
-  showVAT = true
+  showVAT = true,
+  useCostPrice = false
 }) {
   const { company } = useCompany();
   const type = company?.type || 'General';
@@ -74,7 +75,11 @@ export default function VoucherItemsTable({
       const stockItem = filteredStockItems.find(s => s.id === value);
       if (stockItem) {
         updatedItem.stock_item_name = stockItem.name;
-        updatedItem.rate = stockItem.selling_price || 0;
+        if (useCostPrice) {
+          updatedItem.rate = stockItem.cost_price ?? stockItem.opening_rate ?? 0;
+        } else {
+          updatedItem.rate = stockItem.selling_price ?? stockItem.cost_price ?? 0;
+        }
         updatedItem.unit = stockItem.unit_id;
         updatedItem.vat_rate = stockItem.vat_rate || 15;
       }
