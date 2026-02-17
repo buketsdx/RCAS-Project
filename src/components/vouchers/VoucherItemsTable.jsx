@@ -106,7 +106,7 @@ export default function VoucherItemsTable({
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
             {items.map((item, index) => (
-              <tr key={index} className="hover:bg-slate-50">
+              <tr key={index} className="hover:bg-slate-50 dark:hover:bg-slate-800">
                 <td className="px-4 py-2">
                   <Select 
                     value={item.stock_item_id || ''} 
@@ -173,7 +173,7 @@ export default function VoucherItemsTable({
                     />
                   </td>
                 )}
-                <td className="px-4 py-2 text-right font-semibold text-slate-700">
+                <td className="px-4 py-2 text-right font-semibold text-slate-700 dark:text-slate-100">
                   {(item.total_amount || 0).toFixed(2)}
                 </td>
                 <td className="px-4 py-2">
