@@ -194,6 +194,7 @@ export default function VoucherItemsTable({
       
       <div className="p-4 border-t border-slate-100">
         <Button
+          type="button"
           variant="outline"
           onClick={onAddItem}
           className="text-emerald-600 border-emerald-200 hover:bg-emerald-50"
