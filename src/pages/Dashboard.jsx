@@ -112,14 +112,16 @@ export default function Dashboard() {
 
   const totalSales = monthlyVouchers
     .filter(v => v.voucher_type === 'Sales' || v.voucher_type === 'Service')
-    .reduce((sum, v) => sum + (Number(v.grand_total) || 0), 0);
+    .reduce((sum, v) => sum + (Number(v.net_amount) || 0), 0);
 
   const totalPurchases = monthlyVouchers
     .filter(v => v.voucher_type === 'Purchase')
-    .reduce((sum, v) => sum + (Number(v.grand_total) || 0), 0);
+    .reduce((sum, v) => sum + (Number(v.net_amount) || 0), 0);
 
   const stockValue = stockItems.reduce((sum, item) => {
-    return sum + ((Number(item.quantity) || 0) * (Number(item.purchase_price) || 0));
+    const qty = parseFloat(item.current_qty || 0);
+    const rate = parseFloat(item.cost_price || item.opening_rate || 0);
+    return sum + qty * rate;
   }, 0);
 
   // Quick Actions Configuration
