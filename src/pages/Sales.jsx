@@ -62,6 +62,15 @@ export default function Sales() {
     enabled: !!selectedCompanyId
   });
 
+  const { data: voucherItems = [] } = useQuery({
+    queryKey: ['salesVoucherItems', selectedCompanyId],
+    queryFn: async () => {
+      const allItems = await rcas.entities.VoucherItem.list();
+      return allItems;
+    },
+    enabled: !!selectedCompanyId
+  });
+
   const deleteMutation = useMutation({
     mutationFn: (id) => rcas.entities.Voucher.delete(id),
     onSuccess: () => {
@@ -102,31 +111,34 @@ export default function Sales() {
     },
     {
       header: 'Actions',
-      render: (row) => (
-        <div className="flex items-center gap-2">
-          <Link 
-            to={createPageUrl(`SalesInvoice?id=${row.id}`)} 
-            state={{ voucher: row }}
-          >
-            <Button variant="ghost" size="icon"><Eye className="h-4 w-4" /></Button>
-          </Link>
-          <Link to={createPageUrl(`PrintInvoice?id=${row.id}&type=sales`)}>
-            <Button variant="ghost" size="icon"><Printer className="h-4 w-4" /></Button>
-          </Link>
-          <Button variant="ghost" size="icon" onClick={async () => { 
-            if (await confirm({
-              title: `Delete ${terms.title.slice(0, -1)}`, // Remove 's' from title (Invoices -> Invoice)
-              description: `Are you sure you want to delete this invoice? This action cannot be undone.`,
-              variant: 'destructive',
-              confirmText: 'Delete'
-            })) {
-              deleteMutation.mutate(row.id); 
-            }
-          }}>
-            <Trash2 className="h-4 w-4 text-red-500" />
-          </Button>
-        </div>
-      )
+      render: (row) => {
+        const rowItems = voucherItems.filter(item => item.voucher_id === row.id);
+        return (
+          <div className="flex items-center gap-2">
+            <Link 
+              to={createPageUrl(`SalesInvoice?id=${row.id}`)} 
+              state={{ voucher: row, items: rowItems }}
+            >
+              <Button variant="ghost" size="icon"><Eye className="h-4 w-4" /></Button>
+            </Link>
+            <Link to={createPageUrl(`PrintInvoice?id=${row.id}&type=sales`)}>
+              <Button variant="ghost" size="icon"><Printer className="h-4 w-4" /></Button>
+            </Link>
+            <Button variant="ghost" size="icon" onClick={async () => { 
+              if (await confirm({
+                title: `Delete ${terms.title.slice(0, -1)}`,
+                description: `Are you sure you want to delete this invoice? This action cannot be undone.`,
+                variant: 'destructive',
+                confirmText: 'Delete'
+              })) {
+                deleteMutation.mutate(row.id); 
+              }
+            }}>
+              <Trash2 className="h-4 w-4 text-red-500" />
+            </Button>
+          </div>
+        );
+      }
     }
   ];
 

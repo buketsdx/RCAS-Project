@@ -19,6 +19,7 @@ export default function SalesInvoice() {
   const { selectedCompanyId } = useCompany();
   const location = useLocation();
   const routeVoucher = location.state?.voucher;
+  const routeItems = location.state?.items || [];
   const urlParams = new URLSearchParams(window.location.search);
   const voucherId = urlParams.get('id');
 
@@ -71,7 +72,24 @@ export default function SalesInvoice() {
     email: ''
   });
 
-  const [items, setItems] = useState([{ stock_item_id: '', quantity: 1, rate: 0, discount_percent: 0, vat_rate: 15 }]);
+  const [items, setItems] = useState(() => {
+    if (routeItems && routeItems.length > 0) {
+      return routeItems.map(item => ({
+        id: item.id,
+        stock_item_id: item.stock_item_id,
+        stock_item_name: item.stock_item_name,
+        quantity: item.quantity,
+        rate: item.rate,
+        discount_percent: item.discount_percent || 0,
+        discount_amount: item.discount_amount || 0,
+        vat_rate: item.vat_rate || 15,
+        vat_amount: item.vat_amount || 0,
+        amount: item.amount,
+        total_amount: item.total_amount
+      }));
+    }
+    return [{ stock_item_id: '', quantity: 1, rate: 0, discount_percent: 0, vat_rate: 15 }];
+  });
 
   const { data: ledgers = [] } = useQuery({
     queryKey: ['ledgers', selectedCompanyId],
@@ -152,7 +170,7 @@ export default function SalesInvoice() {
       const allItems = await rcas.entities.VoucherItem.list();
       return allItems.filter(item => item.voucher_id === voucherId);
     },
-    enabled: !!voucherId && !!voucher,
+    enabled: !!voucherId && !!voucher && routeItems.length === 0,
     onSuccess: (itemsFromServer) => {
       if (voucherId && itemsFromServer && itemsFromServer.length > 0) {
         setItems(itemsFromServer.map(item => ({
