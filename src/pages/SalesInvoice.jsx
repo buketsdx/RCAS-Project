@@ -457,9 +457,12 @@ export default function SalesInvoice() {
                   type="select"
                   value={customerType}
                   onChange={(e) => {
-                    setCustomerType(e.target.value);
-                    setNewCustomer(prev => ({ ...prev, customer_type: e.target.value }));
-                    setFormData(prev => ({ ...prev, party_ledger_id: '', party_name: '' }));
+                    const newType = e.target.value;
+                    setCustomerType(newType);
+                    setNewCustomer(prev => ({ ...prev, customer_type: newType }));
+                    if (!voucherId) {
+                      setFormData(prev => ({ ...prev, party_ledger_id: '', party_name: '' }));
+                    }
                   }}
                   options={[
                     { value: 'VAT Customer', label: 'VAT Customer' },
