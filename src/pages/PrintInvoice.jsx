@@ -208,30 +208,16 @@ export default function PrintInvoice() {
               <p><strong>Payment Terms:</strong> {voucher.payment_terms || 'Cash'}</p>
               {voucher.due_date && <p><strong>Due Date:</strong> {format(new Date(voucher.due_date), 'dd/MM/yyyy')}</p>}
             </div>
-            {type === 'sales' && (
-              <div className="mt-4 grid grid-cols-2 gap-4 items-start">
-                <div className="space-y-1 text-xs text-slate-700">
-                  <p>
-                    <span className="font-semibold">Invoice UUID: </span>
-                    <span>{zatcaInvoice?.invoice_uuid || '-'}</span>
-                  </p>
-                  <p>
-                    <span className="font-semibold">ZATCA Status: </span>
-                    <span>{zatcaInvoice?.submission_status || 'Pending'}</span>
-                  </p>
+            {type === 'sales' && zatcaQRUrl && (
+              <div className="mt-4 flex justify-end">
+                <div className="text-center">
+                  <img
+                    src={zatcaQRUrl}
+                    alt="ZATCA QR Code"
+                    className="h-24 w-24 mx-auto"
+                  />
+                  <p className="mt-1 text-[10px] text-slate-500">Scan with ZATCA FATOORA</p>
                 </div>
-                {zatcaQRUrl && (
-                  <div className="flex justify-end">
-                    <div className="text-center">
-                      <img
-                        src={zatcaQRUrl}
-                        alt="ZATCA QR Code"
-                        className="h-24 w-24 mx-auto"
-                      />
-                      <p className="mt-1 text-[10px] text-slate-500">Scan with ZATCA FATOORA</p>
-                    </div>
-                  </div>
-                )}
               </div>
             )}
           </div>

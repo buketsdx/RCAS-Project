@@ -327,7 +327,8 @@ export default function SalesInvoice() {
   const totals = {
     gross: items.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0),
     vat: items.reduce((sum, item) => sum + (parseFloat(item.vat_amount) || 0), 0),
-    net: items.reduce((sum, item) => sum + (parseFloat(item.total_amount) || 0), 0)
+    net: items.reduce((sum, item) => sum + (parseFloat(item.total_amount) || 0), 0),
+    discount: items.reduce((sum, item) => sum + (parseFloat(item.discount_amount) || 0), 0)
   };
 
   if (isLoading && voucherId) return <LoadingSpinner text="Loading invoice..." />;
@@ -518,6 +519,12 @@ export default function SalesInvoice() {
                   <span className="text-slate-600 dark:text-muted-foreground">Subtotal:</span>
                   <span className="font-medium">{formatCurrency(totals.gross, 'SAR')}</span>
                 </div>
+                {totals.discount > 0 && (
+                  <div className="flex justify-between w-64">
+                    <span className="text-slate-600 dark:text-muted-foreground">Discount:</span>
+                    <span className="font-medium text-red-600 dark:text-red-400">- {formatCurrency(totals.discount, 'SAR')}</span>
+                  </div>
+                )}
                 <div className="flex justify-between w-64">
                   <span className="text-slate-600 dark:text-muted-foreground">VAT (15%):</span>
                   <span className="font-medium">{formatCurrency(totals.vat, 'SAR')}</span>
