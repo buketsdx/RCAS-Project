@@ -23,6 +23,14 @@ export default function SalesInvoice() {
   const urlParams = new URLSearchParams(window.location.search);
   const voucherId = urlParams.get('id');
 
+  // DEBUG: Log immediately on mount
+  console.log('🔴 SalesInvoice Component Mounted');
+  console.log('📍 URL:', window.location.href);
+  console.log('🆔 voucherId from URL:', voucherId);
+  console.log('🏢 selectedCompanyId:', selectedCompanyId);
+  console.log('📦 routeVoucher:', routeVoucher);
+  console.log('📋 routeItems:', routeItems);
+
   const [formData, setFormData] = useState(() => {
     const base = {
       voucher_type: 'Sales',
@@ -126,7 +134,11 @@ export default function SalesInvoice() {
   const { data: voucher, isLoading: isLoadingVoucher, error: voucherError } = useQuery({
     queryKey: ['voucher', voucherId],
     queryFn: async () => {
-      if (!voucherId) return null;
+      console.log('📌 queryFn START - voucherId:', voucherId);
+      if (!voucherId) {
+        console.log('⚠️  No voucherId, returning null');
+        return null;
+      }
       
       try {
         console.log('🔍 Attempting to fetch voucher directly with ID:', voucherId);
@@ -164,7 +176,8 @@ export default function SalesInvoice() {
     },
     enabled: !!voucherId,
     onSuccess: (voucher) => {
-      console.log('🎯 onSuccess callback - Voucher:', voucher);
+      console.log('✨ onSuccess callback triggered');
+      console.log('📦 Voucher in onSuccess:', voucher);
       if (!voucher) {
         console.warn('❌ onSuccess called but voucher is null/undefined!');
         toast.error('Invoice not found. Check the ID or try refreshing.');
@@ -198,6 +211,10 @@ export default function SalesInvoice() {
       });
       setCustomerType(inferredCustomerType);
       setNewCustomer(prev => ({ ...prev, customer_type: inferredCustomerType }));
+    },
+    onError: (error) => {
+      console.error('❌ Query Error for voucher:', error);
+      toast.error('Failed to load invoice: ' + (error.message || 'Unknown error'));
     }
   });
 
@@ -246,6 +263,7 @@ export default function SalesInvoice() {
 
   // Monitor formData changes for debugging
   useEffect(() => {
+    console.log('🎯 Page Mode:', voucherId ? 'EDIT' : 'CREATE');
     if (voucherId && formData.voucher_number) {
       console.log('📝 Current formData state:', {
         voucher_number: formData.voucher_number,
