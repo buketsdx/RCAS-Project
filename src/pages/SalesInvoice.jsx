@@ -52,7 +52,12 @@ export default function SalesInvoice() {
       reference_number: routeVoucher.reference_number || '',
       billing_address: routeVoucher.billing_address || '',
       narration: routeVoucher.narration || '',
-      status: routeVoucher.status || 'Confirmed'
+      status: routeVoucher.status || 'Confirmed',
+      customer_vat_number: routeVoucher.customer_vat_number || '',
+      customer_business_name: routeVoucher.customer_business_name || '',
+      customer_cr_number: routeVoucher.customer_cr_number || '',
+      customer_address_proof: routeVoucher.customer_address_proof || '',
+      customer_type: routeVoucher.customer_type || 'General'
     };
   });
 
@@ -118,20 +123,53 @@ export default function SalesInvoice() {
     enabled: !!selectedCompanyId
   });
 
-  const { data: voucher, isLoading: isLoadingVoucher } = useQuery({
-    queryKey: ['voucher', voucherId, selectedCompanyId],
+  const { data: voucher, isLoading: isLoadingVoucher, error: voucherError } = useQuery({
+    queryKey: ['voucher', voucherId],
     queryFn: async () => {
-      if (!voucherId || !selectedCompanyId) return null;
-      const list = await rcas.entities.Voucher.list();
-      return list.find(
-        (v) =>
-          v.id === voucherId &&
-          String(v.company_id) === String(selectedCompanyId)
-      );
+      if (!voucherId) return null;
+      
+      try {
+        console.log('🔍 Attempting to fetch voucher directly with ID:', voucherId);
+        console.log('📊 Selected company ID:', selectedCompanyId || 'not set');
+        
+        // Use the direct get method
+        const voucher = await rcas.entities.Voucher.get(voucherId);
+        
+        console.log('✅ Voucher fetched successfully:', voucher);
+        console.log('📋 Voucher data loaded:', {
+          voucher_number: voucher?.voucher_number,
+          party_name: voucher?.party_name,
+          status: voucher?.status,
+          company_id: voucher?.company_id,
+          customer_type: voucher?.customer_type
+        });
+        
+        return voucher;
+      } catch (err) {
+        console.error('❌ Direct get failed:', err.message);
+        console.log('🔄 Attempting fallback: fetching full list...');
+        
+        // Fallback: try fetching from list if get fails
+        try {
+          const list = await rcas.entities.Voucher.list();
+          console.log('📋 List fetched:', list.length, 'total vouchers');
+          const found = list.find((v) => v.id === voucherId);
+          console.log('✅ Found in list:', found ? 'YES' : 'NO');
+          return found || null;
+        } catch (fallbackErr) {
+          console.error('❌ Fallback also failed:', fallbackErr.message);
+          throw new Error(`Could not load voucher ${voucherId}: ${err.message}`);
+        }
+      }
     },
-    enabled: !!voucherId && !!selectedCompanyId,
+    enabled: !!voucherId,
     onSuccess: (voucher) => {
-      if (!voucher) return;
+      console.log('🎯 onSuccess callback - Voucher:', voucher);
+      if (!voucher) {
+        console.warn('❌ onSuccess called but voucher is null/undefined!');
+        toast.error('Invoice not found. Check the ID or try refreshing.');
+        return;
+      }
 
       const inferredCustomerType =
         voucher.customer_type ||
@@ -168,10 +206,14 @@ export default function SalesInvoice() {
     queryFn: async () => {
       if (!voucherId) return [];
       const allItems = await rcas.entities.VoucherItem.list();
-      return allItems.filter(item => item.voucher_id === voucherId);
+      console.log('📦 VoucherItems fetched:', allItems.length);
+      const itemsForVoucher = allItems.filter(item => item.voucher_id === voucherId);
+      console.log('📋 Items for voucher', voucherId, ':', itemsForVoucher.length);
+      return itemsForVoucher;
     },
     enabled: !!voucherId && !!voucher && routeItems.length === 0,
     onSuccess: (itemsFromServer) => {
+      console.log('📦 Items onSuccess:', itemsFromServer.length, 'items');
       if (voucherId && itemsFromServer && itemsFromServer.length > 0) {
         setItems(itemsFromServer.map(item => ({
           id: item.id,
@@ -201,6 +243,36 @@ export default function SalesInvoice() {
       });
     }
   }, [voucherId, formData.voucher_number]);
+
+  // Monitor formData changes for debugging
+  useEffect(() => {
+    if (voucherId && formData.voucher_number) {
+      console.log('📝 Current formData state:', {
+        voucher_number: formData.voucher_number,
+        date: formData.date,
+        party_name: formData.party_name,
+        party_ledger_id: formData.party_ledger_id,
+        status: formData.status,
+        customer_type: formData.customer_type,
+        net_amount: formData.net_amount,
+        vat_amount: formData.vat_amount
+      });
+    }
+  }, [formData, voucherId]);
+
+  // Debug: Log formData changes
+  useEffect(() => {
+    if (voucherId) {
+      console.log('📝 Current formData state:', {
+        voucher_number: formData.voucher_number,
+        party_name: formData.party_name,
+        party_ledger_id: formData.party_ledger_id,
+        date: formData.date,
+        customer_type: formData.customer_type,
+        status: formData.status
+      });
+    }
+  }, [formData, voucherId]);
 
   const partyLedgers = ledgers.filter(l => {
     if (voucherId && formData.party_ledger_id && String(l.id) === String(formData.party_ledger_id)) {
@@ -409,6 +481,64 @@ export default function SalesInvoice() {
       <form onSubmit={handleSubmit} className="flex-1 flex flex-col">
         <div className="flex-1 overflow-y-auto px-4 md:px-8 py-6">
           <div className="max-w-6xl mx-auto space-y-6">
+            {/* Debug Info - Show if editing and data loaded */}
+            {voucherId && !isLoadingVoucher && voucher && (
+              <Card className="border-blue-300 bg-blue-50 dark:bg-blue-950">
+                <CardContent className="pt-4">
+                  <div className="text-sm text-blue-900 dark:text-blue-100">
+                    <p className="font-semibold mb-2">✅ Invoice Data Loaded</p>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs font-mono">
+                      <div>
+                        <strong>Invoice #:</strong><br/>
+                        <span className={formData.voucher_number ? 'text-green-700 dark:text-green-400 font-bold' : 'text-red-700'}>{formData.voucher_number || '❌ EMPTY'}</span>
+                      </div>
+                      <div>
+                        <strong>Customer:</strong><br/>
+                        <span className={formData.party_name ? 'text-green-700 dark:text-green-400 font-bold' : 'text-red-700'}>{formData.party_name || '❌ EMPTY'}</span>
+                      </div>
+                      <div>
+                        <strong>Date:</strong><br/>
+                        <span className={formData.date ? 'text-green-700 dark:text-green-400 font-bold' : 'text-red-700'}>{formData.date || '❌ EMPTY'}</span>
+                      </div>
+                      <div>
+                        <strong>Status:</strong><br/>
+                        <span className={formData.status ? 'text-green-700 dark:text-green-400 font-bold' : 'text-red-700'}>{formData.status || '❌ EMPTY'}</span>
+                      </div>
+                      <div>
+                        <strong>Amount:</strong><br/>
+                        <span className={formData.net_amount ? 'text-green-700 dark:text-green-400 font-bold' : 'text-gray-500'}>SAR {formData.net_amount || '—'}</span>
+                      </div>
+                      <div>
+                        <strong>Type:</strong><br/>
+                        <span>{formData.customer_type}</span>
+                      </div>
+                    </div>
+                    <p className="text-xs text-blue-700 dark:text-blue-300 mt-2">ID: {voucherId.substring(0, 16)}...</p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {voucherId && isLoadingVoucher && (
+              <Card className="border-yellow-300 bg-yellow-50 dark:bg-yellow-950">
+                <CardContent className="pt-4">
+                  <p className="text-sm text-yellow-900 dark:text-yellow-100">⏳ Loading invoice data... Please wait.</p>
+                </CardContent>
+              </Card>
+            )}
+
+            {voucherId && !isLoadingVoucher && !voucher && (
+              <Card className="border-red-300 bg-red-50 dark:bg-red-950">
+                <CardContent className="pt-4">
+                  <div className="text-sm text-red-900 dark:text-red-100">
+                    <p className="font-semibold mb-2">❌ Invoice Not Found</p>
+                    <p className="text-xs">ID: {voucherId}</p>
+                    <p className="text-xs mt-1">Check browser console for details. Try refreshing the page or navigating back to the Sales list.</p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Header Info */}
             <Card>
             <CardHeader>
