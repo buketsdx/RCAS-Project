@@ -131,6 +131,7 @@ export default function SalesInvoice() {
     },
     enabled: !!voucherId && !!selectedCompanyId,
     onSuccess: (voucher) => {
+<<<<<<< HEAD
       if (!voucher) return;
 
       const inferredCustomerType =
@@ -169,6 +170,31 @@ export default function SalesInvoice() {
       if (!voucherId) return [];
       const allItems = await rcas.entities.VoucherItem.list();
       return allItems.filter(item => item.voucher_id === voucherId);
+=======
+      if (voucher) {
+        // sync both form data and the local customerType state so that the UI
+        // shows the correct fields and ledger options when editing an existing
+        // invoice. previously customerType always defaulted to 'General', which
+        // caused the select to drop the saved customer and made the form appear
+        // blank after clicking edit.
+        setFormData({
+          voucher_type: 'Sales',
+          voucher_number: voucher.voucher_number || '',
+          date: voucher.date || format(new Date(), 'yyyy-MM-dd'),
+          party_ledger_id: voucher.party_ledger_id || '',
+          party_name: voucher.party_name || '',
+          reference_number: voucher.reference_number || '',
+          billing_address: voucher.billing_address || '',
+          narration: voucher.narration || '',
+          status: voucher.status || 'Confirmed',
+          customer_vat_number: voucher.customer_vat_number || '',
+          customer_business_name: voucher.customer_business_name || '',
+          customer_cr_number: voucher.customer_cr_number || '',
+          customer_address_proof: voucher.customer_address_proof || '',
+          customer_type: voucher.customer_type || 'General'
+        });
+        setCustomerType(voucher.customer_type || 'General');
+>>>>>>> 9ed16bb (fix(SalesInvoice): synchronize form data and customer type when editing invoices)
     },
     enabled: !!voucherId && !!voucher && routeItems.length === 0,
     onSuccess: (itemsFromServer) => {
@@ -346,6 +372,15 @@ export default function SalesInvoice() {
           updated.party_name = ledger.name;
           updated.billing_address = ledger.address || '';
           updated.customer_type = ledger.customer_type || 'General';
+<<<<<<< HEAD
+=======
+          // also mirror the selected ledger's customer_type state so that the
+          // dropdown & the filtered ledger list stay in sync. if we only updated
+          // formData, the UI could drop the selection (and clear fields) because
+          // `partyLedgers` is computed from the state variable.
+          setCustomerType(ledger.customer_type || 'General');
+          // Populate VAT customer fields if it's a VAT Customer
+>>>>>>> 9ed16bb (fix(SalesInvoice): synchronize form data and customer type when editing invoices)
           if (ledger.customer_type === 'VAT Customer') {
             updated.customer_vat_number = ledger.vat_number || '';
             updated.customer_business_name = ledger.business_name || '';
