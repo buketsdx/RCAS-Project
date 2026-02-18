@@ -90,7 +90,15 @@ export default function SalesInvoice() {
     enabled: !!voucherId && !!selectedCompanyId,
     onSuccess: (voucher) => {
       if (voucher) {
-        const loadedCustomerType = voucher.customer_type || 'General';
+        const inferredCustomerType =
+          voucher.customer_type ||
+          (voucher.customer_vat_number ||
+          voucher.customer_business_name ||
+          voucher.customer_cr_number ||
+          voucher.customer_address_proof
+            ? 'VAT Customer'
+            : 'General');
+
         setFormData({
           voucher_type: 'Sales',
           voucher_number: voucher.voucher_number || '',
@@ -105,10 +113,10 @@ export default function SalesInvoice() {
           customer_business_name: voucher.customer_business_name || '',
           customer_cr_number: voucher.customer_cr_number || '',
           customer_address_proof: voucher.customer_address_proof || '',
-          customer_type: loadedCustomerType
+          customer_type: inferredCustomerType
         });
-        setCustomerType(loadedCustomerType);
-        setNewCustomer(prev => ({ ...prev, customer_type: loadedCustomerType }));
+        setCustomerType(inferredCustomerType);
+        setNewCustomer(prev => ({ ...prev, customer_type: inferredCustomerType }));
       }
     }
   });
@@ -151,6 +159,9 @@ export default function SalesInvoice() {
   }, [voucherId, formData.voucher_number]);
 
   const partyLedgers = ledgers.filter(l => {
+    if (voucherId && formData.party_ledger_id && l.id === formData.party_ledger_id) {
+      return true;
+    }
     return l.customer_type === customerType;
   });
 
