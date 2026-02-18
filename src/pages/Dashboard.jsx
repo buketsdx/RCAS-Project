@@ -110,6 +110,18 @@ export default function Dashboard() {
 
   const monthlyVouchers = filterByDate(vouchers, 'date');
 
+  const previousMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+  const previousYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+
+  const filterByMonthYear = (items, dateField, month, year) => {
+    return items.filter(item => {
+      const date = new Date(item[dateField]);
+      return date.getMonth() === month && date.getFullYear() === year;
+    });
+  };
+
+  const previousMonthlyVouchers = filterByMonthYear(vouchers, 'date', previousMonth, previousYear);
+
   const totalSales = monthlyVouchers
     .filter(v => v.voucher_type === 'Sales' || v.voucher_type === 'Service')
     .reduce((sum, v) => sum + (Number(v.net_amount) || 0), 0);
@@ -123,6 +135,30 @@ export default function Dashboard() {
     const rate = parseFloat(item.cost_price || item.opening_rate || 0);
     return sum + qty * rate;
   }, 0);
+
+  const previousSales = previousMonthlyVouchers
+    .filter(v => v.voucher_type === 'Sales' || v.voucher_type === 'Service')
+    .reduce((sum, v) => sum + (Number(v.net_amount) || 0), 0);
+
+  const previousPurchases = previousMonthlyVouchers
+    .filter(v => v.voucher_type === 'Purchase')
+    .reduce((sum, v) => sum + (Number(v.net_amount) || 0), 0);
+
+  const calculateTrend = (currentValue, previousValue) => {
+    if (!previousValue && !currentValue) {
+      return { label: '0.0%', up: false };
+    }
+    if (!previousValue && currentValue) {
+      return { label: 'New', up: true };
+    }
+    const change = ((currentValue - previousValue) / previousValue) * 100;
+    const rounded = Math.abs(change).toFixed(1);
+    const up = change >= 0;
+    return { label: `${up ? '+' : '-'}${rounded}%`, up };
+  };
+
+  const salesTrend = calculateTrend(totalSales, previousSales);
+  const purchaseTrend = calculateTrend(totalPurchases, previousPurchases);
 
   // Quick Actions Configuration
   const quickActions = [
@@ -248,8 +284,8 @@ export default function Dashboard() {
           title={terms.sales}
           value={formatCurrency(totalSales)}
           icon={TrendingUp}
-          trend="+12.5%"
-          trendUp={true}
+          trend={salesTrend.label}
+          trendUp={salesTrend.up}
           description="from last month"
           color="emerald"
         />
@@ -257,8 +293,8 @@ export default function Dashboard() {
           title={terms.purchases}
           value={formatCurrency(totalPurchases)}
           icon={ShoppingCart}
-          trend="+4.3%"
-          trendUp={false}
+          trend={purchaseTrend.label}
+          trendUp={!purchaseTrend.up}
           description="from last month"
           color="blue"
         />
