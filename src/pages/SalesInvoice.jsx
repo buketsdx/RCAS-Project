@@ -87,7 +87,7 @@ export default function SalesInvoice() {
       const list = await rcas.entities.Voucher.list();
       return list.find(v => String(v.id) === String(voucherId));
     },
-    enabled: !!voucherId && !!selectedCompanyId,
+    enabled: !!voucherId,
     onSuccess: (voucher) => {
       if (voucher) {
         const inferredCustomerType =
@@ -127,7 +127,7 @@ export default function SalesInvoice() {
       const allItems = await rcas.entities.VoucherItem.list();
       return allItems.filter(item => String(item.voucher_id) === String(voucherId));
     },
-    enabled: !!voucherId && !!existingVoucher,
+    enabled: !!voucherId,
     onSuccess: (itemsFromServer) => {
       if (itemsFromServer && itemsFromServer.length > 0) {
         setItems(itemsFromServer.map(item => ({
@@ -159,7 +159,7 @@ export default function SalesInvoice() {
   }, [voucherId, formData.voucher_number]);
 
   const partyLedgers = ledgers.filter(l => {
-    if (voucherId && formData.party_ledger_id && l.id === formData.party_ledger_id) {
+    if (voucherId && formData.party_ledger_id && String(l.id) === String(formData.party_ledger_id)) {
       return true;
     }
     return l.customer_type === customerType;
@@ -297,19 +297,17 @@ export default function SalesInvoice() {
     setFormData(prev => {
       const updated = { ...prev, [name]: value };
       if (name === 'party_ledger_id') {
-        const ledger = ledgers.find(l => l.id === value);
+        const ledger = ledgers.find(l => String(l.id) === String(value));
         if (ledger) {
           updated.party_name = ledger.name;
           updated.billing_address = ledger.address || '';
           updated.customer_type = ledger.customer_type || 'General';
-          // Populate VAT customer fields if it's a VAT Customer
           if (ledger.customer_type === 'VAT Customer') {
             updated.customer_vat_number = ledger.vat_number || '';
             updated.customer_business_name = ledger.business_name || '';
             updated.customer_cr_number = ledger.cr_number || '';
             updated.customer_address_proof = ledger.address_proof || '';
           } else {
-            // Clear VAT fields for non-VAT customers
             updated.customer_vat_number = '';
             updated.customer_business_name = '';
             updated.customer_cr_number = '';
