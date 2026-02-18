@@ -23,7 +23,7 @@ export default function Contra() {
   const { data: vouchers = [], isLoading } = useQuery({
     queryKey: ['contraVouchers', selectedCompanyId],
     queryFn: async () => {
-      const all = await rcas.entities.Voucher.list('-created_date');
+      const all = await rcas.entities.Voucher.list('-created_at');
       return all.filter(v => v.voucher_type === 'Contra' && String(v.company_id) === String(selectedCompanyId));
     },
     enabled: !!selectedCompanyId

@@ -81,7 +81,7 @@ export default function Dashboard() {
     queryKey: ['vouchers', selectedCompanyId],
     queryFn: async () => {
       if (!selectedCompanyId) return [];
-      const list = await rcas.entities.Voucher.list('-created_date', 1000);
+      const list = await rcas.entities.Voucher.list('-created_at', 1000);
       return list.filter(v => String(v.company_id) === String(selectedCompanyId));
     },
     enabled: !!selectedCompanyId

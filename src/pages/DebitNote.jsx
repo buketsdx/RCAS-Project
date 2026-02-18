@@ -23,7 +23,7 @@ export default function DebitNote() {
   const { data: vouchers = [], isLoading } = useQuery({
     queryKey: ['debitNotes', selectedCompanyId],
     queryFn: async () => {
-      const all = await rcas.entities.Voucher.list('-created_date');
+      const all = await rcas.entities.Voucher.list('-created_at');
       return all.filter(v => v.voucher_type === 'Debit Note' && String(v.company_id) === String(selectedCompanyId));
     },
     enabled: !!selectedCompanyId

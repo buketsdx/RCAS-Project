@@ -23,7 +23,7 @@ export default function PurchaseOrder() {
   const { data: vouchers = [], isLoading } = useQuery({
     queryKey: ['purchaseOrders', selectedCompanyId],
     queryFn: async () => {
-      const all = await rcas.entities.Voucher.list('-created_date');
+      const all = await rcas.entities.Voucher.list('-created_at');
       return all.filter(v => v.voucher_type === 'Purchase Order' && String(v.company_id) === String(selectedCompanyId));
     },
     enabled: !!selectedCompanyId
