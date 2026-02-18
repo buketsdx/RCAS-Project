@@ -88,6 +88,20 @@ export const supabaseAdapter = {
     return data;
   },
 
+  get: async (entityName, id, context) => {
+    if (!supabase) throw new Error("Supabase not initialized");
+    const tableName = getTableName(entityName);
+
+    let query = supabase.from(tableName).select('*').eq('id', id);
+    if (context?.companyId && !globalEntities.includes(entityName)) {
+      query = query.eq('company_id', context.companyId);
+    }
+
+    const { data, error } = await query.single();
+    if (error) throw error;
+    return data;
+  },
+
   create: async (entityName, data, context) => {
     if (!supabase) throw new Error("Supabase not initialized");
     const tableName = getTableName(entityName);

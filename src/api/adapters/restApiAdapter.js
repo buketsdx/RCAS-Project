@@ -39,6 +39,29 @@ export const restApiAdapter = {
     return await response.json();
   },
 
+  get: async (entityName, id, context) => {
+    if (!apiUrl) throw new Error("API not initialized");
+
+    const resource = mapEntityToResource(entityName);
+    const params = new URLSearchParams();
+    if (context?.companyId) params.append('company_id', context.companyId);
+
+    const queryString = params.toString();
+    const url = queryString
+      ? `${apiUrl}/${resource}/${id}?${queryString}`
+      : `${apiUrl}/${resource}/${id}`;
+
+    const response = await fetch(url, {
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.ok) throw new Error(`API Error: ${response.statusText}`);
+    return await response.json();
+  },
+
   create: async (entityName, data, context) => {
     if (!apiUrl) throw new Error("API not initialized");
 

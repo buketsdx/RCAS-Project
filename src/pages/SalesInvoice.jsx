@@ -84,68 +84,55 @@ export default function SalesInvoice() {
   const { data: existingVoucher, isLoading } = useQuery({
     queryKey: ['voucher', voucherId, selectedCompanyId],
     queryFn: async () => {
-      const list = await rcas.entities.Voucher.list();
-      return list.find(v => String(v.id) === String(voucherId));
+      if (!voucherId) return null;
+      return rcas.entities.Voucher.get(voucherId);
     },
-    enabled: !!voucherId,
-    onSuccess: (voucher) => {
-      if (voucher) {
-        const inferredCustomerType =
-          voucher.customer_type ||
-          (voucher.customer_vat_number ||
-          voucher.customer_business_name ||
-          voucher.customer_cr_number ||
-          voucher.customer_address_proof
-            ? 'VAT Customer'
-            : 'General');
-
-        setFormData({
-          voucher_type: 'Sales',
-          voucher_number: voucher.voucher_number || '',
-          date: voucher.date || format(new Date(), 'yyyy-MM-dd'),
-          party_ledger_id: voucher.party_ledger_id || '',
-          party_name: voucher.party_name || '',
-          reference_number: voucher.reference_number || '',
-          billing_address: voucher.billing_address || '',
-          narration: voucher.narration || '',
-          status: voucher.status || 'Confirmed',
-          customer_vat_number: voucher.customer_vat_number || '',
-          customer_business_name: voucher.customer_business_name || '',
-          customer_cr_number: voucher.customer_cr_number || '',
-          customer_address_proof: voucher.customer_address_proof || '',
-          customer_type: inferredCustomerType
-        });
-        setCustomerType(inferredCustomerType);
-        setNewCustomer(prev => ({ ...prev, customer_type: inferredCustomerType }));
-      }
-    }
+    enabled: !!voucherId
   });
 
   const { data: existingItems = [] } = useQuery({
     queryKey: ['voucherItems', voucherId],
     queryFn: async () => {
+      if (!voucherId) return [];
       const allItems = await rcas.entities.VoucherItem.list();
       return allItems.filter(item => String(item.voucher_id) === String(voucherId));
     },
-    enabled: !!voucherId,
-    onSuccess: (itemsFromServer) => {
-      if (itemsFromServer && itemsFromServer.length > 0) {
-        setItems(itemsFromServer.map(item => ({
-          id: item.id,
-          stock_item_id: item.stock_item_id,
-          stock_item_name: item.stock_item_name,
-          quantity: item.quantity,
-          rate: item.rate,
-          discount_percent: item.discount_percent || 0,
-          discount_amount: item.discount_amount || 0,
-          vat_rate: item.vat_rate || 15,
-          vat_amount: item.vat_amount || 0,
-          amount: item.amount,
-          total_amount: item.total_amount
-        })));
-      }
-    }
+    enabled: !!voucherId
   });
+
+  useEffect(() => {
+    if (voucherId && existingVoucher) {
+      const voucher = existingVoucher;
+      const inferredCustomerType =
+        voucher.customer_type ||
+        (voucher.customer_vat_number ||
+        voucher.customer_business_name ||
+        voucher.customer_cr_number ||
+        voucher.customer_address_proof
+          ? 'VAT Customer'
+          : 'General');
+
+      setFormData({
+        voucher_type: 'Sales',
+        voucher_number: voucher.voucher_number || '',
+        date: voucher.date || format(new Date(), 'yyyy-MM-dd'),
+        party_ledger_id: voucher.party_ledger_id || '',
+        party_name: voucher.party_name || '',
+        reference_number: voucher.reference_number || '',
+        billing_address: voucher.billing_address || '',
+        narration: voucher.narration || '',
+        status: voucher.status || 'Confirmed',
+        customer_vat_number: voucher.customer_vat_number || '',
+        customer_business_name: voucher.customer_business_name || '',
+        customer_cr_number: voucher.customer_cr_number || '',
+        customer_address_proof: voucher.customer_address_proof || '',
+        customer_type: inferredCustomerType
+      });
+      setCustomerType(inferredCustomerType);
+      setNewCustomer(prev => ({ ...prev, customer_type: inferredCustomerType }));
+    }
+  }, [voucherId, existingVoucher]);
+
 
   useEffect(() => {
     if (!voucherId && !formData.voucher_number) {

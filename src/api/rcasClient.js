@@ -91,9 +91,17 @@ const initializeClient = async () => {
 initializeClient();
 
 const createEntity = (name) => ({
-  list: async (filters) => {
+  list: async () => {
     if (!isInitialized) await initializeClient();
     return currentAdapter.list(name, currentContext);
+  },
+  get: async (id) => {
+    if (!isInitialized) await initializeClient();
+    if (currentAdapter.get) {
+      return currentAdapter.get(name, id, currentContext);
+    }
+    const list = await currentAdapter.list(name, currentContext);
+    return list.find(item => String(item.id) === String(id)) || null;
   },
   create: async (data) => {
     if (!isInitialized) await initializeClient();

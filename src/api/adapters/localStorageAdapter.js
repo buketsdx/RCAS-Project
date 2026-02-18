@@ -97,6 +97,16 @@ export const localStorageAdapter = {
     return Promise.resolve([...data]);
   },
 
+  get: async (entityName, id, context) => {
+    let data = storage[entityName] || [];
+    const globalEntities = ['User', 'Company', 'Currency', 'Settings'];
+    if (context?.companyId && !globalEntities.includes(entityName)) {
+      data = data.filter(item => item.company_id === context.companyId);
+    }
+    const found = data.find(item => String(item.id) === String(id));
+    return Promise.resolve(found || null);
+  },
+
   create: async (entityName, data, context) => {
     const newRecord = { ...data, id: Date.now() };
     

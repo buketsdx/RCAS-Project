@@ -94,6 +94,21 @@ export const insforgeAdapter = {
     return data;
   },
 
+  get: async (entityName, id, context) => {
+    if (!client) throw new Error("InsForge client not initialized");
+    const tableName = getTableName(entityName);
+    const db = client.database || client;
+
+    let query = db.from(tableName).select('*').eq('id', id);
+    if (context?.companyId && !globalEntities.includes(entityName)) {
+      query = query.eq('company_id', context.companyId);
+    }
+
+    const { data, error } = await query.single();
+    if (error) throw error;
+    return data;
+  },
+
   create: async (entityName, data, context) => {
     if (!client) throw new Error("InsForge client not initialized");
     const tableName = getTableName(entityName);

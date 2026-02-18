@@ -9,7 +9,8 @@ import {
   deleteDoc, 
   doc, 
   query, 
-  where 
+  where,
+  getDoc
 } from 'firebase/firestore';
 import { 
   getAuth, 
@@ -47,6 +48,21 @@ export const firebaseAdapter = {
 
     const querySnapshot = await getDocs(q);
     return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  },
+
+  get: async (entityName, id, context) => {
+    if (!db) throw new Error("Firebase not initialized");
+    const globalEntities = ['User', 'Company', 'Currency', 'Settings'];
+    const docRef = doc(db, entityName, id);
+    const snapshot = await getDoc(docRef);
+    if (!snapshot.exists()) return null;
+    const data = { id: snapshot.id, ...snapshot.data() };
+    if (context?.companyId && !globalEntities.includes(entityName)) {
+      if (data.company_id !== context.companyId) {
+        return null;
+      }
+    }
+    return data;
   },
 
   create: async (entityName, data, context) => {
