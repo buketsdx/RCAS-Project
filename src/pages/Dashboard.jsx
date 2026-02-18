@@ -149,7 +149,11 @@ export default function Dashboard() {
       return { label: '0.0%', up: false };
     }
     if (!previousValue && currentValue) {
-      return { label: 'New', up: true };
+      // No previous data: treat as 100% move for display, not as dummy text
+      return { label: '+100.0%', up: true };
+    }
+    if (previousValue && !currentValue) {
+      return { label: '-100.0%', up: false };
     }
     const change = ((currentValue - previousValue) / previousValue) * 100;
     const rounded = Math.abs(change).toFixed(1);
