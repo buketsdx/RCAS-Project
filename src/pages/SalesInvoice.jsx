@@ -100,14 +100,14 @@ export default function SalesInvoice() {
     enabled: !!selectedCompanyId
   });
 
-  const { isLoading } = useQuery({
+  const { data: voucher, isLoading: isLoadingVoucher } = useQuery({
     queryKey: ['voucher', voucherId, selectedCompanyId],
     queryFn: async () => {
       if (!voucherId || !selectedCompanyId) return null;
       const list = await rcas.entities.Voucher.list();
       return list.find(
         (v) =>
-          String(v.id) === String(voucherId) &&
+          v.id === voucherId &&
           String(v.company_id) === String(selectedCompanyId)
       );
     },
@@ -150,9 +150,9 @@ export default function SalesInvoice() {
     queryFn: async () => {
       if (!voucherId) return [];
       const allItems = await rcas.entities.VoucherItem.list();
-      return allItems.filter(item => String(item.voucher_id) === String(voucherId));
+      return allItems.filter(item => item.voucher_id === voucherId);
     },
-    enabled: !!voucherId,
+    enabled: !!voucherId && !!voucher,
     onSuccess: (itemsFromServer) => {
       if (voucherId && itemsFromServer && itemsFromServer.length > 0) {
         setItems(itemsFromServer.map(item => ({
@@ -369,7 +369,7 @@ export default function SalesInvoice() {
     discount: items.reduce((sum, item) => sum + (parseFloat(item.discount_amount) || 0), 0)
   };
 
-  if (isLoading && voucherId) return <LoadingSpinner text="Loading invoice..." />;
+  if (isLoadingVoucher && voucherId) return <LoadingSpinner text="Loading invoice..." />;
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
