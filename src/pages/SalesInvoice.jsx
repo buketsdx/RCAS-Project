@@ -193,6 +193,7 @@ export default function SalesInvoice() {
           ? 'VAT Customer'
           : 'General');
 
+      console.log('🔧 Setting formData with inferred type:', inferredCustomerType);
       setFormData({
         voucher_type: 'Sales',
         voucher_number: voucher.voucher_number || '',
@@ -209,6 +210,7 @@ export default function SalesInvoice() {
         customer_address_proof: voucher.customer_address_proof || '',
         customer_type: inferredCustomerType
       });
+      console.log('✅ formData has been SET - check component re-render');
       setCustomerType(inferredCustomerType);
       setNewCustomer(prev => ({ ...prev, customer_type: inferredCustomerType }));
     },
@@ -496,64 +498,6 @@ export default function SalesInvoice() {
       <form onSubmit={handleSubmit} className="flex-1 flex flex-col">
         <div className="flex-1 overflow-y-auto px-4 md:px-8 py-6">
           <div className="max-w-6xl mx-auto space-y-6">
-            {/* Debug Info - Show if editing and data loaded */}
-            {voucherId && !isLoadingVoucher && voucher && (
-              <Card className="border-blue-300 bg-blue-50 dark:bg-blue-950">
-                <CardContent className="pt-4">
-                  <div className="text-sm text-blue-900 dark:text-blue-100">
-                    <p className="font-semibold mb-2">✅ Invoice Data Loaded</p>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs font-mono">
-                      <div>
-                        <strong>Invoice #:</strong><br/>
-                        <span className={formData.voucher_number ? 'text-green-700 dark:text-green-400 font-bold' : 'text-red-700'}>{formData.voucher_number || '❌ EMPTY'}</span>
-                      </div>
-                      <div>
-                        <strong>Customer:</strong><br/>
-                        <span className={formData.party_name ? 'text-green-700 dark:text-green-400 font-bold' : 'text-red-700'}>{formData.party_name || '❌ EMPTY'}</span>
-                      </div>
-                      <div>
-                        <strong>Date:</strong><br/>
-                        <span className={formData.date ? 'text-green-700 dark:text-green-400 font-bold' : 'text-red-700'}>{formData.date || '❌ EMPTY'}</span>
-                      </div>
-                      <div>
-                        <strong>Status:</strong><br/>
-                        <span className={formData.status ? 'text-green-700 dark:text-green-400 font-bold' : 'text-red-700'}>{formData.status || '❌ EMPTY'}</span>
-                      </div>
-                      <div>
-                        <strong>Amount:</strong><br/>
-                        <span className={formData.net_amount ? 'text-green-700 dark:text-green-400 font-bold' : 'text-gray-500'}>SAR {formData.net_amount || '—'}</span>
-                      </div>
-                      <div>
-                        <strong>Type:</strong><br/>
-                        <span>{formData.customer_type}</span>
-                      </div>
-                    </div>
-                    <p className="text-xs text-blue-700 dark:text-blue-300 mt-2">ID: {voucherId.substring(0, 16)}...</p>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {voucherId && isLoadingVoucher && (
-              <Card className="border-yellow-300 bg-yellow-50 dark:bg-yellow-950">
-                <CardContent className="pt-4">
-                  <p className="text-sm text-yellow-900 dark:text-yellow-100">⏳ Loading invoice data... Please wait.</p>
-                </CardContent>
-              </Card>
-            )}
-
-            {voucherId && !isLoadingVoucher && !voucher && (
-              <Card className="border-red-300 bg-red-50 dark:bg-red-950">
-                <CardContent className="pt-4">
-                  <div className="text-sm text-red-900 dark:text-red-100">
-                    <p className="font-semibold mb-2">❌ Invoice Not Found</p>
-                    <p className="text-xs">ID: {voucherId}</p>
-                    <p className="text-xs mt-1">Check browser console for details. Try refreshing the page or navigating back to the Sales list.</p>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
             {/* Header Info */}
             <Card>
             <CardHeader>
