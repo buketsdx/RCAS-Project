@@ -85,7 +85,7 @@ export default function SalesInvoice() {
     queryKey: ['voucher', voucherId, selectedCompanyId],
     queryFn: async () => {
       const list = await rcas.entities.Voucher.list();
-      return list.find(v => v.id === voucherId && String(v.company_id) === String(selectedCompanyId));
+      return list.find(v => String(v.id) === String(voucherId));
     },
     enabled: !!voucherId && !!selectedCompanyId,
     onSuccess: (voucher) => {
@@ -125,7 +125,7 @@ export default function SalesInvoice() {
     queryKey: ['voucherItems', voucherId],
     queryFn: async () => {
       const allItems = await rcas.entities.VoucherItem.list();
-      return allItems.filter(item => item.voucher_id === voucherId);
+      return allItems.filter(item => String(item.voucher_id) === String(voucherId));
     },
     enabled: !!voucherId && !!existingVoucher,
     onSuccess: (itemsFromServer) => {
