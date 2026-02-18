@@ -3,6 +3,7 @@ import { rcas } from '@/api/rcasClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { createPageUrl, formatCurrency, generateVoucherCode } from "@/utils";
 import { useCompany } from '@/context/CompanyContext';
+import { useLocation } from 'react-router-dom';
 import PageHeader from '@/components/common/PageHeader';
 import FormField from '@/components/forms/FormField';
 import VoucherItemsTable from '@/components/vouchers/VoucherItemsTable';
@@ -16,24 +17,42 @@ import { Save, Printer, ArrowLeft, Plus, X } from 'lucide-react';
 export default function SalesInvoice() {
   const queryClient = useQueryClient();
   const { selectedCompanyId } = useCompany();
+  const location = useLocation();
+  const routeVoucher = location.state?.voucher;
   const urlParams = new URLSearchParams(window.location.search);
   const voucherId = urlParams.get('id');
 
-  const [formData, setFormData] = useState({
-    voucher_type: 'Sales',
-    voucher_number: '',
-    date: format(new Date(), 'yyyy-MM-dd'),
-    party_ledger_id: '',
-    party_name: '',
-    reference_number: '',
-    billing_address: '',
-    narration: '',
-    status: 'Confirmed',
-    customer_vat_number: '',
-    customer_business_name: '',
-    customer_cr_number: '',
-    customer_address_proof: '',
-    customer_type: 'General'
+  const [formData, setFormData] = useState(() => {
+    const base = {
+      voucher_type: 'Sales',
+      voucher_number: '',
+      date: format(new Date(), 'yyyy-MM-dd'),
+      party_ledger_id: '',
+      party_name: '',
+      reference_number: '',
+      billing_address: '',
+      narration: '',
+      status: 'Confirmed',
+      customer_vat_number: '',
+      customer_business_name: '',
+      customer_cr_number: '',
+      customer_address_proof: '',
+      customer_type: 'General'
+    };
+
+    if (!routeVoucher) return base;
+
+    return {
+      ...base,
+      voucher_number: routeVoucher.voucher_number || base.voucher_number,
+      date: routeVoucher.date || base.date,
+      party_ledger_id: routeVoucher.party_ledger_id || '',
+      party_name: routeVoucher.party_name || '',
+      reference_number: routeVoucher.reference_number || '',
+      billing_address: routeVoucher.billing_address || '',
+      narration: routeVoucher.narration || '',
+      status: routeVoucher.status || 'Confirmed'
+    };
   });
 
   const [customerType, setCustomerType] = useState('General');

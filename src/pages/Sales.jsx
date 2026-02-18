@@ -104,7 +104,10 @@ export default function Sales() {
       header: 'Actions',
       render: (row) => (
         <div className="flex items-center gap-2">
-          <Link to={createPageUrl(`SalesInvoice?id=${row.id}`)}>
+          <Link 
+            to={createPageUrl(`SalesInvoice?id=${row.id}`)} 
+            state={{ voucher: row }}
+          >
             <Button variant="ghost" size="icon"><Eye className="h-4 w-4" /></Button>
           </Link>
           <Link to={createPageUrl(`PrintInvoice?id=${row.id}&type=sales`)}>
