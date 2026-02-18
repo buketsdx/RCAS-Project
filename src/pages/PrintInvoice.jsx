@@ -53,6 +53,69 @@ export default function PrintInvoice() {
 
   const partyLedger = ledgers.find(l => l.id === voucher?.party_ledger_id);
 
+  const { data: zatcaInvoice } = useQuery({
+    queryKey: ['zatcaInvoice', voucherId, selectedCompanyId],
+    queryFn: async () => {
+      const list = await rcas.entities.ZATCAInvoice.list();
+      return list.find(z => z.voucher_id === voucherId && String(z.company_id) === String(selectedCompanyId));
+    },
+    enabled: !!voucherId && !!selectedCompanyId
+  });
+
+  const buildZatcaQRBase64 = () => {
+    if (type !== 'sales' || !voucher || !company || !zatcaInvoice) return null;
+    let qrPayload = {};
+    try {
+      qrPayload = zatcaInvoice.qr_code ? JSON.parse(zatcaInvoice.qr_code) : {};
+    } catch {
+      qrPayload = {};
+    }
+    const data = {
+      seller_name: company.name || qrPayload.seller_name || '',
+      vat_number: company.vat_number || qrPayload.vat_number || '',
+      timestamp: voucher.date ? new Date(voucher.date).toISOString() : qrPayload.timestamp || new Date().toISOString(),
+      total_with_vat: parseFloat(voucher.net_amount ?? qrPayload.total_with_vat ?? 0),
+      vat_amount: parseFloat(voucher.vat_amount ?? qrPayload.vat_amount ?? 0)
+    };
+    try {
+      const encoder = new TextEncoder();
+      const segments = [];
+      const pushSegment = (tag, value) => {
+        const text = String(value ?? '');
+        const bytes = encoder.encode(text);
+        const seg = new Uint8Array(2 + bytes.length);
+        seg[0] = tag;
+        seg[1] = bytes.length;
+        seg.set(bytes, 2);
+        segments.push(seg);
+      };
+      pushSegment(1, data.seller_name);
+      pushSegment(2, data.vat_number);
+      pushSegment(3, data.timestamp);
+      pushSegment(4, data.total_with_vat);
+      pushSegment(5, data.vat_amount);
+      const totalLength = segments.reduce((sum, seg) => sum + seg.length, 0);
+      const all = new Uint8Array(totalLength);
+      let offset = 0;
+      segments.forEach(seg => {
+        all.set(seg, offset);
+        offset += seg.length;
+      });
+      let binary = '';
+      for (let i = 0; i < all.length; i += 1) {
+        binary += String.fromCharCode(all[i]);
+      }
+      return btoa(binary);
+    } catch {
+      return null;
+    }
+  };
+
+  const zatcaQRBase64 = buildZatcaQRBase64();
+  const zatcaQRUrl = zatcaQRBase64
+    ? `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(zatcaQRBase64)}`
+    : null;
+
   const handlePrint = () => {
     window.print();
   };
@@ -145,6 +208,32 @@ export default function PrintInvoice() {
               <p><strong>Payment Terms:</strong> {voucher.payment_terms || 'Cash'}</p>
               {voucher.due_date && <p><strong>Due Date:</strong> {format(new Date(voucher.due_date), 'dd/MM/yyyy')}</p>}
             </div>
+            {type === 'sales' && (
+              <div className="mt-4 grid grid-cols-2 gap-4 items-start">
+                <div className="space-y-1 text-xs text-slate-700">
+                  <p>
+                    <span className="font-semibold">Invoice UUID: </span>
+                    <span>{zatcaInvoice?.invoice_uuid || '-'}</span>
+                  </p>
+                  <p>
+                    <span className="font-semibold">ZATCA Status: </span>
+                    <span>{zatcaInvoice?.submission_status || 'Pending'}</span>
+                  </p>
+                </div>
+                {zatcaQRUrl && (
+                  <div className="flex justify-end">
+                    <div className="text-center">
+                      <img
+                        src={zatcaQRUrl}
+                        alt="ZATCA QR Code"
+                        className="h-24 w-24 mx-auto"
+                      />
+                      <p className="mt-1 text-[10px] text-slate-500">Scan with ZATCA FATOORA</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
