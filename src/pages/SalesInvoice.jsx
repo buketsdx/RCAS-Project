@@ -436,15 +436,12 @@ export default function SalesInvoice() {
           updated.party_name = ledger.name;
           updated.billing_address = ledger.address || '';
           updated.customer_type = ledger.customer_type || 'General';
-<<<<<<< HEAD
-=======
           // also mirror the selected ledger's customer_type state so that the
           // dropdown & the filtered ledger list stay in sync. if we only updated
           // formData, the UI could drop the selection (and clear fields) because
           // `partyLedgers` is computed from the state variable.
           setCustomerType(ledger.customer_type || 'General');
           // Populate VAT customer fields if it's a VAT Customer
->>>>>>> 9ed16bb (fix(SalesInvoice): synchronize form data and customer type when editing invoices)
           if (ledger.customer_type === 'VAT Customer') {
             updated.customer_vat_number = ledger.vat_number || '';
             updated.customer_business_name = ledger.business_name || '';
