@@ -90,6 +90,7 @@ export default function SalesInvoice() {
     enabled: !!voucherId && !!selectedCompanyId,
     onSuccess: (voucher) => {
       if (voucher) {
+        const loadedCustomerType = voucher.customer_type || 'General';
         setFormData({
           voucher_type: 'Sales',
           voucher_number: voucher.voucher_number || '',
@@ -104,8 +105,10 @@ export default function SalesInvoice() {
           customer_business_name: voucher.customer_business_name || '',
           customer_cr_number: voucher.customer_cr_number || '',
           customer_address_proof: voucher.customer_address_proof || '',
-          customer_type: voucher.customer_type || 'General'
+          customer_type: loadedCustomerType
         });
+        setCustomerType(loadedCustomerType);
+        setNewCustomer(prev => ({ ...prev, customer_type: loadedCustomerType }));
       }
     }
   });
