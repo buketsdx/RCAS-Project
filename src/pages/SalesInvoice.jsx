@@ -470,7 +470,11 @@ export default function SalesInvoice() {
                 />
               </div>
 
-              {customerType === 'VAT Customer' && (
+              {(customerType === 'VAT Customer' ||
+                formData.customer_vat_number ||
+                formData.customer_business_name ||
+                formData.customer_cr_number ||
+                formData.customer_address_proof) && (
                 <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                   <h3 className="font-semibold text-blue-900 mb-4">VAT Customer Details</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
