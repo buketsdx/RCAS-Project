@@ -81,28 +81,16 @@ export default function SalesInvoice() {
     enabled: !!selectedCompanyId
   });
 
-  const { data: existingVoucher, isLoading } = useQuery({
+  const { isLoading } = useQuery({
     queryKey: ['voucher', voucherId, selectedCompanyId],
     queryFn: async () => {
       if (!voucherId) return null;
       return rcas.entities.Voucher.get(voucherId);
     },
-    enabled: !!voucherId
-  });
+    enabled: !!voucherId,
+    onSuccess: (voucher) => {
+      if (!voucher) return;
 
-  const { data: existingItems = [] } = useQuery({
-    queryKey: ['voucherItems', voucherId],
-    queryFn: async () => {
-      if (!voucherId) return [];
-      const allItems = await rcas.entities.VoucherItem.list();
-      return allItems.filter(item => String(item.voucher_id) === String(voucherId));
-    },
-    enabled: !!voucherId
-  });
-
-  useEffect(() => {
-    if (voucherId && existingVoucher) {
-      const voucher = existingVoucher;
       const inferredCustomerType =
         voucher.customer_type ||
         (voucher.customer_vat_number ||
@@ -131,7 +119,34 @@ export default function SalesInvoice() {
       setCustomerType(inferredCustomerType);
       setNewCustomer(prev => ({ ...prev, customer_type: inferredCustomerType }));
     }
-  }, [voucherId, existingVoucher]);
+  });
+
+  const { data: existingItems = [] } = useQuery({
+    queryKey: ['voucherItems', voucherId],
+    queryFn: async () => {
+      if (!voucherId) return [];
+      const allItems = await rcas.entities.VoucherItem.list();
+      return allItems.filter(item => String(item.voucher_id) === String(voucherId));
+    },
+    enabled: !!voucherId,
+    onSuccess: (itemsFromServer) => {
+      if (voucherId && itemsFromServer && itemsFromServer.length > 0) {
+        setItems(itemsFromServer.map(item => ({
+          id: item.id,
+          stock_item_id: item.stock_item_id,
+          stock_item_name: item.stock_item_name,
+          quantity: item.quantity,
+          rate: item.rate,
+          discount_percent: item.discount_percent || 0,
+          discount_amount: item.discount_amount || 0,
+          vat_rate: item.vat_rate || 15,
+          vat_amount: item.vat_amount || 0,
+          amount: item.amount,
+          total_amount: item.total_amount
+        })));
+      }
+    }
+  });
 
 
   useEffect(() => {
