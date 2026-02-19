@@ -25,15 +25,12 @@ export default function PrintInvoice() {
   });
 
   const { data: voucherItems = [], isLoading: loadingItems } = useQuery({
-    queryKey: ['voucherItems', voucherId, selectedCompanyId],
+    queryKey: ['voucherItems', voucherId],
     queryFn: async () => {
       const all = await rcas.entities.VoucherItem.list();
-      return all.filter(item => 
-        String(item.voucher_id) === String(voucherId) &&
-        String(item.company_id) === String(selectedCompanyId)
-      );
+      return all.filter(item => String(item.voucher_id) === String(voucherId));
     },
-    enabled: !!voucherId && !!voucher && !!selectedCompanyId
+    enabled: !!voucherId && !!voucher
   });
 
   const { data: company } = useQuery({
