@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { format } from 'date-fns';
-import { FileInput, Eye, Trash2 } from 'lucide-react';
+import { FileInput, Pencil, Trash2 } from 'lucide-react';
 
 export default function DebitNote() {
   const queryClient = useQueryClient();
@@ -48,7 +48,7 @@ export default function DebitNote() {
       render: (row) => (
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="icon" asChild>
-            <Link to={createPageUrl(`DebitNoteForm?id=${row.id}`)}><Eye className="h-4 w-4" /></Link>
+            <Link to={createPageUrl(`DebitNoteForm?id=${row.id}`)}><Pencil className="h-4 w-4" /></Link>
           </Button>
           <Button variant="ghost" size="icon" onClick={async () => { 
             if (await confirm({

@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { format } from 'date-fns';
-import { CreditCard, Eye, Trash2 } from 'lucide-react';
+import { CreditCard, Pencil, Trash2 } from 'lucide-react';
 
 export default function Payment() {
   const queryClient = useQueryClient();
@@ -48,7 +48,7 @@ export default function Payment() {
       render: (row) => (
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="icon" asChild>
-            <Link to={createPageUrl("payment", row.id)}><Eye className="h-4 w-4" /></Link>
+            <Link to={createPageUrl("payment", row.id)}><Pencil className="h-4 w-4" /></Link>
           </Button>
           <Button variant="ghost" size="icon" onClick={async () => { 
             if (await confirm({

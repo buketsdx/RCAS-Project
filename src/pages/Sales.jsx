@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { format } from 'date-fns';
-import { TrendingUp, Plus, Eye, Printer, Trash2 } from 'lucide-react';
+import { TrendingUp, Plus, Pencil, Printer, Trash2 } from 'lucide-react';
 
 export default function Sales() {
   const { company, selectedCompanyId } = useCompany();
@@ -119,7 +119,7 @@ export default function Sales() {
               to={createPageUrl(`SalesInvoice?id=${row.id}`)} 
               state={{ voucher: row, items: rowItems }}
             >
-              <Button variant="ghost" size="icon"><Eye className="h-4 w-4" /></Button>
+              <Button variant="ghost" size="icon"><Pencil className="h-4 w-4" /></Button>
             </Link>
             <Link to={createPageUrl(`PrintInvoice?id=${row.id}&type=sales`)}>
               <Button variant="ghost" size="icon"><Printer className="h-4 w-4" /></Button>
