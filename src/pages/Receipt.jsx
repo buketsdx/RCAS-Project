@@ -29,15 +29,6 @@ export default function Receipt() {
     enabled: !!selectedCompanyId
   });
 
-  const { data: voucherEntries = [] } = useQuery({
-    queryKey: ['receiptVoucherEntries', selectedCompanyId],
-    queryFn: async () => {
-      const all = await rcas.entities.VoucherLedgerEntry.list();
-      return all;
-    },
-    enabled: !!selectedCompanyId
-  });
-
   const deleteMutation = useMutation({
     mutationFn: async (id) => {
       // 1. Fetch dependencies directly using raw query
@@ -45,7 +36,7 @@ export default function Receipt() {
       try {
         const { data: rawZatca } = await rcas.from('zatca_invoices').select('*').eq('voucher_id', id);
         zatcaToDelete = rawZatca || [];
-      } catch (err) {
+      } catch {
         const allZatca = await rcas.entities.ZATCAInvoice.list();
         zatcaToDelete = allZatca.filter(z => String(z.voucher_id) === String(id));
       }
@@ -58,7 +49,7 @@ export default function Receipt() {
       try {
         const { data: rawBankRecs } = await rcas.from('bank_reconciliations').select('*').eq('voucher_id', id);
         bankRecToDelete = rawBankRecs || [];
-      } catch (err) {
+      } catch {
         const allBankRecs = await rcas.entities.BankReconciliation.list();
         bankRecToDelete = allBankRecs.filter(b => String(b.voucher_id) === String(id));
       }
@@ -71,7 +62,7 @@ export default function Receipt() {
       try {
         const { data: rawEntries } = await rcas.from('voucher_ledger_entries').select('*').eq('voucher_id', id);
         entriesToDelete = rawEntries || [];
-      } catch (err) {
+      } catch {
         const allEntries = await rcas.entities.VoucherLedgerEntry.list();
         entriesToDelete = allEntries.filter(e => String(e.voucher_id) === String(id));
       }

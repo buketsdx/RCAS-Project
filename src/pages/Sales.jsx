@@ -78,11 +78,10 @@ export default function Sales() {
       
       let zatcaToDelete = [];
       try {
-        // Try to use raw query to bypass default filters if adapter supports it
         const { data: rawZatca } = await rcas.from('zatca_invoices').select('*').eq('voucher_id', id);
         zatcaToDelete = rawZatca || [];
-      } catch (err) {
-        console.warn('Raw query failed, falling back to list()', err);
+      } catch {
+        console.warn('Raw query failed, falling back to list()');
         const allZatca = await rcas.entities.ZATCAInvoice.list();
         zatcaToDelete = allZatca.filter(z => String(z.voucher_id) === String(id));
       }
@@ -97,7 +96,7 @@ export default function Sales() {
       try {
         const { data: rawItems } = await rcas.from('voucher_items').select('*').eq('voucher_id', id);
         itemsToDelete = rawItems || [];
-      } catch (err) {
+      } catch {
         const allItems = await rcas.entities.VoucherItem.list();
         itemsToDelete = allItems.filter(item => String(item.voucher_id) === String(id));
       }

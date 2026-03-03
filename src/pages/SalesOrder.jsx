@@ -29,15 +29,6 @@ export default function SalesOrder() {
     enabled: !!selectedCompanyId
   });
 
-  const { data: voucherItems = [] } = useQuery({
-    queryKey: ['salesOrderItems', selectedCompanyId],
-    queryFn: async () => {
-      const allItems = await rcas.entities.VoucherItem.list();
-      return allItems;
-    },
-    enabled: !!selectedCompanyId
-  });
-
   const deleteMutation = useMutation({
     mutationFn: async (id) => {
       // 1. Fetch dependencies directly using raw query
@@ -45,7 +36,7 @@ export default function SalesOrder() {
       try {
         const { data: rawZatca } = await rcas.from('zatca_invoices').select('*').eq('voucher_id', id);
         zatcaToDelete = rawZatca || [];
-      } catch (err) {
+      } catch {
         const allZatca = await rcas.entities.ZATCAInvoice.list();
         zatcaToDelete = allZatca.filter(z => String(z.voucher_id) === String(id));
       }
@@ -58,7 +49,7 @@ export default function SalesOrder() {
       try {
         const { data: rawItems } = await rcas.from('voucher_items').select('*').eq('voucher_id', id);
         itemsToDelete = rawItems || [];
-      } catch (err) {
+      } catch {
         const allItems = await rcas.entities.VoucherItem.list();
         itemsToDelete = allItems.filter(item => String(item.voucher_id) === String(id));
       }
