@@ -145,12 +145,24 @@ export default function SalesInvoice() {
     enabled: !!voucherId
   });
 
-  const { data: existingItemsData = [] } = useQuery({
+  const { data: existingItemsData = [], isLoading: isLoadingItems } = useQuery({
     queryKey: ['voucherItems', voucherId],
     queryFn: async () => {
       if (!voucherId) return [];
-      const allItems = await rcas.entities.VoucherItem.list();
-      return allItems.filter(item => item.voucher_id === voucherId);
+      try {
+        // Try direct fetch by voucher_id for maximum reliability
+        const { data, error } = await rcas.from('voucher_items').select('*').eq('voucher_id', voucherId);
+        if (error) throw error;
+        if (data && data.length > 0) return data;
+        
+        // Fallback to entities list if raw query fails or returns empty (though it shouldn't)
+        const allItems = await rcas.entities.VoucherItem.list();
+        return allItems.filter(item => String(item.voucher_id) === String(voucherId));
+      } catch (err) {
+        console.warn('❌ Direct fetch failed, falling back to entities list:', err);
+        const allItems = await rcas.entities.VoucherItem.list();
+        return allItems.filter(item => String(item.voucher_id) === String(voucherId));
+      }
     },
     enabled: !!voucherId
   });
@@ -197,26 +209,30 @@ export default function SalesInvoice() {
 
   // Sync items data to state
   useEffect(() => {
-    if (voucherId && existingItemsData && existingItemsData.length > 0 && routeItems.length === 0 && !itemsLoadedRef.current) {
-      console.log('🔄 Syncing items to state', existingItemsData.length);
-      setTimeout(() => {
-        setItems(existingItemsData.map(item => ({
-          id: item.id,
-          stock_item_id: item.stock_item_id,
-          stock_item_name: item.stock_item_name,
-          quantity: item.quantity,
-          rate: item.rate,
-          discount_percent: item.discount_percent || 0,
-          discount_amount: item.discount_amount || 0,
-          vat_rate: item.vat_rate || 15,
-          vat_amount: item.vat_amount || 0,
-          amount: item.amount,
-          total_amount: item.total_amount
-        })));
-      }, 0);
+    if (voucherId && !isLoadingItems && !itemsLoadedRef.current) {
+      if (existingItemsData && existingItemsData.length > 0) {
+        console.log('🔄 Syncing items to state', existingItemsData.length);
+        setTimeout(() => {
+          setItems(existingItemsData.map(item => ({
+            id: item.id,
+            stock_item_id: item.stock_item_id,
+            stock_item_name: item.stock_item_name,
+            quantity: item.quantity,
+            rate: item.rate,
+            discount_percent: item.discount_percent || 0,
+            discount_amount: item.discount_amount || 0,
+            vat_rate: item.vat_rate || 15,
+            vat_amount: item.vat_amount || 0,
+            amount: item.amount,
+            total_amount: item.total_amount
+          })));
+        }, 0);
+      } else {
+        console.log('⚠️ No items found for this voucher in DB');
+      }
       itemsLoadedRef.current = true;
     }
-  }, [existingItemsData, voucherId, routeItems.length]);
+  }, [existingItemsData, voucherId, isLoadingItems]);
 
 
   useEffect(() => {
@@ -363,6 +379,7 @@ export default function SalesInvoice() {
             try {
               await rcas.entities.VoucherItem.create({
                 voucher_id: voucher.id,
+                company_id: selectedCompanyId,
                 stock_item_id: item.stock_item_id,
                 stock_item_name: item.stock_item_name,
                 quantity: parseFloat(item.quantity) || 0,
@@ -457,7 +474,7 @@ export default function SalesInvoice() {
     discount: items.reduce((sum, item) => sum + (parseFloat(item.discount_amount) || 0), 0)
   };
 
-  if (isLoadingVoucher && voucherId) return <LoadingSpinner text="Loading invoice..." />;
+  if ((isLoadingVoucher || isLoadingItems) && voucherId) return <LoadingSpinner text="Loading invoice details..." />;
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -629,8 +646,9 @@ export default function SalesInvoice() {
 
           {/* Items */}
           <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0">
               <CardTitle>Invoice Items</CardTitle>
+              {isLoadingItems && <span className="text-xs text-muted-foreground animate-pulse">Fetching items...</span>}
             </CardHeader>
             <CardContent>
               <VoucherItemsTable

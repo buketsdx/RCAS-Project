@@ -154,7 +154,7 @@ export default function Sales() {
     {
       header: 'Actions',
       render: (row) => {
-        const rowItems = voucherItems.filter(item => item.voucher_id === row.id);
+        const rowItems = voucherItems.filter(item => String(item.voucher_id) === String(row.id));
         return (
           <div className="flex items-center gap-2">
             <Link 

@@ -61,9 +61,18 @@ export default function SalesOrderForm() {
 
   const { data: itemsFromServer = [] } = useQuery({
     queryKey: ['voucherItems', voucherId],
-    queryFn: async () => {
-      const allItems = await rcas.entities.VoucherItem.list();
-      return allItems.filter(item => item.voucher_id === voucherId);
+queryFn: async () => {
+      if (!voucherId) return [];
+      try {
+        const { data, error } = await rcas.from('voucher_items').select('*').eq('voucher_id', voucherId);
+        if (error) throw error;
+        if (data && data.length > 0) return data;
+        const allItems = await rcas.entities.VoucherItem.list();
+        return allItems.filter(item => String(item.voucher_id) === String(voucherId));
+      } catch (err) {
+        const allItems = await rcas.entities.VoucherItem.list();
+        return allItems.filter(item => String(item.voucher_id) === String(voucherId));
+      }
     },
     enabled: !!voucherId && !!existingVoucher
   });
@@ -141,7 +150,7 @@ export default function SalesOrderForm() {
       for (const item of items) {
         if (item.stock_item_id) {
           await rcas.entities.VoucherItem.create({
-            voucher_id: voucher.id, stock_item_id: item.stock_item_id, stock_item_name: item.stock_item_name,
+            voucher_id: voucher.id, company_id: selectedCompanyId, stock_item_id: item.stock_item_id, stock_item_name: item.stock_item_name,
             quantity: parseFloat(item.quantity) || 0, rate: parseFloat(item.rate) || 0,
             discount_percent: parseFloat(item.discount_percent) || 0,
             vat_rate: parseFloat(item.vat_rate) || 15, vat_amount: parseFloat(item.vat_amount) || 0,
