@@ -160,8 +160,7 @@ export default function CreditNoteForm() {
               vat_rate: parseFloat(item.vat_rate) || 15,
               vat_amount: parseFloat(item.vat_amount) || 0,
               amount: parseFloat(item.amount) || 0,
-              total_amount: parseFloat(item.total_amount) || 0,
-              salesman_id: null
+              total_amount: parseFloat(item.total_amount) || 0
             });
           } catch (error) {
             console.warn('Failed to create item:', error);
