@@ -71,30 +71,44 @@ export default function Sales() {
     enabled: !!selectedCompanyId
   });
 
-  const { data: zatcaInvoices = [] } = useQuery({
-    queryKey: ['zatcaInvoices', selectedCompanyId],
-    queryFn: async () => {
-      const all = await rcas.entities.ZATCAInvoice.list();
-      return all.filter(z => String(z.company_id) === String(selectedCompanyId));
-    },
-    enabled: !!selectedCompanyId
-  });
-
   const deleteMutation = useMutation({
     mutationFn: async (id) => {
-      // 1. Delete ZATCA records first (if any) due to foreign key constraints
-      const zatcaToDelete = zatcaInvoices.filter(z => z.voucher_id === id);
+      // 1. Fetch ALL ZATCA records for this specific voucher (bypassing company filter if possible)
+      console.log('🔍 Fetching dependencies for voucher deletion:', id);
+      
+      let zatcaToDelete = [];
+      try {
+        // Try to use raw query to bypass default filters if adapter supports it
+        const { data: rawZatca } = await rcas.from('zatca_invoices').select('*').eq('voucher_id', id);
+        zatcaToDelete = rawZatca || [];
+      } catch (err) {
+        console.warn('Raw query failed, falling back to list()', err);
+        const allZatca = await rcas.entities.ZATCAInvoice.list();
+        zatcaToDelete = allZatca.filter(z => String(z.voucher_id) === String(id));
+      }
+      
+      console.log(`🗑️ Deleting ${zatcaToDelete.length} ZATCA records`);
       for (const z of zatcaToDelete) {
         await rcas.entities.ZATCAInvoice.delete(z.id);
       }
 
-      // 2. Find and delete all items for this voucher
-      const itemsToDelete = voucherItems.filter(item => item.voucher_id === id);
+      // 2. Fetch and delete all items for this voucher
+      let itemsToDelete = [];
+      try {
+        const { data: rawItems } = await rcas.from('voucher_items').select('*').eq('voucher_id', id);
+        itemsToDelete = rawItems || [];
+      } catch (err) {
+        const allItems = await rcas.entities.VoucherItem.list();
+        itemsToDelete = allItems.filter(item => String(item.voucher_id) === String(id));
+      }
+      
+      console.log(`🗑️ Deleting ${itemsToDelete.length} voucher items`);
       for (const item of itemsToDelete) {
         await rcas.entities.VoucherItem.delete(item.id);
       }
       
       // 3. Delete the voucher itself
+      console.log('🗑️ Deleting voucher record');
       return rcas.entities.Voucher.delete(id);
     },
     onSuccess: () => {

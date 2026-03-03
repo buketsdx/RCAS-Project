@@ -38,28 +38,34 @@ export default function CreditNote() {
     enabled: !!selectedCompanyId
   });
 
-  const { data: zatcaInvoices = [] } = useQuery({
-    queryKey: ['zatcaInvoices', selectedCompanyId],
-    queryFn: async () => {
-      const all = await rcas.entities.ZATCAInvoice.list();
-      return all.filter(z => String(z.company_id) === String(selectedCompanyId));
-    },
-    enabled: !!selectedCompanyId
-  });
-
   const deleteMutation = useMutation({
     mutationFn: async (id) => {
-      // 1. Delete ZATCA records first (if any) due to foreign key constraints
-      const zatcaToDelete = zatcaInvoices.filter(z => z.voucher_id === id);
+      // 1. Fetch dependencies directly using raw query
+      let zatcaToDelete = [];
+      try {
+        const { data: rawZatca } = await rcas.from('zatca_invoices').select('*').eq('voucher_id', id);
+        zatcaToDelete = rawZatca || [];
+      } catch (err) {
+        const allZatca = await rcas.entities.ZATCAInvoice.list();
+        zatcaToDelete = allZatca.filter(z => String(z.voucher_id) === String(id));
+      }
       for (const z of zatcaToDelete) {
         await rcas.entities.ZATCAInvoice.delete(z.id);
       }
 
       // 2. Delete associated items
-      const itemsToDelete = voucherItems.filter(item => item.voucher_id === id);
+      let itemsToDelete = [];
+      try {
+        const { data: rawItems } = await rcas.from('voucher_items').select('*').eq('voucher_id', id);
+        itemsToDelete = rawItems || [];
+      } catch (err) {
+        const allItems = await rcas.entities.VoucherItem.list();
+        itemsToDelete = allItems.filter(item => String(item.voucher_id) === String(id));
+      }
       for (const item of itemsToDelete) {
         await rcas.entities.VoucherItem.delete(item.id);
       }
+      
       // 3. Delete the voucher
       return rcas.entities.Voucher.delete(id);
     },
