@@ -31,41 +31,23 @@ export default function Payment() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id) => {
-      // 1. Fetch dependencies directly using raw query
-      let zatcaToDelete = [];
-      try {
-        const { data: rawZatca } = await rcas.from('zatca_invoices').select('*').eq('voucher_id', id);
-        zatcaToDelete = rawZatca || [];
-      } catch {
-        const allZatca = await rcas.entities.ZATCAInvoice.list();
-        zatcaToDelete = allZatca.filter(z => String(z.voucher_id) === String(id));
-      }
+      // 1. Fetch dependencies directly using list()
+      const allZatca = await rcas.entities.ZATCAInvoice.list();
+      const zatcaToDelete = allZatca.filter(z => String(z.voucher_id) === String(id));
       for (const z of zatcaToDelete) {
         await rcas.entities.ZATCAInvoice.delete(z.id);
       }
 
       // 2. Fetch and delete Bank Reconciliation records
-      let bankRecToDelete = [];
-      try {
-        const { data: rawBankRecs } = await rcas.from('bank_reconciliations').select('*').eq('voucher_id', id);
-        bankRecToDelete = rawBankRecs || [];
-      } catch {
-        const allBankRecs = await rcas.entities.BankReconciliation.list();
-        bankRecToDelete = allBankRecs.filter(b => String(b.voucher_id) === String(id));
-      }
+      const allBankRecs = await rcas.entities.BankReconciliation.list();
+      const bankRecToDelete = allBankRecs.filter(b => String(b.voucher_id) === String(id));
       for (const b of bankRecToDelete) {
         await rcas.entities.BankReconciliation.delete(b.id);
       }
 
       // 3. Delete associated ledger entries
-      let entriesToDelete = [];
-      try {
-        const { data: rawEntries } = await rcas.from('voucher_ledger_entries').select('*').eq('voucher_id', id);
-        entriesToDelete = rawEntries || [];
-      } catch {
-        const allEntries = await rcas.entities.VoucherLedgerEntry.list();
-        entriesToDelete = allEntries.filter(e => String(e.voucher_id) === String(id));
-      }
+      const allEntries = await rcas.entities.VoucherLedgerEntry.list();
+      const entriesToDelete = allEntries.filter(e => String(e.voucher_id) === String(id));
       for (const entry of entriesToDelete) {
         await rcas.entities.VoucherLedgerEntry.delete(entry.id);
       }

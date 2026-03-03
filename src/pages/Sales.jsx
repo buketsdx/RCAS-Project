@@ -73,18 +73,10 @@ export default function Sales() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id) => {
-      // 1. Fetch ALL ZATCA records for this specific voucher (bypassing company filter if possible)
+      // 1. Fetch dependencies directly using list() and filter by voucher_id
       console.log('🔍 Fetching dependencies for voucher deletion:', id);
-      
-      let zatcaToDelete = [];
-      try {
-        const { data: rawZatca } = await rcas.from('zatca_invoices').select('*').eq('voucher_id', id);
-        zatcaToDelete = rawZatca || [];
-      } catch {
-        console.warn('Raw query failed, falling back to list()');
-        const allZatca = await rcas.entities.ZATCAInvoice.list();
-        zatcaToDelete = allZatca.filter(z => String(z.voucher_id) === String(id));
-      }
+      const allZatca = await rcas.entities.ZATCAInvoice.list();
+      const zatcaToDelete = allZatca.filter(z => String(z.voucher_id) === String(id));
       
       console.log(`🗑️ Deleting ${zatcaToDelete.length} ZATCA records`);
       for (const z of zatcaToDelete) {
@@ -92,14 +84,8 @@ export default function Sales() {
       }
 
       // 2. Fetch and delete all items for this voucher
-      let itemsToDelete = [];
-      try {
-        const { data: rawItems } = await rcas.from('voucher_items').select('*').eq('voucher_id', id);
-        itemsToDelete = rawItems || [];
-      } catch {
-        const allItems = await rcas.entities.VoucherItem.list();
-        itemsToDelete = allItems.filter(item => String(item.voucher_id) === String(id));
-      }
+      const allItems = await rcas.entities.VoucherItem.list();
+      const itemsToDelete = allItems.filter(item => String(item.voucher_id) === String(id));
       
       console.log(`🗑️ Deleting ${itemsToDelete.length} voucher items`);
       for (const item of itemsToDelete) {

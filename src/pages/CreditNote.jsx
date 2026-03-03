@@ -31,28 +31,16 @@ export default function CreditNote() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id) => {
-      // 1. Fetch dependencies directly using raw query
-      let zatcaToDelete = [];
-      try {
-        const { data: rawZatca } = await rcas.from('zatca_invoices').select('*').eq('voucher_id', id);
-        zatcaToDelete = rawZatca || [];
-      } catch {
-        const allZatca = await rcas.entities.ZATCAInvoice.list();
-        zatcaToDelete = allZatca.filter(z => String(z.voucher_id) === String(id));
-      }
+      // 1. Fetch dependencies directly using list()
+      const allZatca = await rcas.entities.ZATCAInvoice.list();
+      const zatcaToDelete = allZatca.filter(z => String(z.voucher_id) === String(id));
       for (const z of zatcaToDelete) {
         await rcas.entities.ZATCAInvoice.delete(z.id);
       }
 
       // 2. Delete associated items
-      let itemsToDelete = [];
-      try {
-        const { data: rawItems } = await rcas.from('voucher_items').select('*').eq('voucher_id', id);
-        itemsToDelete = rawItems || [];
-      } catch {
-        const allItems = await rcas.entities.VoucherItem.list();
-        itemsToDelete = allItems.filter(item => String(item.voucher_id) === String(id));
-      }
+      const allItems = await rcas.entities.VoucherItem.list();
+      const itemsToDelete = allItems.filter(item => String(item.voucher_id) === String(id));
       for (const item of itemsToDelete) {
         await rcas.entities.VoucherItem.delete(item.id);
       }

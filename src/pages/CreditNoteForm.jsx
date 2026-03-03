@@ -53,8 +53,12 @@ export default function CreditNoteForm() {
   const { data: existingVoucher, isLoading } = useQuery({
     queryKey: ['voucher', voucherId, selectedCompanyId],
     queryFn: async () => {
-      const list = await rcas.entities.Voucher.list();
-      return list.find(v => v.id === voucherId && String(v.company_id) === String(selectedCompanyId));
+      try {
+        return await rcas.entities.Voucher.get(voucherId);
+      } catch {
+        const list = await rcas.entities.Voucher.list();
+        return list.find((v) => String(v.id) === String(voucherId) && String(v.company_id) === String(selectedCompanyId)) || null;
+      }
     },
     enabled: !!voucherId && !!selectedCompanyId
   });
@@ -63,16 +67,8 @@ export default function CreditNoteForm() {
     queryKey: ['voucherItems', voucherId],
 queryFn: async () => {
       if (!voucherId) return [];
-      try {
-        const { data, error } = await rcas.from('voucher_items').select('*').eq('voucher_id', voucherId);
-        if (error) throw error;
-        if (data && data.length > 0) return data;
-        const allItems = await rcas.entities.VoucherItem.list();
-        return allItems.filter(item => String(item.voucher_id) === String(voucherId));
-      } catch (err) {
-        const allItems = await rcas.entities.VoucherItem.list();
-        return allItems.filter(item => String(item.voucher_id) === String(voucherId));
-      }
+      const allItems = await rcas.entities.VoucherItem.list();
+      return allItems.filter(item => String(item.voucher_id) === String(voucherId));
     },
     enabled: !!voucherId && !!existingVoucher
   });

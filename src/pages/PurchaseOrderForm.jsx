@@ -53,8 +53,12 @@ export default function PurchaseOrderForm() {
   const { data: existingVoucher, isLoading } = useQuery({
     queryKey: ['voucher', voucherId, selectedCompanyId],
     queryFn: async () => {
-      const list = await rcas.entities.Voucher.list();
-      return list.find(v => v.id === voucherId && String(v.company_id) === String(selectedCompanyId));
+      try {
+        return await rcas.entities.Voucher.get(voucherId);
+      } catch {
+        const list = await rcas.entities.Voucher.list();
+        return list.find(v => String(v.id) === String(voucherId) && String(v.company_id) === String(selectedCompanyId));
+      }
     },
     enabled: !!voucherId && !!selectedCompanyId
   });
@@ -63,16 +67,8 @@ export default function PurchaseOrderForm() {
     queryKey: ['voucherItems', voucherId],
 queryFn: async () => {
       if (!voucherId) return [];
-      try {
-        const { data, error } = await rcas.from('voucher_items').select('*').eq('voucher_id', voucherId);
-        if (error) throw error;
-        if (data && data.length > 0) return data;
-        const allItems = await rcas.entities.VoucherItem.list();
-        return allItems.filter(item => String(item.voucher_id) === String(voucherId));
-      } catch (err) {
-        const allItems = await rcas.entities.VoucherItem.list();
-        return allItems.filter(item => String(item.voucher_id) === String(voucherId));
-      }
+      const allItems = await rcas.entities.VoucherItem.list();
+      return allItems.filter(item => String(item.voucher_id) === String(voucherId));
     },
     enabled: !!voucherId && !!existingVoucher
   });
@@ -83,18 +79,16 @@ queryFn: async () => {
   // Sync voucher data to form
   useEffect(() => {
     if (existingVoucher && !dataLoadedRef.current) {
-      setTimeout(() => {
-        setFormData({
-          voucher_type: 'Purchase Order',
-          voucher_number: existingVoucher.voucher_number || '',
-          date: existingVoucher.date || format(new Date(), 'yyyy-MM-dd'),
-          due_date: existingVoucher.due_date || '',
-          party_ledger_id: existingVoucher.party_ledger_id || '',
-          party_name: existingVoucher.party_name || '',
-          narration: existingVoucher.narration || '',
-          status: existingVoucher.status || 'Draft'
-        });
-      }, 0);
+      setFormData({
+        voucher_type: 'Purchase Order',
+        voucher_number: existingVoucher.voucher_number || '',
+        date: existingVoucher.date || format(new Date(), 'yyyy-MM-dd'),
+        due_date: existingVoucher.due_date || '',
+        party_ledger_id: existingVoucher.party_ledger_id || '',
+        party_name: existingVoucher.party_name || '',
+        narration: existingVoucher.narration || '',
+        status: existingVoucher.status || 'Draft'
+      });
       dataLoadedRef.current = true;
     }
   }, [existingVoucher]);
@@ -102,20 +96,19 @@ queryFn: async () => {
   // Sync items data to state
   useEffect(() => {
     if (voucherId && itemsFromServer && itemsFromServer.length > 0 && !itemsLoadedRef.current) {
-      setTimeout(() => {
-        setItems(itemsFromServer.map(item => ({
-          id: item.id,
-          stock_item_id: item.stock_item_id,
-          stock_item_name: item.stock_item_name,
-          quantity: item.quantity,
-          rate: item.rate,
-          discount_percent: item.discount_percent || 0,
-          vat_rate: item.vat_rate || 15,
-          vat_amount: item.vat_amount || 0,
-          amount: item.amount,
-          total_amount: item.total_amount
-        })));
-      }, 0);
+      setItems(itemsFromServer.map(item => ({
+        id: item.id,
+        stock_item_id: item.stock_item_id,
+        stock_item_name: item.stock_item_name,
+        quantity: item.quantity,
+        rate: item.rate,
+        discount_percent: item.discount_percent || 0,
+        discount_amount: item.discount_amount || 0,
+        vat_rate: item.vat_rate || 15,
+        vat_amount: item.vat_amount || 0,
+        amount: item.amount,
+        total_amount: item.total_amount
+      })));
       itemsLoadedRef.current = true;
     }
   }, [itemsFromServer, voucherId]);

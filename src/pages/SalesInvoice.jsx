@@ -69,20 +69,53 @@ export default function SalesInvoice() {
     };
   });
 
-  const [customerType, setCustomerType] = useState('General');
+  const [customerType, setCustomerType] = useState(() => {
+    if (routeVoucher) {
+      return routeVoucher.customer_type || (
+        routeVoucher.customer_vat_number ||
+        routeVoucher.customer_business_name ||
+        routeVoucher.customer_cr_number ||
+        routeVoucher.customer_address_proof
+          ? 'VAT Customer'
+          : 'General'
+      );
+    }
+    return 'General';
+  });
   const [showNewCustomerDialog, setShowNewCustomerDialog] = useState(false);
-  const [newCustomer, setNewCustomer] = useState({
-    name: '',
-    customer_type: 'General',
-    vat_number: '',
-    business_name: '',
-    cr_number: '',
-    address_proof: '',
-    contact_person: '',
-    address: '',
-    city: '',
-    phone: '',
-    email: ''
+  const [newCustomer, setNewCustomer] = useState(() => {
+    const base = {
+      name: '',
+      customer_type: 'General',
+      vat_number: '',
+      business_name: '',
+      cr_number: '',
+      address_proof: '',
+      contact_person: '',
+      address: '',
+      city: '',
+      phone: '',
+      email: ''
+    };
+    if (routeVoucher) {
+      const type = routeVoucher.customer_type || (
+        routeVoucher.customer_vat_number ||
+        routeVoucher.customer_business_name ||
+        routeVoucher.customer_cr_number ||
+        routeVoucher.customer_address_proof
+          ? 'VAT Customer'
+          : 'General'
+      );
+      return {
+        ...base,
+        customer_type: type,
+        vat_number: routeVoucher.customer_vat_number || '',
+        business_name: routeVoucher.customer_business_name || '',
+        cr_number: routeVoucher.customer_cr_number || '',
+        address_proof: routeVoucher.customer_address_proof || ''
+      };
+    }
+    return base;
   });
 
   const [items, setItems] = useState(() => {
@@ -139,7 +172,7 @@ export default function SalesInvoice() {
         return await rcas.entities.Voucher.get(voucherId);
       } catch {
         const list = await rcas.entities.Voucher.list();
-        return list.find((v) => v.id === voucherId) || null;
+        return list.find((v) => String(v.id) === String(voucherId)) || null;
       }
     },
     enabled: !!voucherId
@@ -149,20 +182,8 @@ export default function SalesInvoice() {
     queryKey: ['voucherItems', voucherId],
     queryFn: async () => {
       if (!voucherId) return [];
-      try {
-        // Try direct fetch by voucher_id for maximum reliability
-        const { data, error } = await rcas.from('voucher_items').select('*').eq('voucher_id', voucherId);
-        if (error) throw error;
-        if (data && data.length > 0) return data;
-        
-        // Fallback to entities list if raw query fails or returns empty (though it shouldn't)
-        const allItems = await rcas.entities.VoucherItem.list();
-        return allItems.filter(item => String(item.voucher_id) === String(voucherId));
-      } catch (err) {
-        console.warn('❌ Direct fetch failed, falling back to entities list:', err);
-        const allItems = await rcas.entities.VoucherItem.list();
-        return allItems.filter(item => String(item.voucher_id) === String(voucherId));
-      }
+      const allItems = await rcas.entities.VoucherItem.list();
+      return allItems.filter(item => String(item.voucher_id) === String(voucherId));
     },
     enabled: !!voucherId
   });
