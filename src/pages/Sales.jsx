@@ -71,14 +71,30 @@ export default function Sales() {
     enabled: !!selectedCompanyId
   });
 
+  const { data: zatcaInvoices = [] } = useQuery({
+    queryKey: ['zatcaInvoices', selectedCompanyId],
+    queryFn: async () => {
+      const all = await rcas.entities.ZATCAInvoice.list();
+      return all.filter(z => String(z.company_id) === String(selectedCompanyId));
+    },
+    enabled: !!selectedCompanyId
+  });
+
   const deleteMutation = useMutation({
     mutationFn: async (id) => {
-      // 1. Find and delete all items for this voucher first
+      // 1. Delete ZATCA records first (if any) due to foreign key constraints
+      const zatcaToDelete = zatcaInvoices.filter(z => z.voucher_id === id);
+      for (const z of zatcaToDelete) {
+        await rcas.entities.ZATCAInvoice.delete(z.id);
+      }
+
+      // 2. Find and delete all items for this voucher
       const itemsToDelete = voucherItems.filter(item => item.voucher_id === id);
       for (const item of itemsToDelete) {
         await rcas.entities.VoucherItem.delete(item.id);
       }
-      // 2. Delete the voucher itself
+      
+      // 3. Delete the voucher itself
       return rcas.entities.Voucher.delete(id);
     },
     onSuccess: () => {

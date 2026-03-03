@@ -38,14 +38,44 @@ export default function Contra() {
     enabled: !!selectedCompanyId
   });
 
+  const { data: zatcaInvoices = [] } = useQuery({
+    queryKey: ['zatcaInvoices', selectedCompanyId],
+    queryFn: async () => {
+      const all = await rcas.entities.ZATCAInvoice.list();
+      return all.filter(z => String(z.company_id) === String(selectedCompanyId));
+    },
+    enabled: !!selectedCompanyId
+  });
+
+  const { data: bankReconciliations = [] } = useQuery({
+    queryKey: ['bankReconciliations', selectedCompanyId],
+    queryFn: async () => {
+      const all = await rcas.entities.BankReconciliation.list();
+      return all.filter(b => String(b.company_id) === String(selectedCompanyId));
+    },
+    enabled: !!selectedCompanyId
+  });
+
   const deleteMutation = useMutation({
     mutationFn: async (id) => {
-      // 1. Delete associated ledger entries first
+      // 1. Delete ZATCA records first (if any)
+      const zatcaToDelete = zatcaInvoices.filter(z => z.voucher_id === id);
+      for (const z of zatcaToDelete) {
+        await rcas.entities.ZATCAInvoice.delete(z.id);
+      }
+
+      // 2. Delete Bank Reconciliation records first (if any)
+      const bankRecToDelete = bankReconciliations.filter(b => b.voucher_id === id);
+      for (const b of bankRecToDelete) {
+        await rcas.entities.BankReconciliation.delete(b.id);
+      }
+
+      // 3. Delete associated ledger entries first
       const entriesToDelete = voucherEntries.filter(e => e.voucher_id === id);
       for (const entry of entriesToDelete) {
         await rcas.entities.VoucherLedgerEntry.delete(entry.id);
       }
-      // 2. Delete the voucher
+      // 4. Delete the voucher
       return rcas.entities.Voucher.delete(id);
     },
     onSuccess: () => {
