@@ -110,7 +110,7 @@ export default function PaymentVoucher() {
       let voucher;
       if (voucherId) {
         voucher = await rcas.entities.Voucher.update(voucherId, voucherData);
-        for (const entry of existingEntries) await rcas.entities.VoucherLedgerEntry.delete(entry.id);
+        for (const entry of entriesFromServer) await rcas.entities.VoucherLedgerEntry.delete(entry.id);
       } else {
         voucher = await rcas.entities.Voucher.create(voucherData);
       }

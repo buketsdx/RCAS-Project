@@ -184,7 +184,7 @@ export default function PurchaseInvoice() {
         let voucher;
         if (voucherId) {
           voucher = await rcas.entities.Voucher.update(voucherId, voucherData);
-          for (const item of existingItems) {
+          for (const item of itemsFromServer) {
             try {
               await rcas.entities.VoucherItem.delete(item.id);
             } catch (error) {

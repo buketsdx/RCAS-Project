@@ -124,7 +124,7 @@ export default function SalesOrderForm() {
       let voucher;
       if (voucherId) {
         voucher = await rcas.entities.Voucher.update(voucherId, voucherData);
-        for (const item of existingItems) await rcas.entities.VoucherItem.delete(item.id);
+        for (const item of itemsFromServer) await rcas.entities.VoucherItem.delete(item.id);
       } else {
         voucher = await rcas.entities.Voucher.create(voucherData);
       }

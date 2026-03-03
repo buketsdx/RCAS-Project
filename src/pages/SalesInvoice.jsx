@@ -314,6 +314,7 @@ export default function SalesInvoice() {
   const saveMutation = useMutation({
     mutationFn: async () => {
       try {
+        console.log('💾 Saving Sales Invoice...', { voucherId, formData });
         const grossAmount = items.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
         const vatAmount = items.reduce((sum, item) => sum + (parseFloat(item.vat_amount) || 0), 0);
         const netAmount = items.reduce((sum, item) => sum + (parseFloat(item.total_amount) || 0), 0);
@@ -328,9 +329,11 @@ export default function SalesInvoice() {
 
         let voucher;
         if (voucherId) {
+          console.log('🔄 Updating existing voucher:', voucherId);
           voucher = await rcas.entities.Voucher.update(voucherId, voucherData);
+          console.log('✅ Voucher updated, deleting old items:', existingItemsData.length);
           // Delete old items
-          for (const item of existingItems) {
+          for (const item of existingItemsData) {
             try {
               await rcas.entities.VoucherItem.delete(item.id);
             } catch (error) {
@@ -338,9 +341,11 @@ export default function SalesInvoice() {
             }
           }
         } else {
+          console.log('🆕 Creating new voucher');
           voucher = await rcas.entities.Voucher.create(voucherData);
         }
 
+        console.log('📝 Creating new items:', items.length);
         // Create new items
         for (const item of items) {
           if (item.stock_item_id) {
@@ -357,30 +362,31 @@ export default function SalesInvoice() {
                 vat_amount: parseFloat(item.vat_amount) || 0,
                 amount: parseFloat(item.amount) || 0,
                 total_amount: parseFloat(item.total_amount) || 0,
-                salesman_id: item.salesman_id || null
+                salesman_id: null
               });
             } catch (error) {
-              console.warn('Failed to create item:', error);
+              console.error('❌ Failed to create item:', item, error);
             }
           }
         }
-
+        console.log('🎉 Save complete!');
         return voucher;
-      } catch (error) {
-        throw new Error(error.message || 'Failed to save invoice');
+      } catch (err) {
+        console.error('❌ Save error:', err);
+        throw err;
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['salesVouchers', selectedCompanyId] });
       queryClient.invalidateQueries({ queryKey: ['vouchers', selectedCompanyId] });
-      toast.success('Invoice saved successfully');
+      toast.success(voucherId ? 'Invoice updated successfully' : 'Invoice saved successfully');
       setTimeout(() => {
         window.location.href = createPageUrl('Sales');
       }, 1000);
     },
     onError: (error) => {
-      console.error('Save error:', error);
-      toast.error(error.message || 'Failed to save invoice. Please try again.');
+      console.error('Mutation error:', error);
+      toast.error(error.message || 'Failed to save invoice');
     }
   });
 

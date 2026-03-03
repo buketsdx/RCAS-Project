@@ -125,7 +125,7 @@ export default function CreditNoteForm() {
       if (voucherId) {
         voucher = await rcas.entities.Voucher.update(voucherId, voucherData);
         // Delete old items
-        for (const item of existingItems) {
+        for (const item of itemsFromServer) {
           try {
             await rcas.entities.VoucherItem.delete(item.id);
           } catch (error) {

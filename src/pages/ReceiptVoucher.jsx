@@ -115,7 +115,7 @@ export default function ReceiptVoucher() {
       if (voucherId) {
         voucher = await rcas.entities.Voucher.update(voucherId, voucherData);
         // Delete old entries
-        for (const entry of existingEntries) {
+        for (const entry of entriesFromServer) {
           try {
             await rcas.entities.VoucherLedgerEntry.delete(entry.id);
           } catch (error) {
