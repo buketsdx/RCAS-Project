@@ -49,41 +49,45 @@ export default function ReceiptVoucher() {
       const list = await rcas.entities.Voucher.list();
       return list.find(v => v.id === voucherId && String(v.company_id) === String(selectedCompanyId));
     },
-    enabled: !!voucherId && !!selectedCompanyId,
-    onSuccess: (voucher) => {
-      if (voucher) {
-        setFormData({
-          voucher_type: 'Receipt',
-          voucher_number: voucher.voucher_number || '',
-          date: voucher.date || format(new Date(), 'yyyy-MM-dd'),
-          party_ledger_id: voucher.party_ledger_id || '',
-          party_name: voucher.party_name || '',
-          narration: voucher.narration || '',
-          net_amount: voucher.net_amount || 0
-        });
-      }
-    }
+    enabled: !!voucherId && !!selectedCompanyId
   });
 
-  const { data: existingEntries = [] } = useQuery({
+  const { data: entriesFromServer = [] } = useQuery({
     queryKey: ['voucherEntries', voucherId],
     queryFn: async () => {
       const all = await rcas.entities.VoucherLedgerEntry.list();
       return all.filter(e => e.voucher_id === voucherId);
     },
-    enabled: !!voucherId && !!existingVoucher,
-    onSuccess: (entriesFromServer) => {
-      if (entriesFromServer && entriesFromServer.length > 0) {
-        setEntries(entriesFromServer.map(e => ({
-          id: e.id,
-          ledger_id: e.ledger_id,
-          ledger_name: e.ledger_name,
-          debit_amount: e.debit_amount || 0,
-          credit_amount: e.credit_amount || 0
-        })));
-      }
-    }
+    enabled: !!voucherId && !!existingVoucher
   });
+
+  // Sync voucher data to form
+  useEffect(() => {
+    if (existingVoucher) {
+      setFormData({
+        voucher_type: 'Receipt',
+        voucher_number: existingVoucher.voucher_number || '',
+        date: existingVoucher.date || format(new Date(), 'yyyy-MM-dd'),
+        party_ledger_id: existingVoucher.party_ledger_id || '',
+        party_name: existingVoucher.party_name || '',
+        narration: existingVoucher.narration || '',
+        net_amount: existingVoucher.net_amount || 0
+      });
+    }
+  }, [existingVoucher]);
+
+  // Sync entries data to state
+  useEffect(() => {
+    if (voucherId && entriesFromServer && entriesFromServer.length > 0) {
+      setEntries(entriesFromServer.map(e => ({
+        id: e.id,
+        ledger_id: e.ledger_id,
+        ledger_name: e.ledger_name,
+        debit_amount: e.debit_amount || 0,
+        credit_amount: e.credit_amount || 0
+      })));
+    }
+  }, [entriesFromServer, voucherId]);
 
   useEffect(() => {
     if (!voucherId && !formData.voucher_number) {

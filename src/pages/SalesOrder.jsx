@@ -29,11 +29,32 @@ export default function SalesOrder() {
     enabled: !!selectedCompanyId
   });
 
+  const { data: voucherItems = [] } = useQuery({
+    queryKey: ['salesOrderItems', selectedCompanyId],
+    queryFn: async () => {
+      const allItems = await rcas.entities.VoucherItem.list();
+      return allItems;
+    },
+    enabled: !!selectedCompanyId
+  });
+
   const deleteMutation = useMutation({
-    mutationFn: (id) => rcas.entities.Voucher.delete(id),
+    mutationFn: async (id) => {
+      // 1. Delete associated items first
+      const itemsToDelete = voucherItems.filter(item => item.voucher_id === id);
+      for (const item of itemsToDelete) {
+        await rcas.entities.VoucherItem.delete(item.id);
+      }
+      // 2. Delete the voucher
+      return rcas.entities.Voucher.delete(id);
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['salesOrders', selectedCompanyId] });
+      queryClient.invalidateQueries({ queryKey: ['salesOrders'] });
       toast.success('Sales order deleted');
+    },
+    onError: (error) => {
+      console.error('Delete error:', error);
+      toast.error('Failed to delete sales order: ' + error.message);
     }
   });
 

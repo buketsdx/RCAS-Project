@@ -72,10 +72,22 @@ export default function Sales() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => rcas.entities.Voucher.delete(id),
+    mutationFn: async (id) => {
+      // 1. Find and delete all items for this voucher first
+      const itemsToDelete = voucherItems.filter(item => item.voucher_id === id);
+      for (const item of itemsToDelete) {
+        await rcas.entities.VoucherItem.delete(item.id);
+      }
+      // 2. Delete the voucher itself
+      return rcas.entities.Voucher.delete(id);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['salesVouchers', selectedCompanyId] });
       toast.success('Invoice deleted');
+    },
+    onError: (error) => {
+      console.error('Delete error:', error);
+      toast.error('Failed to delete invoice: ' + error.message);
     }
   });
 

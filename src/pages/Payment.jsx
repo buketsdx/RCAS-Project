@@ -29,11 +29,32 @@ export default function Payment() {
     enabled: !!selectedCompanyId
   });
 
+  const { data: voucherEntries = [] } = useQuery({
+    queryKey: ['paymentVoucherEntries', selectedCompanyId],
+    queryFn: async () => {
+      const all = await rcas.entities.VoucherLedgerEntry.list();
+      return all;
+    },
+    enabled: !!selectedCompanyId
+  });
+
   const deleteMutation = useMutation({
-    mutationFn: (id) => rcas.entities.Voucher.delete(id),
+    mutationFn: async (id) => {
+      // 1. Delete associated ledger entries first
+      const entriesToDelete = voucherEntries.filter(e => e.voucher_id === id);
+      for (const entry of entriesToDelete) {
+        await rcas.entities.VoucherLedgerEntry.delete(entry.id);
+      }
+      // 2. Delete the voucher
+      return rcas.entities.Voucher.delete(id);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['paymentVouchers', selectedCompanyId] });
       toast.success('Payment deleted');
+    },
+    onError: (error) => {
+      console.error('Delete error:', error);
+      toast.error('Failed to delete payment: ' + error.message);
     }
   });
 

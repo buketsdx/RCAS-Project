@@ -56,47 +56,51 @@ export default function CreditNoteForm() {
       const list = await rcas.entities.Voucher.list();
       return list.find(v => v.id === voucherId && String(v.company_id) === String(selectedCompanyId));
     },
-    enabled: !!voucherId && !!selectedCompanyId,
-    onSuccess: (voucher) => {
-      if (voucher) {
-        setFormData({
-          voucher_type: 'Credit Note',
-          voucher_number: voucher.voucher_number || '',
-          date: voucher.date || format(new Date(), 'yyyy-MM-dd'),
-          party_ledger_id: voucher.party_ledger_id || '',
-          party_name: voucher.party_name || '',
-          reference_number: voucher.reference_number || '',
-          narration: voucher.narration || '',
-          status: voucher.status || 'Confirmed'
-        });
-      }
-    }
+    enabled: !!voucherId && !!selectedCompanyId
   });
 
-  const { data: existingItems = [] } = useQuery({
+  const { data: itemsFromServer = [] } = useQuery({
     queryKey: ['voucherItems', voucherId],
     queryFn: async () => {
-      const all = await rcas.entities.VoucherItem.list();
-      return all.filter(item => item.voucher_id === voucherId);
+      const allItems = await rcas.entities.VoucherItem.list();
+      return allItems.filter(item => item.voucher_id === voucherId);
     },
-    enabled: !!voucherId && !!existingVoucher,
-    onSuccess: (itemsFromServer) => {
-      if (itemsFromServer && itemsFromServer.length > 0) {
-        setItems(itemsFromServer.map(item => ({
-          id: item.id,
-          stock_item_id: item.stock_item_id,
-          stock_item_name: item.stock_item_name,
-          quantity: item.quantity,
-          rate: item.rate,
-          discount_percent: item.discount_percent || 0,
-          vat_rate: item.vat_rate || 15,
-          vat_amount: item.vat_amount || 0,
-          amount: item.amount,
-          total_amount: item.total_amount
-        })));
-      }
-    }
+    enabled: !!voucherId && !!existingVoucher
   });
+
+  // Sync voucher data to form
+  useEffect(() => {
+    if (existingVoucher) {
+      setFormData({
+        voucher_type: 'Credit Note',
+        voucher_number: existingVoucher.voucher_number || '',
+        date: existingVoucher.date || format(new Date(), 'yyyy-MM-dd'),
+        party_ledger_id: existingVoucher.party_ledger_id || '',
+        party_name: existingVoucher.party_name || '',
+        reference_number: existingVoucher.reference_number || '',
+        narration: existingVoucher.narration || '',
+        status: existingVoucher.status || 'Confirmed'
+      });
+    }
+  }, [existingVoucher]);
+
+  // Sync items data to state
+  useEffect(() => {
+    if (voucherId && itemsFromServer && itemsFromServer.length > 0) {
+      setItems(itemsFromServer.map(item => ({
+        id: item.id,
+        stock_item_id: item.stock_item_id,
+        stock_item_name: item.stock_item_name,
+        quantity: item.quantity,
+        rate: item.rate,
+        discount_percent: item.discount_percent || 0,
+        vat_rate: item.vat_rate || 15,
+        vat_amount: item.vat_amount || 0,
+        amount: item.amount,
+        total_amount: item.total_amount
+      })));
+    }
+  }, [itemsFromServer, voucherId]);
 
   useEffect(() => {
     if (!voucherId && !formData.voucher_number) {

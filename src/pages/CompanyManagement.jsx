@@ -14,7 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Building2, Plus, Pencil, Trash2, Eye, EyeOff, UserPlus, Users } from 'lucide-react';
+import { Building2, Plus, Pencil, Trash2, Monitor, EyeOff, UserPlus, Users } from 'lucide-react';
 
 export default function CompanyManagement() {
   const queryClient = useQueryClient();
@@ -257,7 +257,7 @@ export default function CompanyManagement() {
             title="Switch to this company"
             className={selectedCompanyId === row.id ? "bg-emerald-100 text-emerald-700" : ""}
           >
-            <Eye className="h-4 w-4" />
+            <Monitor className="h-4 w-4" />
           </Button>
           <Button
             variant="ghost"

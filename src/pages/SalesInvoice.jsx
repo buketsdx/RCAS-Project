@@ -134,56 +134,30 @@ export default function SalesInvoice() {
   const { data: voucher, isLoading: isLoadingVoucher, error: voucherError } = useQuery({
     queryKey: ['voucher', voucherId],
     queryFn: async () => {
-      console.log('📌 queryFn START - voucherId:', voucherId);
-      if (!voucherId) {
-        console.log('⚠️  No voucherId, returning null');
-        return null;
-      }
-      
+      if (!voucherId) return null;
       try {
-        console.log('🔍 Attempting to fetch voucher directly with ID:', voucherId);
-        console.log('📊 Selected company ID:', selectedCompanyId || 'not set');
-        
-        // Use the direct get method
-        const voucher = await rcas.entities.Voucher.get(voucherId);
-        
-        console.log('✅ Voucher fetched successfully:', voucher);
-        console.log('📋 Voucher data loaded:', {
-          voucher_number: voucher?.voucher_number,
-          party_name: voucher?.party_name,
-          status: voucher?.status,
-          company_id: voucher?.company_id,
-          customer_type: voucher?.customer_type
-        });
-        
-        return voucher;
+        return await rcas.entities.Voucher.get(voucherId);
       } catch (err) {
-        console.error('❌ Direct get failed:', err.message);
-        console.log('🔄 Attempting fallback: fetching full list...');
-        
-        // Fallback: try fetching from list if get fails
-        try {
-          const list = await rcas.entities.Voucher.list();
-          console.log('📋 List fetched:', list.length, 'total vouchers');
-          const found = list.find((v) => v.id === voucherId);
-          console.log('✅ Found in list:', found ? 'YES' : 'NO');
-          return found || null;
-        } catch (fallbackErr) {
-          console.error('❌ Fallback also failed:', fallbackErr.message);
-          throw new Error(`Could not load voucher ${voucherId}: ${err.message}`);
-        }
+        const list = await rcas.entities.Voucher.list();
+        return list.find((v) => v.id === voucherId) || null;
       }
     },
-    enabled: !!voucherId,
-    onSuccess: (voucher) => {
-      console.log('✨ onSuccess callback triggered');
-      console.log('📦 Voucher in onSuccess:', voucher);
-      if (!voucher) {
-        console.warn('❌ onSuccess called but voucher is null/undefined!');
-        toast.error('Invoice not found. Check the ID or try refreshing.');
-        return;
-      }
+    enabled: !!voucherId
+  });
 
+  const { data: existingItemsData = [] } = useQuery({
+    queryKey: ['voucherItems', voucherId],
+    queryFn: async () => {
+      if (!voucherId) return [];
+      const allItems = await rcas.entities.VoucherItem.list();
+      return allItems.filter(item => item.voucher_id === voucherId);
+    },
+    enabled: !!voucherId && !!voucher && routeItems.length === 0
+  });
+
+  // Sync voucher data to form
+  useEffect(() => {
+    if (voucher && !routeVoucher) {
       const inferredCustomerType =
         voucher.customer_type ||
         (voucher.customer_vat_number ||
@@ -193,7 +167,6 @@ export default function SalesInvoice() {
           ? 'VAT Customer'
           : 'General');
 
-      console.log('🔧 Setting formData with inferred type:', inferredCustomerType);
       setFormData({
         voucher_type: 'Sales',
         voucher_number: voucher.voucher_number || '',
@@ -210,46 +183,29 @@ export default function SalesInvoice() {
         customer_address_proof: voucher.customer_address_proof || '',
         customer_type: inferredCustomerType
       });
-      console.log('✅ formData has been SET - check component re-render');
       setCustomerType(inferredCustomerType);
       setNewCustomer(prev => ({ ...prev, customer_type: inferredCustomerType }));
-    },
-    onError: (error) => {
-      console.error('❌ Query Error for voucher:', error);
-      toast.error('Failed to load invoice: ' + (error.message || 'Unknown error'));
     }
-  });
+  }, [voucher, routeVoucher]);
 
-  const { data: existingItems = [] } = useQuery({
-    queryKey: ['voucherItems', voucherId],
-    queryFn: async () => {
-      if (!voucherId) return [];
-      const allItems = await rcas.entities.VoucherItem.list();
-      console.log('📦 VoucherItems fetched:', allItems.length);
-      const itemsForVoucher = allItems.filter(item => item.voucher_id === voucherId);
-      console.log('📋 Items for voucher', voucherId, ':', itemsForVoucher.length);
-      return itemsForVoucher;
-    },
-    enabled: !!voucherId && !!voucher && routeItems.length === 0,
-    onSuccess: (itemsFromServer) => {
-      console.log('📦 Items onSuccess:', itemsFromServer.length, 'items');
-      if (voucherId && itemsFromServer && itemsFromServer.length > 0) {
-        setItems(itemsFromServer.map(item => ({
-          id: item.id,
-          stock_item_id: item.stock_item_id,
-          stock_item_name: item.stock_item_name,
-          quantity: item.quantity,
-          rate: item.rate,
-          discount_percent: item.discount_percent || 0,
-          discount_amount: item.discount_amount || 0,
-          vat_rate: item.vat_rate || 15,
-          vat_amount: item.vat_amount || 0,
-          amount: item.amount,
-          total_amount: item.total_amount
-        })));
-      }
+  // Sync items data to state
+  useEffect(() => {
+    if (voucherId && existingItemsData && existingItemsData.length > 0 && routeItems.length === 0) {
+      setItems(existingItemsData.map(item => ({
+        id: item.id,
+        stock_item_id: item.stock_item_id,
+        stock_item_name: item.stock_item_name,
+        quantity: item.quantity,
+        rate: item.rate,
+        discount_percent: item.discount_percent || 0,
+        discount_amount: item.discount_amount || 0,
+        vat_rate: item.vat_rate || 15,
+        vat_amount: item.vat_amount || 0,
+        amount: item.amount,
+        total_amount: item.total_amount
+      })));
     }
-  });
+  }, [existingItemsData, voucherId, routeItems.length]);
 
 
   useEffect(() => {

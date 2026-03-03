@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { rcas } from '@/api/rcasClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { createPageUrl } from "@/utils";
@@ -47,39 +47,43 @@ export default function JournalVoucher() {
       const list = await rcas.entities.Voucher.list();
       return list.find(v => v.id === voucherId && String(v.company_id) === String(selectedCompanyId));
     },
-    enabled: !!voucherId && !!selectedCompanyId,
-    onSuccess: (voucher) => {
-      if (voucher) {
-        setFormData({
-          voucher_type: 'Journal',
-          voucher_number: voucher.voucher_number || '',
-          date: voucher.date || format(new Date(), 'yyyy-MM-dd'),
-          narration: voucher.narration || '',
-          net_amount: voucher.net_amount || 0
-        });
-      }
-    }
+    enabled: !!voucherId && !!selectedCompanyId
   });
 
-  const { data: existingEntries = [] } = useQuery({
+  const { data: entriesFromServer = [] } = useQuery({
     queryKey: ['voucherEntries', voucherId],
     queryFn: async () => {
       const all = await rcas.entities.VoucherLedgerEntry.list();
       return all.filter(e => e.voucher_id === voucherId);
     },
-    enabled: !!voucherId && !!existingVoucher,
-    onSuccess: (entriesFromServer) => {
-      if (entriesFromServer && entriesFromServer.length > 0) {
-        setEntries(entriesFromServer.map(e => ({
-          id: e.id,
-          ledger_id: e.ledger_id,
-          ledger_name: e.ledger_name,
-          debit_amount: e.debit_amount || 0,
-          credit_amount: e.credit_amount || 0
-        })));
-      }
-    }
+    enabled: !!voucherId && !!existingVoucher
   });
+
+  // Sync voucher data to form
+  useEffect(() => {
+    if (existingVoucher) {
+      setFormData({
+        voucher_type: 'Journal',
+        voucher_number: existingVoucher.voucher_number || '',
+        date: existingVoucher.date || format(new Date(), 'yyyy-MM-dd'),
+        narration: existingVoucher.narration || '',
+        net_amount: existingVoucher.net_amount || 0
+      });
+    }
+  }, [existingVoucher]);
+
+  // Sync entries data to state
+  useEffect(() => {
+    if (voucherId && entriesFromServer && entriesFromServer.length > 0) {
+      setEntries(entriesFromServer.map(e => ({
+        id: e.id,
+        ledger_id: e.ledger_id,
+        ledger_name: e.ledger_name,
+        debit_amount: e.debit_amount || 0,
+        credit_amount: e.credit_amount || 0
+      })));
+    }
+  }, [entriesFromServer, voucherId]);
 
   const saveMutation = useMutation({
     mutationFn: async () => {
