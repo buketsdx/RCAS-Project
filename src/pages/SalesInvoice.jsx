@@ -168,32 +168,99 @@ export default function SalesInvoice() {
     queryKey: ['voucher', voucherId],
     queryFn: async () => {
       if (!voucherId) return null;
+      console.log('🔍 Fetching voucher details for ID:', voucherId);
       try {
-        return await rcas.entities.Voucher.get(voucherId);
-      } catch {
-        const list = await rcas.entities.Voucher.list();
-        return list.find((v) => String(v.id) === String(voucherId)) || null;
+        // Try direct fetch first
+        const { data, error } = await rcas.from('vouchers').select('*').eq('id', voucherId).single();
+        if (data) {
+          console.log('✅ Found voucher via raw query:', data);
+          return data;
+        }
+        if (error) throw error;
+      } catch (err) {
+        console.warn('⚠️ Raw query for voucher failed, trying entities.get():', err);
       }
+      
+      try {
+        const v = await rcas.entities.Voucher.get(voucherId);
+        if (v) return v;
+      } catch (err) {
+        console.warn('⚠️ entities.get() failed, trying list() fallback:', err);
+      }
+
+      const list = await rcas.entities.Voucher.list();
+      const found = list.find((v) => String(v.id) === String(voucherId));
+      if (found) {
+        console.log('✅ Found voucher via list fallback:', found);
+      } else {
+        console.error('❌ Voucher not found in any fetch attempt!');
+      }
+      return found || null;
     },
-    enabled: !!voucherId
+    enabled: !!voucherId,
+    retry: 1
   });
 
   const { data: existingItemsData = [], isLoading: isLoadingItems } = useQuery({
     queryKey: ['voucherItems', voucherId],
     queryFn: async () => {
       if (!voucherId) return [];
+      console.log('🔍 Fetching items for voucher ID:', voucherId);
+      try {
+        // Try raw query to bypass any company filters that might be missing data
+        const { data, error } = await rcas.from('voucher_items').select('*').eq('voucher_id', voucherId);
+        if (data && data.length > 0) {
+          console.log('✅ Found items via raw query:', data.length);
+          return data;
+        }
+        if (error) console.warn('Raw items query error:', error);
+      } catch (err) {
+        console.warn('⚠️ Raw items query failed:', err);
+      }
+
+      // Fallback to standard list
       const allItems = await rcas.entities.VoucherItem.list();
-      return allItems.filter(item => String(item.voucher_id) === String(voucherId));
+      const filtered = allItems.filter(item => String(item.voucher_id) === String(voucherId));
+      console.log('✅ Found items via list fallback:', filtered.length);
+      return filtered;
     },
-    enabled: !!voucherId
+    enabled: !!voucherId,
+    retry: 1
   });
 
-  const dataLoadedRef = useRef(false);
-  const itemsLoadedRef = useRef(false);
+  const dataLoadedRef = useRef(null);
+  const itemsLoadedRef = useRef(null);
+
+  // Reset state when voucherId changes or becomes null (new invoice)
+  useEffect(() => {
+    if (!voucherId) {
+      console.log('✨ Resetting to New Invoice mode');
+      setFormData({
+        voucher_type: 'Sales',
+        voucher_number: '',
+        date: format(new Date(), 'yyyy-MM-dd'),
+        party_ledger_id: '',
+        party_name: '',
+        reference_number: '',
+        billing_address: '',
+        narration: '',
+        status: 'Confirmed',
+        customer_vat_number: '',
+        customer_business_name: '',
+        customer_cr_number: '',
+        customer_address_proof: '',
+        customer_type: 'General'
+      });
+      setItems([{ stock_item_id: '', quantity: 1, rate: 0, discount_percent: 0, vat_rate: 15 }]);
+      setCustomerType('General');
+      dataLoadedRef.current = null;
+      itemsLoadedRef.current = null;
+    }
+  }, [voucherId]);
 
   // Sync voucher data to form
   useEffect(() => {
-    if (voucher && !routeVoucher && !dataLoadedRef.current) {
+    if (voucher && !routeVoucher && dataLoadedRef.current !== voucherId) {
       console.log('🔄 Syncing voucher data to form', voucher);
       const inferredCustomerType =
         voucher.customer_type ||
@@ -222,13 +289,13 @@ export default function SalesInvoice() {
       });
       setCustomerType(inferredCustomerType);
       setNewCustomer(prev => ({ ...prev, customer_type: inferredCustomerType }));
-      dataLoadedRef.current = true;
+      dataLoadedRef.current = voucherId;
     }
-  }, [voucher, routeVoucher]);
+  }, [voucher, routeVoucher, voucherId]);
 
   // Sync items data to state
   useEffect(() => {
-    if (voucherId && !isLoadingItems && !itemsLoadedRef.current) {
+    if (voucherId && !isLoadingItems && itemsLoadedRef.current !== voucherId) {
       if (existingItemsData && existingItemsData.length > 0) {
         console.log('🔄 Syncing items to state', existingItemsData.length);
         setItems(existingItemsData.map(item => ({
@@ -244,10 +311,15 @@ export default function SalesInvoice() {
           amount: item.amount,
           total_amount: item.total_amount
         })));
-      } else {
-        console.log('⚠️ No items found for this voucher in DB');
+        itemsLoadedRef.current = voucherId;
+      } else if (!isLoadingItems) {
+        console.log('⚠️ No items found for this voucher in DB yet');
+        // Don't set ref to true if items are empty, maybe they are still loading in the background
+        // or we want to keep checking. Actually, if isLoadingItems is false, they are truly empty.
+        if (existingItemsData && existingItemsData.length === 0) {
+           itemsLoadedRef.current = voucherId;
+        }
       }
-      itemsLoadedRef.current = true;
     }
   }, [existingItemsData, voucherId, isLoadingItems]);
 
@@ -485,10 +557,10 @@ export default function SalesInvoice() {
   };
 
   const totals = {
-    gross: items.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0),
-    vat: items.reduce((sum, item) => sum + (parseFloat(item.vat_amount) || 0), 0),
-    net: items.reduce((sum, item) => sum + (parseFloat(item.total_amount) || 0), 0),
-    discount: items.reduce((sum, item) => sum + (parseFloat(item.discount_amount) || 0), 0)
+    gross: (items || []).reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0),
+    vat: (items || []).reduce((sum, item) => sum + (parseFloat(item.vat_amount) || 0), 0),
+    net: (items || []).reduce((sum, item) => sum + (parseFloat(item.total_amount) || 0), 0),
+    discount: (items || []).reduce((sum, item) => sum + (parseFloat(item.discount_amount) || 0), 0)
   };
 
   if ((isLoadingVoucher || isLoadingItems) && voucherId) return <LoadingSpinner text="Loading invoice details..." />;

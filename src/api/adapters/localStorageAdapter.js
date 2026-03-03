@@ -139,6 +139,25 @@ export const localStorageAdapter = {
     return Promise.resolve({ success: true });
   },
 
+  // Mock raw query builder to prevent crashes
+  from: (entityName) => {
+    return {
+      select: () => ({
+        eq: (field, value) => ({
+          single: async () => {
+            const data = storage[entityName] || [];
+            return { data: data.find(item => item[field] === value), error: null };
+          },
+          then: (callback) => {
+             const data = storage[entityName] || [];
+             const results = data.filter(item => item[field] === value);
+             return Promise.resolve({ data: results, error: null }).then(callback);
+          }
+        })
+      })
+    };
+  },
+
   // Auth specific methods
   auth: {
     login: async (username, password) => {

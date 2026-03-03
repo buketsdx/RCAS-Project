@@ -64,69 +64,103 @@ export default function PurchaseInvoice() {
     enabled: !!selectedCompanyId
   });
 
-  const { data: existingVoucher, isLoading } = useQuery({
+  const { data: voucher, isLoading: isLoadingVoucher } = useQuery({
     queryKey: ['voucher', voucherId, selectedCompanyId],
     queryFn: async () => {
-      const list = await rcas.entities.Voucher.list();
-      return list.find(v => String(v.id) === String(voucherId) && String(v.company_id) === String(selectedCompanyId));
+      if (!voucherId) return null;
+      try {
+        const { data, error } = await rcas.from('vouchers').select('*').eq('id', voucherId).single();
+        if (data) return data;
+        if (error) throw error;
+      } catch (err) {
+        console.warn('Raw query failed for voucher:', err);
+      }
+      try {
+        return await rcas.entities.Voucher.get(voucherId);
+      } catch {
+        const list = await rcas.entities.Voucher.list();
+        return list.find(v => String(v.id) === String(voucherId) && String(v.company_id) === String(selectedCompanyId));
+      }
     },
     enabled: !!voucherId && !!selectedCompanyId
   });
 
-  const { data: itemsFromServer = [] } = useQuery({
+  const { data: itemsFromServer = [], isLoading: isLoadingItems } = useQuery({
     queryKey: ['voucherItems', voucherId],
-queryFn: async () => {
+    queryFn: async () => {
       if (!voucherId) return [];
+      try {
+        const { data, error } = await rcas.from('voucher_items').select('*').eq('voucher_id', voucherId);
+        if (data && data.length > 0) return data;
+      } catch (err) {
+        console.warn('Raw query failed for items:', err);
+      }
       const allItems = await rcas.entities.VoucherItem.list();
       return allItems.filter(item => String(item.voucher_id) === String(voucherId));
     },
-    enabled: !!voucherId && !!existingVoucher
+    enabled: !!voucherId && !!voucher
   });
 
-  const dataLoadedRef = useRef(false);
-  const itemsLoadedRef = useRef(false);
+  const dataLoadedRef = useRef(null);
+  const itemsLoadedRef = useRef(null);
 
   // Sync voucher data to form
   useEffect(() => {
-    if (existingVoucher && !dataLoadedRef.current) {
-      setTimeout(() => {
-        setFormData({
-          voucher_type: 'Purchase',
-          voucher_number: existingVoucher.voucher_number || '',
-          date: existingVoucher.date || format(new Date(), 'yyyy-MM-dd'),
-          party_ledger_id: existingVoucher.party_ledger_id || '',
-          party_name: existingVoucher.party_name || '',
-          reference_number: existingVoucher.reference_number || '',
-          billing_address: existingVoucher.billing_address || '',
-          narration: existingVoucher.narration || '',
-          status: existingVoucher.status || 'Confirmed'
-        });
-      }, 0);
-      dataLoadedRef.current = true;
+    if (voucher && dataLoadedRef.current !== voucherId) {
+      setFormData({
+        voucher_type: 'Purchase',
+        voucher_number: voucher.voucher_number || '',
+        date: voucher.date || format(new Date(), 'yyyy-MM-dd'),
+        party_ledger_id: voucher.party_ledger_id || '',
+        party_name: voucher.party_name || '',
+        reference_number: voucher.reference_number || '',
+        billing_address: voucher.billing_address || '',
+        narration: voucher.narration || '',
+        status: voucher.status || 'Confirmed'
+      });
+      dataLoadedRef.current = voucherId;
     }
-  }, [existingVoucher]);
+  }, [voucher, voucherId]);
 
   // Sync items data to state
   useEffect(() => {
-    if (voucherId && itemsFromServer && itemsFromServer.length > 0 && !itemsLoadedRef.current) {
-      setTimeout(() => {
-        setItems(itemsFromServer.map(item => ({
-          id: item.id,
-          stock_item_id: item.stock_item_id,
-          stock_item_name: item.stock_item_name,
-          quantity: item.quantity,
-          rate: item.rate,
-          discount_percent: item.discount_percent || 0,
-          discount_amount: item.discount_amount || 0,
-          vat_rate: item.vat_rate || 15,
-          vat_amount: item.vat_amount || 0,
-          amount: item.amount,
-          total_amount: item.total_amount
-        })));
-      }, 0);
-      itemsLoadedRef.current = true;
+    if (voucherId && itemsFromServer && itemsFromServer.length > 0 && itemsLoadedRef.current !== voucherId) {
+      setItems(itemsFromServer.map(item => ({
+        id: item.id,
+        stock_item_id: item.stock_item_id,
+        stock_item_name: item.stock_item_name,
+        quantity: item.quantity,
+        rate: item.rate,
+        discount_percent: item.discount_percent || 0,
+        discount_amount: item.discount_amount || 0,
+        vat_rate: item.vat_rate || 15,
+        vat_amount: item.vat_amount || 0,
+        amount: item.amount,
+        total_amount: item.total_amount
+      })));
+      itemsLoadedRef.current = voucherId;
     }
   }, [itemsFromServer, voucherId]);
+
+  // Reset when voucherId is null
+  useEffect(() => {
+    if (!voucherId) {
+      setFormData({
+        voucher_type: 'Purchase',
+        voucher_number: '',
+        date: format(new Date(), 'yyyy-MM-dd'),
+        party_ledger_id: '',
+        party_name: '',
+        reference_number: '',
+        billing_address: '',
+        narration: '',
+        status: 'Confirmed'
+      });
+      setItems([{ stock_item_id: '', stock_item_name: '', quantity: 1, rate: 0, discount_percent: 0, vat_rate: 15 }]);
+      dataLoadedRef.current = null;
+      itemsLoadedRef.current = null;
+    }
+  }, [voucherId]);
 
   const partyLedgers = ledgers.filter(l => {
     return l.customer_type === supplierType;
@@ -271,7 +305,7 @@ queryFn: async () => {
     saveMutation.mutate();
   };
 
-  if (isLoading && voucherId) return <LoadingSpinner text="Loading..." />;
+  if ((isLoadingVoucher || isLoadingItems) && voucherId) return <LoadingSpinner text="Loading..." />;
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
