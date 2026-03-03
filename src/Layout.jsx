@@ -9,6 +9,8 @@ import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { KeyboardShortcutsDialog } from '@/components/KeyboardShortcutsDialog';
 import AppLogo from '@/components/ui/AppLogo';
 import Footer from '@/components/ProfessionalFooter';
+import TallyGateway from '@/components/tally/TallyGateway';
+import TallySidebar from '@/components/tally/TallySidebar';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -61,7 +63,10 @@ import {
   UserCircle,
   Store,
   Check,
-  Ticket
+  Ticket,
+  Maximize2,
+  Minimize2,
+  Monitor
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 
@@ -288,6 +293,17 @@ export default function Layout() {
   const mobileSidebarRef = React.useRef(null);
   const location = useLocation();
 
+  const [isTallyMode, setIsTallyMode] = useState(() => {
+    return localStorage.getItem('rcas_ui_mode') === 'tally';
+  });
+
+  const toggleTallyMode = () => {
+    const newMode = !isTallyMode;
+    setIsTallyMode(newMode);
+    localStorage.setItem('rcas_ui_mode', newMode ? 'tally' : 'modern');
+    toast.success(newMode ? 'TallyPrime Mode Activated' : 'Modern Mode Activated');
+  };
+
   const selectedCompany = companies.find(c => c.id === selectedCompanyId);
 
   const filteredMenuItems = React.useMemo(() => {
@@ -440,11 +456,39 @@ export default function Layout() {
         const nextIndex = (currentIndex + 1) % companies.length;
         setSelectedCompanyId(companies[nextIndex].id);
       }
+
+      // Tally Mode Specific Shortcuts
+      if (isTallyMode) {
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          if (location.pathname !== '/Dashboard') {
+            navigate('/Dashboard');
+          }
+        }
+        
+        // F-Keys
+        if (e.key === 'F1') { e.preventDefault(); navigate('/CompanyInfo'); }
+        if (e.key === 'F2') { e.preventDefault(); navigate('/Dashboard'); }
+        if (e.key === 'F3') { e.preventDefault(); navigate('/CompanyManagement'); }
+        if (e.key === 'F4') { e.preventDefault(); navigate('/Contra'); }
+        if (e.key === 'F5') { e.preventDefault(); navigate('/Payment'); }
+        if (e.key === 'F6') { e.preventDefault(); navigate('/Receipt'); }
+        if (e.key === 'F7') { e.preventDefault(); navigate('/Journal'); }
+        if (e.key === 'F8') { e.preventDefault(); navigate('/Sales'); }
+        if (e.key === 'F9') { e.preventDefault(); navigate('/Purchase'); }
+        if (e.key === 'F11') { e.preventDefault(); navigate('/AppSettings'); }
+        
+        // Alt+G for Go To
+        if (e.altKey && e.key === 'g') {
+          e.preventDefault();
+          toast('Go To feature coming soon!', { icon: '🚀' });
+        }
+      }
     };
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [companies, selectedCompanyId, setSelectedCompanyId]);
+  }, [companies, selectedCompanyId, setSelectedCompanyId, isTallyMode, location.pathname, navigate]);
 
   // Prevent body scroll when mobile sidebar is open
   // Removed body scroll lock to allow content interaction when sidebar is open in ERP-style layout
@@ -718,19 +762,31 @@ export default function Layout() {
         sidebarOpen && "pl-64"
       )}>
         {/* Desktop Header */}
-        <header className="hidden lg:flex h-16 items-center justify-between px-8 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-20">
+        <header className={cn(
+          "hidden lg:flex h-16 items-center justify-between px-8 border-b sticky top-0 z-20 transition-colors",
+          isTallyMode ? "bg-[#1c3c5c] text-white border-[#1c3c5c]" : "bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
+        )}>
           <div className="flex items-center gap-3">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="flex items-center gap-3 h-auto p-2 -ml-2 hover:bg-muted group">
-                  <div className="p-2 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
-                    <Building2 className="h-5 w-5 text-primary" />
+                <Button variant="ghost" className={cn(
+                  "flex items-center gap-3 h-auto p-2 -ml-2 hover:bg-muted group",
+                  isTallyMode && "text-white hover:bg-white/10"
+                )}>
+                  <div className={cn(
+                    "p-2 rounded-lg group-hover:bg-primary/20 transition-colors",
+                    isTallyMode ? "bg-white/10" : "bg-primary/10 text-primary"
+                  )}>
+                    <Building2 className="h-5 w-5" />
                   </div>
                   <div className="flex flex-col items-start">
                     <span className="font-bold text-lg tracking-tight leading-none">{selectedCompany?.name || 'Select Company'}</span>
-                    <span className="text-xs text-muted-foreground mt-1 group-hover:text-primary transition-colors">Switch Company</span>
+                    <span className={cn(
+                      "text-xs mt-1 transition-colors",
+                      isTallyMode ? "text-white/60 group-hover:text-white" : "text-muted-foreground group-hover:text-primary"
+                    )}>Switch Company</span>
                   </div>
-                  <ChevronDown className="h-4 w-4 text-muted-foreground ml-2 group-hover:text-primary transition-colors" />
+                  <ChevronDown className="h-4 w-4 ml-2 group-hover:text-primary transition-colors" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-64">
@@ -757,15 +813,54 @@ export default function Layout() {
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
+
+          {/* Tally Mode Toggle & Other Actions */}
+          <div className="flex items-center gap-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={toggleTallyMode}
+              className={cn(
+                "gap-2 transition-all",
+                isTallyMode 
+                  ? "bg-white/10 border-white/20 text-white hover:bg-white/20" 
+                  : "hover:bg-primary/10 hover:text-primary border-primary/20"
+              )}
+            >
+              <Monitor className="h-4 w-4" />
+              {isTallyMode ? 'Modern Mode' : 'Tally Mode'}
+            </Button>
+            
+            {isTallyMode && (
+              <div className="flex items-center gap-2 px-3 py-1 bg-white/10 rounded-md text-[11px] font-mono border border-white/5">
+                <span className="text-white/60">GOTO:</span>
+                <span className="text-white font-bold">Alt + G</span>
+              </div>
+            )}
+          </div>
         </header>
 
-        <main className="min-h-[calc(100vh-4rem)] pt-16 lg:pt-0 bg-background">
-          <div className="p-6 lg:p-8">
-            <Outlet />
+        <main className={cn(
+          "min-h-[calc(100vh-4rem)] pt-16 lg:pt-0 relative flex",
+          isTallyMode ? "bg-[#f0f4f8]" : "bg-background"
+        )}>
+          <div className="flex-1">
+            <div className="p-6 lg:p-8">
+              {isTallyMode && location.pathname === '/Dashboard' ? (
+                <TallyGateway />
+              ) : (
+                <Outlet />
+              )}
+            </div>
+            <div className="px-6 lg:px-8 pb-6">
+              <Footer />
+            </div>
           </div>
-          <div className="px-6 lg:px-8 pb-6">
-            <Footer />
-          </div>
+
+          {/* Tally Vertical Button Bar */}
+          {isTallyMode && (
+            <TallySidebar />
+          )}
         </main>
       </div>
 
