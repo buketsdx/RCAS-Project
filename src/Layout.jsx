@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, Outlet, useNavigate } from 'react-router-dom';
 import { createPageUrl } from "@/lib/utils";
-import { useTheme } from '@/context/ThemeContext';
 import { useCompany } from '@/context/CompanyContext';
 import { useAuth, ROLES } from '@/context/AuthContext';
-import { rcas } from '@/api/rcasClient';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { KeyboardShortcutsDialog } from '@/components/KeyboardShortcutsDialog';
 import AppLogo from '@/components/ui/AppLogo';
@@ -64,8 +62,6 @@ import {
   Store,
   Check,
   Ticket,
-  Maximize2,
-  Minimize2,
   Monitor
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
@@ -194,7 +190,7 @@ const menuItems = [
   }
 ];
 
-function MenuItem({ item, isActive, isOpen, onToggle, onOpen, onClose, collapsed, isDark, isMobile }) {
+function MenuItem({ item, isActive, isOpen, onToggle, onOpen, onClose, collapsed, isMobile }) {
   const hasChildren = item.children && item.children.length > 0;
   const location = useLocation();
 
@@ -280,7 +276,6 @@ function MenuItem({ item, isActive, isOpen, onToggle, onOpen, onClose, collapsed
 
 export default function Layout() {
   const navigate = useNavigate();
-  const { isDark } = useTheme();
   const { selectedCompanyId, setSelectedCompanyId, companies } = useCompany();
   const { user, logout, hasRole } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -635,7 +630,6 @@ export default function Layout() {
               onToggle={() => toggleMenu(item.title)}
               onOpen={() => openMenu(item.title)}
               onClose={() => closeMenu(item.title)}
-              isDark={isDark}
               isMobile={isMobile}
               collapsed={false}
             />
@@ -699,7 +693,6 @@ export default function Layout() {
               onToggle={() => toggleMenu(item.title)}
               onOpen={() => openMenu(item.title)}
               onClose={() => closeMenu(item.title)}
-              isDark={isDark}
               isMobile={isMobile}
               collapsed={sidebarCollapsed}
             />

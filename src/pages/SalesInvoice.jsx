@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { rcas } from '@/api/rcasClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { createPageUrl, formatCurrency, generateVoucherCode } from "@/utils";
@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { format } from 'date-fns';
-import { Save, Printer, ArrowLeft, Plus, X } from 'lucide-react';
+import { Save, Plus, X } from 'lucide-react';
 
 export default function SalesInvoice() {
   const queryClient = useQueryClient();
@@ -131,13 +131,13 @@ export default function SalesInvoice() {
     enabled: !!selectedCompanyId
   });
 
-  const { data: voucher, isLoading: isLoadingVoucher, error: voucherError } = useQuery({
+  const { data: voucher, isLoading: isLoadingVoucher } = useQuery({
     queryKey: ['voucher', voucherId],
     queryFn: async () => {
       if (!voucherId) return null;
       try {
         return await rcas.entities.Voucher.get(voucherId);
-      } catch (err) {
+      } catch {
         const list = await rcas.entities.Voucher.list();
         return list.find((v) => v.id === voucherId) || null;
       }
@@ -152,12 +152,16 @@ export default function SalesInvoice() {
       const allItems = await rcas.entities.VoucherItem.list();
       return allItems.filter(item => item.voucher_id === voucherId);
     },
-    enabled: !!voucherId && !!voucher && routeItems.length === 0
+    enabled: !!voucherId
   });
+
+  const dataLoadedRef = useRef(false);
+  const itemsLoadedRef = useRef(false);
 
   // Sync voucher data to form
   useEffect(() => {
-    if (voucher && !routeVoucher) {
+    if (voucher && !routeVoucher && !dataLoadedRef.current) {
+      console.log('🔄 Syncing voucher data to form', voucher);
       const inferredCustomerType =
         voucher.customer_type ||
         (voucher.customer_vat_number ||
@@ -167,43 +171,50 @@ export default function SalesInvoice() {
           ? 'VAT Customer'
           : 'General');
 
-      setFormData({
-        voucher_type: 'Sales',
-        voucher_number: voucher.voucher_number || '',
-        date: voucher.date || format(new Date(), 'yyyy-MM-dd'),
-        party_ledger_id: voucher.party_ledger_id || '',
-        party_name: voucher.party_name || '',
-        reference_number: voucher.reference_number || '',
-        billing_address: voucher.billing_address || '',
-        narration: voucher.narration || '',
-        status: voucher.status || 'Confirmed',
-        customer_vat_number: voucher.customer_vat_number || '',
-        customer_business_name: voucher.customer_business_name || '',
-        customer_cr_number: voucher.customer_cr_number || '',
-        customer_address_proof: voucher.customer_address_proof || '',
-        customer_type: inferredCustomerType
-      });
-      setCustomerType(inferredCustomerType);
-      setNewCustomer(prev => ({ ...prev, customer_type: inferredCustomerType }));
+      setTimeout(() => {
+        setFormData({
+          voucher_type: 'Sales',
+          voucher_number: voucher.voucher_number || '',
+          date: voucher.date || format(new Date(), 'yyyy-MM-dd'),
+          party_ledger_id: voucher.party_ledger_id || '',
+          party_name: voucher.party_name || '',
+          reference_number: voucher.reference_number || '',
+          billing_address: voucher.billing_address || '',
+          narration: voucher.narration || '',
+          status: voucher.status || 'Confirmed',
+          customer_vat_number: voucher.customer_vat_number || '',
+          customer_business_name: voucher.customer_business_name || '',
+          customer_cr_number: voucher.customer_cr_number || '',
+          customer_address_proof: voucher.customer_address_proof || '',
+          customer_type: inferredCustomerType
+        });
+        setCustomerType(inferredCustomerType);
+        setNewCustomer(prev => ({ ...prev, customer_type: inferredCustomerType }));
+      }, 0);
+      dataLoadedRef.current = true;
     }
   }, [voucher, routeVoucher]);
 
   // Sync items data to state
   useEffect(() => {
-    if (voucherId && existingItemsData && existingItemsData.length > 0 && routeItems.length === 0) {
-      setItems(existingItemsData.map(item => ({
-        id: item.id,
-        stock_item_id: item.stock_item_id,
-        stock_item_name: item.stock_item_name,
-        quantity: item.quantity,
-        rate: item.rate,
-        discount_percent: item.discount_percent || 0,
-        discount_amount: item.discount_amount || 0,
-        vat_rate: item.vat_rate || 15,
-        vat_amount: item.vat_amount || 0,
-        amount: item.amount,
-        total_amount: item.total_amount
-      })));
+    if (voucherId && existingItemsData && existingItemsData.length > 0 && routeItems.length === 0 && !itemsLoadedRef.current) {
+      console.log('🔄 Syncing items to state', existingItemsData.length);
+      setTimeout(() => {
+        setItems(existingItemsData.map(item => ({
+          id: item.id,
+          stock_item_id: item.stock_item_id,
+          stock_item_name: item.stock_item_name,
+          quantity: item.quantity,
+          rate: item.rate,
+          discount_percent: item.discount_percent || 0,
+          discount_amount: item.discount_amount || 0,
+          vat_rate: item.vat_rate || 15,
+          vat_amount: item.vat_amount || 0,
+          amount: item.amount,
+          total_amount: item.total_amount
+        })));
+      }, 0);
+      itemsLoadedRef.current = true;
     }
   }, [existingItemsData, voucherId, routeItems.length]);
 

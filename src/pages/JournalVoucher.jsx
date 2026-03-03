@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { rcas } from '@/api/rcasClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { createPageUrl } from "@/utils";
@@ -59,29 +59,38 @@ export default function JournalVoucher() {
     enabled: !!voucherId && !!existingVoucher
   });
 
+  const dataLoadedRef = useRef(false);
+  const entriesLoadedRef = useRef(false);
+
   // Sync voucher data to form
   useEffect(() => {
-    if (existingVoucher) {
-      setFormData({
-        voucher_type: 'Journal',
-        voucher_number: existingVoucher.voucher_number || '',
-        date: existingVoucher.date || format(new Date(), 'yyyy-MM-dd'),
-        narration: existingVoucher.narration || '',
-        net_amount: existingVoucher.net_amount || 0
-      });
+    if (existingVoucher && !dataLoadedRef.current) {
+      setTimeout(() => {
+        setFormData({
+          voucher_type: 'Journal',
+          voucher_number: existingVoucher.voucher_number || '',
+          date: existingVoucher.date || format(new Date(), 'yyyy-MM-dd'),
+          narration: existingVoucher.narration || '',
+          net_amount: existingVoucher.net_amount || 0
+        });
+      }, 0);
+      dataLoadedRef.current = true;
     }
   }, [existingVoucher]);
 
   // Sync entries data to state
   useEffect(() => {
-    if (voucherId && entriesFromServer && entriesFromServer.length > 0) {
-      setEntries(entriesFromServer.map(e => ({
-        id: e.id,
-        ledger_id: e.ledger_id,
-        ledger_name: e.ledger_name,
-        debit_amount: e.debit_amount || 0,
-        credit_amount: e.credit_amount || 0
-      })));
+    if (voucherId && entriesFromServer && entriesFromServer.length > 0 && !entriesLoadedRef.current) {
+      setTimeout(() => {
+        setEntries(entriesFromServer.map(e => ({
+          id: e.id,
+          ledger_id: e.ledger_id,
+          ledger_name: e.ledger_name,
+          debit_amount: e.debit_amount || 0,
+          credit_amount: e.credit_amount || 0
+        })));
+      }, 0);
+      entriesLoadedRef.current = true;
     }
   }, [entriesFromServer, voucherId]);
 

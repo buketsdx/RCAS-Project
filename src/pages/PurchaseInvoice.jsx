@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { rcas } from '@/api/rcasClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { createPageUrl, formatCurrency } from "@/utils";
@@ -44,7 +44,7 @@ export default function PurchaseInvoice() {
     email: ''
   });
 
-  const [items, setItems] = useState([{ stock_item_id: '', quantity: 1, rate: 0, discount_percent: 0, vat_rate: 15 }]);
+  const [items, setItems] = useState([{ stock_item_id: '', stock_item_name: '', quantity: 1, rate: 0, discount_percent: 0, vat_rate: 15 }]);
 
   const { data: ledgers = [] } = useQuery({
     queryKey: ['ledgers', selectedCompanyId],
@@ -82,39 +82,48 @@ export default function PurchaseInvoice() {
     enabled: !!voucherId && !!existingVoucher
   });
 
+  const dataLoadedRef = useRef(false);
+  const itemsLoadedRef = useRef(false);
+
   // Sync voucher data to form
   useEffect(() => {
-    if (existingVoucher) {
-      setFormData({
-        voucher_type: 'Purchase',
-        voucher_number: existingVoucher.voucher_number || '',
-        date: existingVoucher.date || format(new Date(), 'yyyy-MM-dd'),
-        party_ledger_id: existingVoucher.party_ledger_id || '',
-        party_name: existingVoucher.party_name || '',
-        reference_number: existingVoucher.reference_number || '',
-        billing_address: existingVoucher.billing_address || '',
-        narration: existingVoucher.narration || '',
-        status: existingVoucher.status || 'Confirmed'
-      });
+    if (existingVoucher && !dataLoadedRef.current) {
+      setTimeout(() => {
+        setFormData({
+          voucher_type: 'Purchase',
+          voucher_number: existingVoucher.voucher_number || '',
+          date: existingVoucher.date || format(new Date(), 'yyyy-MM-dd'),
+          party_ledger_id: existingVoucher.party_ledger_id || '',
+          party_name: existingVoucher.party_name || '',
+          reference_number: existingVoucher.reference_number || '',
+          billing_address: existingVoucher.billing_address || '',
+          narration: existingVoucher.narration || '',
+          status: existingVoucher.status || 'Confirmed'
+        });
+      }, 0);
+      dataLoadedRef.current = true;
     }
   }, [existingVoucher]);
 
   // Sync items data to state
   useEffect(() => {
-    if (voucherId && itemsFromServer && itemsFromServer.length > 0) {
-      setItems(itemsFromServer.map(item => ({
-        id: item.id,
-        stock_item_id: item.stock_item_id,
-        stock_item_name: item.stock_item_name,
-        quantity: item.quantity,
-        rate: item.rate,
-        discount_percent: item.discount_percent || 0,
-        discount_amount: item.discount_amount || 0,
-        vat_rate: item.vat_rate || 15,
-        vat_amount: item.vat_amount || 0,
-        amount: item.amount,
-        total_amount: item.total_amount
-      })));
+    if (voucherId && itemsFromServer && itemsFromServer.length > 0 && !itemsLoadedRef.current) {
+      setTimeout(() => {
+        setItems(itemsFromServer.map(item => ({
+          id: item.id,
+          stock_item_id: item.stock_item_id,
+          stock_item_name: item.stock_item_name,
+          quantity: item.quantity,
+          rate: item.rate,
+          discount_percent: item.discount_percent || 0,
+          discount_amount: item.discount_amount || 0,
+          vat_rate: item.vat_rate || 15,
+          vat_amount: item.vat_amount || 0,
+          amount: item.amount,
+          total_amount: item.total_amount
+        })));
+      }, 0);
+      itemsLoadedRef.current = true;
     }
   }, [itemsFromServer, voucherId]);
 
@@ -335,7 +344,7 @@ export default function PurchaseInvoice() {
                 onAddItem={() =>
                   setItems(prev => [
                     ...prev,
-                    { stock_item_id: '', quantity: 1, rate: 0, discount_percent: 0, vat_rate: 15 }
+                    { stock_item_id: '', stock_item_name: '', quantity: 1, rate: 0, discount_percent: 0, vat_rate: 15 }
                   ])
                 }
                 onRemoveItem={(i) =>

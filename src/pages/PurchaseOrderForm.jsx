@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { rcas } from '@/api/rcasClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { createPageUrl, formatCurrency, generateVoucherCode } from "@/utils";
@@ -30,7 +30,7 @@ export default function PurchaseOrderForm() {
     status: 'Draft'
   });
 
-  const [items, setItems] = useState([{ stock_item_id: '', quantity: 1, rate: 0, discount_percent: 0, vat_rate: 15 }]);
+  const [items, setItems] = useState([{ stock_item_id: '', stock_item_name: '', quantity: 1, rate: 0, discount_percent: 0, vat_rate: 15 }]);
 
   const { data: ledgers = [] } = useQuery({
     queryKey: ['ledgers', selectedCompanyId],
@@ -68,37 +68,46 @@ export default function PurchaseOrderForm() {
     enabled: !!voucherId && !!existingVoucher
   });
 
+  const dataLoadedRef = useRef(false);
+  const itemsLoadedRef = useRef(false);
+
   // Sync voucher data to form
   useEffect(() => {
-    if (existingVoucher) {
-      setFormData({
-        voucher_type: 'Purchase Order',
-        voucher_number: existingVoucher.voucher_number || '',
-        date: existingVoucher.date || format(new Date(), 'yyyy-MM-dd'),
-        due_date: existingVoucher.due_date || '',
-        party_ledger_id: existingVoucher.party_ledger_id || '',
-        party_name: existingVoucher.party_name || '',
-        narration: existingVoucher.narration || '',
-        status: existingVoucher.status || 'Draft'
-      });
+    if (existingVoucher && !dataLoadedRef.current) {
+      setTimeout(() => {
+        setFormData({
+          voucher_type: 'Purchase Order',
+          voucher_number: existingVoucher.voucher_number || '',
+          date: existingVoucher.date || format(new Date(), 'yyyy-MM-dd'),
+          due_date: existingVoucher.due_date || '',
+          party_ledger_id: existingVoucher.party_ledger_id || '',
+          party_name: existingVoucher.party_name || '',
+          narration: existingVoucher.narration || '',
+          status: existingVoucher.status || 'Draft'
+        });
+      }, 0);
+      dataLoadedRef.current = true;
     }
   }, [existingVoucher]);
 
   // Sync items data to state
   useEffect(() => {
-    if (voucherId && itemsFromServer && itemsFromServer.length > 0) {
-      setItems(itemsFromServer.map(item => ({
-        id: item.id,
-        stock_item_id: item.stock_item_id,
-        stock_item_name: item.stock_item_name,
-        quantity: item.quantity,
-        rate: item.rate,
-        discount_percent: item.discount_percent || 0,
-        vat_rate: item.vat_rate || 15,
-        vat_amount: item.vat_amount || 0,
-        amount: item.amount,
-        total_amount: item.total_amount
-      })));
+    if (voucherId && itemsFromServer && itemsFromServer.length > 0 && !itemsLoadedRef.current) {
+      setTimeout(() => {
+        setItems(itemsFromServer.map(item => ({
+          id: item.id,
+          stock_item_id: item.stock_item_id,
+          stock_item_name: item.stock_item_name,
+          quantity: item.quantity,
+          rate: item.rate,
+          discount_percent: item.discount_percent || 0,
+          vat_rate: item.vat_rate || 15,
+          vat_amount: item.vat_amount || 0,
+          amount: item.amount,
+          total_amount: item.total_amount
+        })));
+      }, 0);
+      itemsLoadedRef.current = true;
     }
   }, [itemsFromServer, voucherId]);
 
@@ -189,7 +198,7 @@ export default function PurchaseOrderForm() {
           <Card>
             <CardHeader><CardTitle>Order Items</CardTitle></CardHeader>
             <CardContent>
-              <VoucherItemsTable items={items} stockItems={stockItems} onItemChange={(i, item) => setItems(prev => prev.map((it, idx) => idx === i ? item : it))} onAddItem={() => setItems(prev => [...prev, { stock_item_id: '', quantity: 1, rate: 0, discount_percent: 0, vat_rate: 15 }])} onRemoveItem={(i) => setItems(prev => prev.filter((_, idx) => idx !== i))} />
+              <VoucherItemsTable items={items} stockItems={stockItems} onItemChange={(i, item) => setItems(prev => prev.map((it, idx) => idx === i ? item : it))} onAddItem={() => setItems(prev => [...prev, { stock_item_id: '', stock_item_name: '', quantity: 1, rate: 0, discount_percent: 0, vat_rate: 15 }])} onRemoveItem={(i) => setItems(prev => prev.filter((_, idx) => idx !== i))} />
             </CardContent>
           </Card>
 
