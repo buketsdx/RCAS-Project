@@ -169,28 +169,28 @@ export default function Dashboard() {
     {
       title: terms.salesInvoice,
       icon: Receipt,
-      path: '/Vouchers/Sales',
+      path: '/SalesInvoice',
       color: 'bg-emerald-500',
       description: 'Create new invoice'
     },
     {
       title: terms.purchaseInvoice,
       icon: ShoppingCart,
-      path: '/Vouchers/Purchase',
+      path: '/PurchaseInvoice',
       color: 'bg-blue-500',
       description: 'Record purchase'
     },
     {
       title: 'Payment Entry',
       icon: CreditCard,
-      path: '/Vouchers/Payment',
+      path: '/PaymentVoucher',
       color: 'bg-amber-500',
       description: 'Record payment'
     },
     {
       title: 'Receipt Entry',
       icon: Wallet,
-      path: '/Vouchers/Receipt',
+      path: '/ReceiptVoucher',
       color: 'bg-purple-500',
       description: 'Record receipt'
     }

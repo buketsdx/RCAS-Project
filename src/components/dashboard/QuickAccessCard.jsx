@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { createPageUrl } from "@/lib/utils"; // <-- Yahan maine sahi address daal diya hai
 import { cn } from "@/lib/utils";
 
-export default function QuickAccessCard({ icon: Icon, title, description, href, color = 'emerald' }) {
+export default function QuickAccessCard({ icon: Icon, title, description, href, path, color = 'emerald' }) {
   const colors = {
     emerald: 'from-emerald-500 to-teal-600 shadow-emerald-200',
     blue: 'from-blue-500 to-indigo-600 shadow-blue-200',
@@ -13,7 +13,7 @@ export default function QuickAccessCard({ icon: Icon, title, description, href, 
   };
 
   return (
-    <Link to={createPageUrl(href)}>
+    <Link to={createPageUrl(href || path)}>
       <div className="bg-card rounded-2xl p-5 border border-border shadow-sm hover:shadow-xl hover:border-primary/20 transition-all duration-300 cursor-pointer group hover:-translate-y-1 h-full">
         <div className={cn(
           "w-12 h-12 rounded-xl bg-gradient-to-br flex items-center justify-center mb-4 shadow-md group-hover:shadow-lg transition-all duration-300",
