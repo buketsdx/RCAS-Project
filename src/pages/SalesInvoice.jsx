@@ -165,7 +165,7 @@ export default function SalesInvoice() {
   });
 
   const { data: voucher, isLoading: isLoadingVoucher } = useQuery({
-    queryKey: ['voucher', voucherId],
+    queryKey: ['voucher', voucherId, selectedCompanyId],
     queryFn: async () => {
       if (!voucherId) return null;
       console.log('🔍 Fetching voucher details for ID:', voucherId);
@@ -197,12 +197,12 @@ export default function SalesInvoice() {
       }
       return found || null;
     },
-    enabled: !!voucherId,
+    enabled: !!voucherId && !!selectedCompanyId,
     retry: 1
   });
 
   const { data: existingItemsData = [], isLoading: isLoadingItems } = useQuery({
-    queryKey: ['voucherItems', voucherId],
+    queryKey: ['voucherItems', voucherId, selectedCompanyId],
     queryFn: async () => {
       if (!voucherId) return [];
       console.log('🔍 Fetching items for voucher ID:', voucherId);
@@ -224,7 +224,7 @@ export default function SalesInvoice() {
       console.log('✅ Found items via list fallback:', filtered.length);
       return filtered;
     },
-    enabled: !!voucherId,
+    enabled: !!voucherId && !!selectedCompanyId,
     retry: 1
   });
 
